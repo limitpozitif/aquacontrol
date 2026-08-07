@@ -42,6 +42,29 @@ Aktif versiyon değiştiğinde (yeni `Çamkent Su projesi_Vxx`) şu hepsi **birl
 
 Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, günlüğe işle, commit'le.
 
+## 🔥 FLASH KAYNAĞI (kritik — kullanıcı bu dosyaları flash ediyor)
+
+Kullanıcı **flash'ı aşağıdaki dosyalardan yapıyor**, `web_gomulu\*.h` DEĞİL:
+
+- **`downside_web_entegre.txt`** — DOWNSIDE firmware + web panel **gömülü** (asıl flash dosyası).
+  Web'i `R"CAMKENTP9(...)CAMKENTP9"` blokları olarak içinde taşır: `WEB_INDEX_HTML`
+  (index.html), `WEB_LOGIN_HTML` (login.html), `WEB_STYLE_CSS` (style.css), `WEB_APP_JS`
+  (app.js). Ayrıca `/data` → `j["ver"]="V01"` burada yapılır.
+- **`upside_web_entegre.txt`** — UPSIDE firmware (Nextion + pompa kontrolü). **Web sunmaz**
+  ("HTTP /data yolu kaldırıldı — veri ESP'ler üzerinden"), yani web embed gerekmez.
+  Sürüm etiketi yalnızca downside'ın sunduğu web panelindedir (V01) — upside kodunda etiket yok.
+
+Kural: **`web_panel_data\` içinde yapılan her değişiklik, `downside_web_entegre.txt` içindeki
+ilgili bloğa da gömülmek zorundadır**; aksi hâlde flash edilen cihazda eski web kalır.
+
+- Gömmek: `yardimci_araclar\embed_web.ps1` (web_panel_data → downside_web_entegre.txt;
+  blok dışındaki tüm baytlara dokunmaz).
+- Doğrulamak: embed sonrası `git diff -- downside_web_entegre.txt` incele (yalnızca blok içi
+  fark olmalı); bloklar birebir `web_panel_data` ile eşit olmalı.
+- `web_gomulu\*.h` ayrı başlık biçimidir (`web2header.ps1` üretir) — flash kaynağı DEĞİLDİR.
+- ⚠️ PS 5.1 tuzağı: `string.StartsWith([char]0xFEFF)` hatalı TRUE döner ve içeriği bozar;
+  scriptlerde BOM kontrolü EKLEME (`ReadAllLines` BOM'u kendisi siler).
+
 ## 🛠 ORTAM / ÜRETİM NOTLARI
 
 - Shell: Windows PowerShell 5.1. Python: `C:\Users\limit\AppData\Local\Programs\Python\Python312\python.exe`
@@ -72,7 +95,8 @@ Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, gün
 | `Web_Panel_Giris_Sistemi_Kilavuzu.*` | Kullanım kılavuzu (10 slayt) |
 | `yangin-guvenligi-sunum.*` | Yangın güvenliği sunumu (12 slayt) |
 | `site-yangin-kontrol-sistemi-sunum-raporu.*` | Teknik sunum raporu |
-| `downside_web_entegre.txt` | Firmware komutları (`web_sifirla`, `web_sil_tel`, `web_engelli`, `web_talep_*` onay kuyruğu) |
+| `downside_web_entegre.txt` | **FLASH kaynağı** — DOWNSIDE firmware + web gömülü (`WEB_INDEX_HTML`, `WEB_LOGIN_HTML`, `WEB_STYLE_CSS`, `WEB_APP_JS` blokları, `j["ver"]="V01"`); `web_panel_data\` ile senkron tutulur (embed_web.ps1) |
+| `upside_web_entegre.txt` | **FLASH kaynağı** — UPSIDE firmware (Nextion + pompa); web sunmaz, embed gerekmez |
 | `downside_web_ek.txt`, `upside_web_ek.txt` | Firmware web ekleri |
 | `upside_web_entegre.txt`, `downside_son_durum_*.txt`, `upside_*.txt` | Firmware entegrasyon dokümanları |
 | `web_veri_semasi.txt` | `/data` sözleşmesi (`kullaniciSay`, `aktifSay`, `fire1Start`, `pressureOK`...) |
