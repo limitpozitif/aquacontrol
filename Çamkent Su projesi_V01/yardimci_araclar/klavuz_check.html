@@ -90,7 +90,7 @@
 <!-- SLIDE 1: KAPAK -->
 <section class="slide k1 white">
   <div class="bg"></div>
-  <div class="kicker">Bilgilendirme · Ağustos 2026</div>
+  <div class="kicker">Bilgilendirme · Ağustos 2026 · Sürüm V01</div>
   <h1>Çamkent Aqua — Web Panel<br>Kullanım Kılavuzu</h1>
   <p style="margin-top:8mm; max-width:210mm;">Web panel; site suyu ve yangın hattının durumunu internetten canlı izlemenizi sağlar. Bu kılavuz; giriş sayfasını, girişten sonra açılan kontrol panelini ve güvenlik kurallarını adım adım anlatır.</p>
   <div style="margin-top:10mm; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.35); border-radius:4mm; padding:6mm 9mm; display:inline-block;">
@@ -112,7 +112,7 @@
     </div>
     <div class="card green">
       <h3>2. Giriş yalnızca kayıtlı numaralara açık</h3>
-      <p>Sisteme yalnızca hane kaydı yapılmış numaralar girebilir. Kaydı olmayanların talebi yönetici onayına düşer, onaysız giriş yapılamaz.</p>
+      <p>Sisteme yalnızca hane kaydı yapılmış numaralar girebilir. Kaydı olmayanların talebi <b>kuyruğa alınır</b>; yönetici onayladığında şifreniz ekrana gelir. Talebiniz <b>ilk anda görülmeyebilir</b> — beklemede kaldığını düşünüp tekrar tekrar başvurmayın, <b>kuyrukta durur</b>; yönetici gördüğünde mutlaka gereken işlemi yapar.</p>
     </div>
     <div class="card red">
       <h3>3. Taşınan kullanıcı tamamen engellenir</h3>
@@ -200,7 +200,7 @@
     </div>
     <div style="flex:1;">
       <div class="note">
-        <p><b>Kayıtlı değil misiniz?</b> Talep yönetici onayına düşer; sayfa 2 saniyede bir kontrol eder ve onaylanınca şifre otomatik dolar. Onay gelene kadar bekleyin.</p>
+        <p><b>Kayıtlı değil misiniz?</b> Talebiniz <b>kuyruğa alınır</b> — ilk anda görülmese de beklemede durur, kaybolmaz. Sayfa 2 saniyede bir kontrol eder; yönetici onaylayınca şifre otomatik dolar. Yönetici talebi gördüğünde <b>mutlaka gereken işlemi yapar</b>; bu yüzden tekrar tekrar başvurmanıza gerek yoktur.</p>
       </div>
       <div class="note" style="background:#eafaf1; border-color:#8ed0b0; margin-top:5mm;">
         <p><b>İpucu:</b> Şifre 30 gün hatırlandığı için ilk girişten sonra aynı cihazda tekrar sormaz. "Çıkış" yapmazsanız aynı oturum açık kalır.</p>
@@ -258,7 +258,7 @@
 <section class="slide k6">
   <div class="bg"></div>
   <h2>Üst Bölüm — Neyi Gösterir?</h2>
-  <img class="wide" src="panel_upper.png" style="max-height:84mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel üst bölüm">
+  <img class="wide" src="panel_upper.png" style="max-height:87mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel üst bölüm">
   <div class="grid4">
     <div class="card">
       <h3>Başlık &amp; Özet</h3>
@@ -321,7 +321,7 @@
 <section class="slide k7">
   <div class="bg"></div>
   <h2>Alt Bölüm — Neyi Gösterir?</h2>
-  <img class="wide" src="panel_lower.png" style="max-height:76mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel alt bölüm">
+  <img class="wide" src="panel_lower.png" style="max-height:90mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel alt bölüm">
   <div class="grid4">
     <div class="card">
       <h3>Basınçlar</h3>
@@ -398,6 +398,23 @@
   </div>
 </section>
 
-<script>window.addEventListener("load",function(){document.querySelectorAll(".slide").forEach(function(s,i){var d=document.createElement("div");d.id="ov"+(i+1);d.style.cssText="position:fixed;top:"+(i*18)+"px;left:0;background:#ffe900;color:#000;font:bold 14px monospace;z-index:99999";d.textContent=(i+1)+": cH="+s.clientHeight+" sH="+s.scrollHeight+" cW="+s.clientWidth+" sW="+s.scrollWidth;document.body.appendChild(d);});});</script></body>
+<script>window.addEventListener("load", function () {
+  var slides = document.querySelectorAll(".slide");
+  var out = "";
+  for (var i = 0; i < slides.length; i++) {
+    var s = slides[i];
+    out += (i + 1) + ": slide sH=" + s.scrollHeight + " | ";
+    Array.prototype.forEach.call(s.children, function (c) {
+      if (c.className === "bg") return;
+      out += c.tagName + "." + (c.className + "").replace(/ /g, ".") + "(" + Math.round(c.offsetHeight) + "/" + Math.round(c.scrollHeight) + ") ";
+    });
+    out += "\n";
+  }
+  var d = document.createElement("div");
+  d.id = "ovall";
+  d.style.cssText = "position:fixed;top:0;left:0;background:#0ff;color:#000;font:bold 11px monospace;z-index:99999;white-space:pre";
+  d.textContent = out;
+  document.body.appendChild(d);
+});
+</script></body>
 </html>
-

@@ -38,6 +38,8 @@
   .box.ok { border-left-color: #2e7d32; }
   .box.warn { border-left-color: #fb8c00; }
   .box h3 { font-size: 19pt; margin-bottom: 3mm; }
+  .compact p, .compact li { font-size: 14pt; }
+  .compact h3 { font-size: 17pt; margin-bottom: 2mm; }
   .icon-line { display: flex; align-items: center; gap: 5mm; font-size: 16pt; margin-bottom: 4mm; }
   .arrow { color: #0f6ad0; font-size: 22pt; font-weight: 700; }
   .pump { display: inline-block; background: #fff; border: 2px solid #b0bec5; border-radius: 50%; width: 13mm; height: 13mm; text-align: center; line-height: 12mm; font-size: 15pt; font-weight: 700; }
@@ -60,10 +62,26 @@
 
 <!-- 1. KAPAK -->
 <section class="slide cover">
-  <div class="kicker">Çamkent Sitesi · Bilgilendirme Sunumu</div>
+  <div class="kicker">Çamkent Sitesi · Bilgilendirme Sunumu · Sürüm V01</div>
   <h1>🔔 YANGINDA NE YAPMALIYIM?</h1>
   <div class="sub">Site su ve yangın kontrol sistemini herkesin anlayabileceği şekilde anlatıyoruz</div>
   <div class="foot">Bu kılavuzu okuyun, ailenizle paylaşın · Acil durumda sistem kendini otomatik korur, siz sadece doğru adımları bilin</div>
+</section>
+
+<!-- 1b. SON GÜNCELLEME (last_update) -->
+<section class="slide narrow">
+  <h2>📋 Son Güncelleme · last_update</h2>
+  <div class="card compact" style="flex:1;">
+    <h3>V01 — Ağustos 2026 · İlk resmi sürüm</h3>
+    <ul>
+      <li><b>Tek sürüm etiketi:</b> Web panel görsel, PDF ve gömülü sürümlerin hepsinde <b>V01</b> gösterilir.</li>
+      <li><b>Giriş sistemi:</b> Kayıtlı numaralar şifresini <b>anında</b> alır, onay beklenmez.</li>
+      <li><b>Talep kuyruğu:</b> Kayıtsız numaraların talebi kuyruğa alınır; yönetici gördüğünde gereken işlemi yapar.</li>
+      <li><b>Hane kuralı:</b> Bir haneye en fazla 3 numara; taşınan kullanıcının erişimi kapanır.</li>
+      <li><b>Güncel görseller:</b> Panel ekran görüntüleri ve PDF'ler V01 ile yenilendi.</li>
+    </ul>
+  </div>
+  <p style="margin-top:4mm; font-size:14pt; color:#666;">Bu slayt her yeni sürümde güncellenir; duyuru olarak ayrıca yayınlanabilir (last_update).</p>
 </section>
 
 <!-- 2. SİSTEM NE İŞE YARAR -->
@@ -153,19 +171,19 @@
   <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:8mm; align-items:center; flex:1;">
     <div>
       <ul>
-        <li><b>Elektrik gitmiş, internet gitmiş, sensör bozulmuş olsa bile…</b> görevli teknik odadaki panele gider.</li>
+        <li><b>Elektrik, internet ve sensörler devre dışı kalsa bile</b> görevli teknik odadaki panele gider.</li>
         <li>Panelde kırmızı <b>YANGIN (Fire)</b> düğmesi vardır.</li>
-        <li>Görevli düğmeye basınca yangın pompaları ve hidrantlar <b>doğrudan çalışır</b>.</li>
-        <li>Yani sistem otomatik çalışamasa bile <b>elle çalıştırılabilir</b> — hiçbir zaman çaresiz kalmaz.</li>
+        <li>Düğmeye basınca yangın pompaları ve hidrantlar <b>doğrudan çalışır</b>.</li>
+        <li>Otomatik çalışamasa da sistem <b>elle çalıştırılabilir</b> — hiçbir zaman çaresiz kalmazsınız.</li>
       </ul>
-      <div class="box warn" style="margin-top:5mm;">
-        <p><b>Unutmayın:</b> Paneldeki ve uzaktaki (bulut) yangın düğmesi <b>yalnızca görevli/yöneticiye açıktır</b> — bulut düğmesinde <b>"yalnızca yangın anında basın"</b> uyarısı vardır. Sakinlerin görevi, yangını görevliye <b>haber vermektir</b> — düğmeye basmak değil.</p>
+      <div class="box warn compact" style="margin-top:5mm;">
+        <p><b>Unutmayın:</b> Paneldeki ve uzaktaki (bulut) yangın düğmesi <b>yalnızca görevli/yöneticiye açıktır</b>. Sakinlerin görevi yangını <b>haber vermektir</b> — düğmeye basmak değil.</p>
       </div>
     </div>
     <div class="box fire">
       <h3>Teknik panel — "YANGIN" düğmesi</h3>
-      <img src="upside.PNG" style="width:100%; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Yangın kontrol paneli">
-      <p style="margin-top:3mm;">Panel böyle görünür; kırmızı <b>YANGIN (Fire)</b> düğmesi öne çıkar. Bu düğme en kötü durumda bile yangına müdahaleyi başlatır.</p>
+      <img src="upside.PNG" style="max-height:52mm; width:auto; max-width:100%; display:block; margin:0 auto; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Yangın kontrol paneli">
+      <p style="margin-top:3mm;">Kırmızı <b>YANGIN (Fire)</b> düğmesi öne çıkar; en kötü durumda bile müdahaleyi başlatır.</p>
     </div>
   </div>
 </section>
@@ -176,19 +194,19 @@
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8mm; flex:1;">
     <div class="box">
       <h3>Normal an — yeşil "SİSTEM NORMAL"</h3>
-      <img src="web_panel_normal.png" style="width:100%; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Web paneli - normal durum">
-      <p style="margin-top:3mm;">Tank dolulukları, basınçlar ve pompa durumları <b>canlı</b> görünür. Görevli telefon veya tabletten her an kontrol edebilir.</p>
+      <img src="web_panel_normal.png" style="max-height:42mm; width:auto; max-width:100%; display:block; margin:0 auto; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Web paneli - normal durum">
+      <p style="margin-top:3mm;">Tank dolulukları, basınçlar ve pompa durumları <b>canlı</b> görünür; görevli her an telefonundan kontrol edebilir.</p>
     </div>
     <div class="box fire">
       <h3>Gerçek yangın — kırmızı bant</h3>
-      <img src="web_panel_fire.png" style="width:100%; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Web paneli - yangın durumu">
-      <p style="margin-top:3mm;">Yangın düğmesine basılınca panelde kırmızı <b>"GERÇEK YANGIN AKTİF — BÜYÜK POMPA DEVRE DE!"</b> bandı belirir. Sensör bozuksa bant <b>"MANUEL KONTROL GEREKLİ"</b> uyarısına döner.</p>
+      <img src="web_panel_fire.png" style="max-height:42mm; width:auto; max-width:100%; display:block; margin:0 auto; border-radius:4mm; border:2px solid #fff; background:#fff;" alt="Web paneli - yangın durumu">
+      <p style="margin-top:3mm;">Yangında panelde kırmızı <b>"GERÇEK YANGIN AKTİF — BÜYÜK POMPA DEVRE DE!"</b> bandı belirir.</p>
     </div>
   </div>
-  <div class="card" style="margin-top:5mm;">
+  <div class="card compact" style="margin-top:5mm;">
     <h3>👁️ Panelde ne görünürse görünsün, kural değişmez</h3>
-    <p>Yeşil, turuncu veya kırmızı ne görünürse görünsün <b>sakinlerin yapması gereken tek şey görevliye haber vermektir</b>. Düğmelere yalnızca görevli/yönetici basar.</p>
-    <p style="margin-top:3mm;">📖 Giriş ve kullanımı adım adım anlatan detaylı kılavuz: <b>Web_Panel_Giris_Sistemi_Kilavuzu.pdf</b></p>
+    <p>Yeşil, turuncu veya kırmızı ne görünürse görünsün <b>sakinlerin tek görevi görevliye haber vermektir</b>.</p>
+    <p style="margin-top:2mm;">📖 Adım adım giriş ve kullanım: <b>Web_Panel_Giris_Sistemi_Kilavuzu.pdf</b></p>
   </div>
 </section>
 
@@ -196,28 +214,28 @@
 <section class="slide narrow">
   <h2>🌐 Web paneli neden önemli? Size ne kazandırır?</h2>
   <div class="grid2">
-    <div class="box">
+    <div class="box compact">
       <h3>Neden önemli?</h3>
       <ul>
-        <li><b>Sistemin canlı nabzı:</b> Tank seviyeleri, basınçlar ve pompa durumları her 2 saniyede bir güncellenir.</li>
-        <li><b>Erken fark etme:</b> Görevli/yönetici internet olan her yerden izler; sorun büyümeden müdahale eder.</li>
-        <li><b>Alarmlar görünür:</b> Sensör hataları ve yangın durumu panelde sarı/kırmızı bantlarla anında görünür.</li>
-        <li><b>Teknik panelin internet penceresidir:</b> Odada olmadan sistemin sağlığı izlenir.</li>
+        <li><b>Sistemin canlı nabzı:</b> Tank, basınç ve pompa durumları 2 sn'de bir güncellenir.</li>
+        <li><b>Erken fark etme:</b> Görevli internet olan her yerden izler; sorun büyümeden müdahale eder.</li>
+        <li><b>Alarmlar görünür:</b> Hata ve yangın durumu panelde sarı/kırmızı bantla anında görünür.</li>
+        <li><b>Teknik panelin internet penceresi:</b> Odada olmadan sistemin sağlığı izlenir.</li>
       </ul>
     </div>
-    <div class="box ok">
+    <div class="box ok compact">
       <h3>Size (hane sakinlerine) faydası</h3>
       <ul>
-        <li>🔍 <b>Gözle görülen güven:</b> Yangın rezervinin dolu olduğunu kendiniz kontrol edersiniz.</li>
-        <li>🕐 <b>Erken haber verme:</b> Sarı/kırmızı uyarı gördüğünüzde görevliye söylersiniz — küçük sorun büyümeden çözülür.</li>
-        <li>💧 <b>Su durumu bilgisi:</b> Kesinti olursa tank/kuyu seviyesinden nedenini görürsünüz.</li>
-        <li>🏠 <b>Uzaktan izleme:</b> Kayıtlı numaranızla evden veya tatildeyken durumu görebilirsiniz.</li>
+        <li>🔍 <b>Gözle görülen güven:</b> Yangın rezervinin dolu olduğunu kendiniz görürsünüz.</li>
+        <li>🕐 <b>Erken haber:</b> Sarı/kırmızı uyarı gördüğünüzde görevliye söylersiniz.</li>
+        <li>💧 <b>Su durumu:</b> Kesinti olursa tank/kuyu seviyesinden nedenini görürsünüz.</li>
+        <li>🏠 <b>Uzaktan izleme:</b> Kayıtlı numaranızla evden veya tatildeyken durumu görürsünüz.</li>
       </ul>
     </div>
   </div>
-  <div class="box warn" style="margin-top:5mm;">
+  <div class="box warn compact" style="margin-top:3mm;">
     <h3>⚠️ Unutmayın</h3>
-    <p>Panel <b>izleme</b> içindir. Her evden 3 numara kaydı yapılabilir; adım adım giriş anlatımı <b>Web_Panel_Giris_Sistemi_Kilavuzu.pdf</b> kılavuzunda. Düğmelere yalnızca görevli/yönetici basar.</p>
+    <p>Panel <b>izleme</b> içindir; her evden en fazla 3 numara kaydı yapılır. Giriş talebiniz <b>anında görülmese de kuyruğa alınır</b>; yönetici gördüğünde <b>mutlaka gereken işlemi yapar</b>. Düğmelere yalnızca görevli/yönetici basar.</p>
   </div>
 </section>
 
@@ -265,6 +283,23 @@
   <p style="margin-top:8mm; font-size:18pt;">Çamkent Sitesi Yönetimi · Bu bilgi herkesin kolayca ulaşabileceği yerlerde asılabilir.</p>
 </section>
 
-<script src="C:/Users/limit/AppData/Local/Temp/opencode/diag.js"></script></body>
+<script>window.addEventListener("load", function () {
+  var slides = document.querySelectorAll(".slide");
+  var out = "";
+  for (var i = 0; i < slides.length; i++) {
+    var s = slides[i];
+    out += (i + 1) + ": slide sH=" + s.scrollHeight + " | ";
+    Array.prototype.forEach.call(s.children, function (c) {
+      if (c.className === "bg") return;
+      out += c.tagName + "." + (c.className + "").replace(/ /g, ".") + "(" + Math.round(c.offsetHeight) + "/" + Math.round(c.scrollHeight) + ") ";
+    });
+    out += "\n";
+  }
+  var d = document.createElement("div");
+  d.id = "ovall";
+  d.style.cssText = "position:fixed;top:0;left:0;background:#0ff;color:#000;font:bold 11px monospace;z-index:99999;white-space:pre";
+  d.textContent = out;
+  document.body.appendChild(d);
+});
+</script></body>
 </html>
-

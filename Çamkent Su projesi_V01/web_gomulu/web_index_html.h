@@ -8,8 +8,8 @@ static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9("
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Çamkent Aqua — Kontrol Paneli</title>
-<link rel="stylesheet" href="style.css?v=8">
-    <script src="app.js?v=12" defer></script>
+<link rel="stylesheet" href="style.css?v=V01">
+    <script src="app.js?v=V01" defer></script>
 </head>
 <body>
 

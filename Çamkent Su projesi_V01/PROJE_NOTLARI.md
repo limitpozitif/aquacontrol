@@ -63,7 +63,7 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
 
 | Dosya | Açıklama |
 |---|---|
-| `web_panel_data\` | **GÜNCEL** panel (app.js v12, index.html, login.html, style.css) |
+| `web_panel_data\` | **GÜNCEL** panel (app.js V01, index.html, login.html, style.css) |
 | `web_gomulu\` | Panelin Arduino'ya gömülü halleri (`web_*.h`) |
 | `Web_Panel_Giris_Sistemi_Kilavuzu.*` | Kullanım kılavuzu (10 slayt) |
 | `yangin-guvenligi-sunum.*` | Yangın güvenliği sunumu (12 slayt) |
@@ -79,7 +79,7 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
 | `panel_upper.png`, `panel_lower.png` | Üst/alt bölüm kırpmaları (kılavuz) |
 | `login_card.png`, `login_screen.png` | Giriş ekranı görselleri |
 | `upside.PNG` | Teknik panel görseli (sunum) |
-| `index.html`, `app.js`, `style.css` | Eski kök panel (v7/v10 — **kullanılmıyor**, güncel: `web_panel_data\`) |
+| `index.html`, `app.js`, `style.css` | Eski kök panel (eski — **kullanılmıyor**, güncel: `web_panel_data\`) |
 | `serve.bat` | Panel sunma yardımcısı |
 
 > Not: `roll-off-*` dosyaları bu projeye ait değildir (ayrı iş fikri) — versiyon klasörüne
@@ -109,3 +109,17 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
     (12 sayfa) görseller V01 etiketiyle yeniden basıldı
 - Kural: aktif versiyon değiştiğinde (V02...) web etiketi + görseller + PDF'ler birlikte
   güncellenir (bkz. kök `AGENTS.md` → "SÜRÜM ETİKETİ SENKRONİZASYONU").
+
+**V01 güncelleme (2026-08-07) — Sunum/kılavuza versiyon bilgisi + last_update slaytı**
+- Sunum kapağına sürüm etiketi eklendi: `Çamkent Sitesi · Bilgilendirme Sunumu · Sürüm V01`.
+- Sunuma **last_update** slaytı eklendi (slayt 2, "📋 Son Güncelleme · last_update"):
+  V01 değişiklikleri listelenir (tek sürüm etiketi, anında şifre, talep kuyruğu, hane başı
+  3 numara, güncel görseller); her yeni sürümde bu liste güncellenir ve duyuru olarak
+  ayrıca yayınlanabilir. Sunum slayt sayısı 12 → 13.
+- Kılavuz kapağına sürüm etiketi eklendi: `Bilgilendirme · Ağustos 2026 · Sürüm V01`.
+- Taşma kontrolü yapıldı: tüm slaytlar `sH == 794` (A4 yatay) — `yardimci_araclar`
+  check kopyaları diag_all.js ile yenilendi.
+- PDF'ler yeniden basıldı: `yangin-guvenligi-sunum.pdf` (13 sayfa),
+  `Web_Panel_Giris_Sistemi_Kilavuzu.pdf` (10 sayfa) — root + bu klasör.
+- Kural: her versiyonda `last_update` slaytı güncellenir (bkz. kök `AGENTS.md` → "SUNUM /
+  ADMIN / HANE BİLGİLENDİRME").

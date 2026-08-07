@@ -24,6 +24,11 @@ Değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
 İlgili dosyalar: `yangin-guvenligi-sunum.html/.pdf`, `Web_Panel_Giris_Sistemi_Kilavuzu.html/.pdf`,
 `site-yangin-kontrol-sistemi-sunum-raporu.*`.
 
+Sunum ve kılavuz kapaklarında **sürüm etiketi (Vxx)** gösterilir. Sunumun **slayt 2**'si
+`last_update` ("📋 Son Güncelleme") slaytıdır: o sürümde yapılan değişiklikleri listeler ve
+her versiyon değiştiğinde **güncellenir**; duyuru olarak ayrıca yayınlanabilir. Kullanıcı
+bir değişiklik yaptırdığında `last_update` slaytına da eklemeyi unutma.
+
 ## 🏷 SÜRÜM ETİKETİ SENKRONİZASYONU (web = aktif versiyon)
 
 Web panelde görünen sürüm etiketi **her zaman aktif proje versiyonunu (Vxx)** gösterir.
@@ -62,7 +67,7 @@ Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, gün
 
 | Dosya | Açıklama |
 |---|---|
-| `web_panel_data\` | **GÜNCEL** panel (app.js v12, index.html, login.html, style.css) |
+| `web_panel_data\` | **GÜNCEL** panel (app.js V01, index.html, login.html, style.css) |
 | `web_gomulu\` | Panelin Arduino'ya gömülü halleri (`web_*.h`) |
 | `Web_Panel_Giris_Sistemi_Kilavuzu.*` | Kullanım kılavuzu (10 slayt) |
 | `yangin-guvenligi-sunum.*` | Yangın güvenliği sunumu (12 slayt) |
@@ -78,7 +83,7 @@ Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, gün
 | `panel_upper.png`, `panel_lower.png` | Üst/alt bölüm kırpmaları (kılavuz) |
 | `login_card.png`, `login_screen.png` | Giriş ekranı görselleri |
 | `upside.PNG` | Teknik panel görseli |
-| `index.html`, `app.js`, `style.css` | Eski kök panel (v7/v10 — **kullanılmıyor**, güncel: `web_panel_data\`) |
+| `index.html`, `app.js`, `style.css` | Eski kök panel (eski — **kullanılmıyor**, güncel: `web_panel_data\`) |
 | `serve.bat` | Panel sunma yardımcısı |
 
 > Not: `roll-off-*` dosyaları bu projeye ait değil (ayrı iş fikri). Onlara dokunma.
