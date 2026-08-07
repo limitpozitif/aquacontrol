@@ -328,6 +328,17 @@
   }
   @media (max-width: 480px) {
     .cards.c2 { grid-template-columns: 1fr; }
+    .table-wrap { margin: 0 -8px; }
+    table { min-width: 100%; font-size: 12px; }
+    th, td { padding: 9px 10px; }
+    thead { display: none; }
+    tr { display: block; margin-bottom: 8px; border: 1px solid #e3ecf4; border-radius: 8px; overflow: hidden; }
+    td { display: block; text-align: left; border-bottom: 1px solid #e3ecf4; font-size: 12.5px; }
+    td:last-child { border-bottom: none; }
+    td:first-child { font-weight: 800; color: var(--navy); background: var(--bg); }
+  }
+  @media (max-width: 360px) {
+    .wrap { padding: 0 10px; }
   }
 </style>
 </head>
