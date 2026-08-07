@@ -96,3 +96,16 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
   (`panel_upper.png` 0–848, `panel_lower.png` 858–1480) ve boyutları büyütüldü (87mm / 90mm).
 - Sunum (12 slayt): 7/8/9 slayt taşması düzeltildi; 7b (uzaktan izleme) ve 7c (web panelin
   önemi + sakinlere faydaları) slaytları eklendi; 9. slayta kuyruk/onay notu eklendi.
+
+**V01 güncelleme (2026-08-07) — Sürüm etiketi web'e senkron**
+- Web panel sürüm etiketi aktif proje versiyonunu gösteriyor: hero-sub `v10` → `V01`,
+  footer `HMI v3.0` → `ÇAMKENT AQUA HMI V01`.
+- Değiştirilenler (root + bu klasörün ikisinde):
+  - `web_panel_data/index.html` (hero-sub + footer)
+  - `web_gomulu/web_index_html.h` (gömülü firmware — aynı iki satır)
+  - Panel görselleri yeniden üretildi: `web_panel_normal.png`, `web_panel_fire.png`
+    (1280×900), `panel_upper.png` (0–848), `panel_lower.png` (858–1480)
+  - `Web_Panel_Giris_Sistemi_Kilavuzu.pdf` (10 sayfa) ve `yangin-guvenligi-sunum.pdf`
+    (12 sayfa) görseller V01 etiketiyle yeniden basıldı
+- Kural: aktif versiyon değiştiğinde (V02...) web etiketi + görseller + PDF'ler birlikte
+  güncellenir (bkz. kök `AGENTS.md` → "SÜRÜM ETİKETİ SENKRONİZASYONU").

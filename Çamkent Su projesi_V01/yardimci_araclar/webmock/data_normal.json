@@ -1,0 +1,45 @@
+{
+  "time": 12345,
+  "ver": "v12",
+  "kullaniciSay": 24,
+  "aktifSay": 3,
+  "siteStart": true,
+  "fireStart": false,
+  "fire1Start": false,
+  "sysOff": false,
+  "fillValve": { "on": false },
+  "upOnline": true,
+  "upMsg": "",
+  "site": {
+    "water": { "ton": 3.4, "cap": 5.0 },
+    "pressure": 2.1,
+    "pump": { "on": true, "freq": 45.2, "cur": 8.6, "volt": 381 },
+    "fault": false,
+    "pressureOK": true
+  },
+  "fire": {
+    "tanks": [
+      { "ton": 4.1, "cap": 5.0 },
+      { "ton": 4.3, "cap": 5.0 },
+      { "ton": 4.2, "cap": 5.0 },
+      { "ton": 4.0, "cap": 5.0 }
+    ],
+    "pressure": 0.8,
+    "pump": { "on": false, "freq": 0.0, "cur": 0.0, "volt": 0 },
+    "big": { "on": false, "freq": 0.0 },
+    "fault": false,
+    "pressureOK": true
+  },
+  "down": {
+    "p1": 3.2,
+    "p2": 2.4,
+    "p3": 0.8,
+    "faz": true,
+    "siteSensorOK": true,
+    "lineSensorOK": true,
+    "pumps": { "inv": { "on": true }, "yedek": { "on": false }, "kuyu": { "on": false }, "hidrant": { "on": false } },
+    "fireTank": { "pct": 100, "s1": true, "s2": true },
+    "siteTank": { "pct": 100, "s1": true },
+    "alarms": []
+  }
+}

@@ -24,6 +24,19 @@ Değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
 İlgili dosyalar: `yangin-guvenligi-sunum.html/.pdf`, `Web_Panel_Giris_Sistemi_Kilavuzu.html/.pdf`,
 `site-yangin-kontrol-sistemi-sunum-raporu.*`.
 
+## 🏷 SÜRÜM ETİKETİ SENKRONİZASYONU (web = aktif versiyon)
+
+Web panelde görünen sürüm etiketi **her zaman aktif proje versiyonunu (Vxx)** gösterir.
+Aktif versiyon değiştiğinde (yeni `Çamkent Su projesi_Vxx`) şu hepsi **birlikte** güncellenir:
+
+1. `web_panel_data/index.html` → hero-sub (`·&nbsp; Vxx`) + footer (`ÇAMKENT AQUA HMI Vxx`)
+2. `web_gomulu/web_index_html.h` → aynı iki satır (gömülü firmware)
+3. Panel görselleri: `web_panel_normal.png`, `web_panel_fire.png`, `panel_upper.png`, `panel_lower.png`
+   → webmock ile Chrome `--screenshot` (budget'sız) + `--window-size=1280,1700`; kırpma: üst 0–848, alt 858–1480
+4. Sunum/kılavuz PDF'leri → `--print-to-pdf` ile yeniden üret (önce Temp, sonra Remove-Item + Move-Item)
+
+Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, günlüğe işle, commit'le.
+
 ## 🛠 ORTAM / ÜRETİM NOTLARI
 
 - Shell: Windows PowerShell 5.1. Python: `C:\Users\limit\AppData\Local\Programs\Python\Python312\python.exe`
