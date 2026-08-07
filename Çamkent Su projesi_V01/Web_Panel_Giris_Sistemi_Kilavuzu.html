@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Web Panel Kullanım Kılavuzu</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  .slide {
+    width: 297mm; height: 210mm;
+    page-break-after: always;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14mm 16mm;
+    overflow: hidden;
+  }
+  .slide:last-child { page-break-after: auto; }
+  .bg { position: absolute; inset: 0; z-index: -1; }
+  .k1 .bg { background: linear-gradient(135deg,#0f2a4a 0%,#14538f 60%,#1f7ac4 100%); }
+  .k2 .bg { background: #f2f6fb; }
+  .k3 .bg { background: #0a1120; }
+  .k4 .bg { background: linear-gradient(135deg,#083a34 0%,#0e6b5c 60%,#17a085 100%); }
+  .k5 .bg { background: #f2f6fb; }
+  .k6 .bg { background: #eef4fb; }
+  .k10 .bg { background: #fbf2f2; }
+  .k7 .bg { background: #eef4fb; }
+  .k8 .bg { background: #fdf6ec; }
+  .k9 .bg { background: linear-gradient(135deg,#3a2a52 0%,#5b3f86 60%,#8a63c9 100%); }
+
+  h1 { font-size: 30pt; color: #0f2a4a; line-height: 1.2; }
+  h2 { font-size: 24pt; color: #0f2a4a; margin-bottom: 7mm; }
+  p  { font-size: 13pt; color: #334; line-height: 1.5; }
+  .white h1 { color: #fff; }
+  .white h2 { color: #fff; }
+  .white p  { color: #eef4fb; }
+  .kicker { font-size: 12pt; letter-spacing: 3px; text-transform: uppercase; color:#8fc4f0; margin-bottom: 6mm; }
+  .white .kicker { color: #9fd4f8; }
+  .tag { display: inline-block; background:#fff; color:#14538f; font-weight:bold; font-size:12pt; padding:3mm 7mm; border-radius:20mm; margin-top:10mm; }
+
+  .cards { display: flex; flex-direction: column; gap: 3mm; margin-top: 3mm; }
+  .card { background:#fff; border-left:4mm solid #1f7ac4; border-radius:3mm; padding:3.5mm 5.5mm; box-shadow:0 2mm 5mm rgba(15,42,74,.12); }
+  .card.green { border-left-color:#17a085; }
+  .card.orange { border-left-color:#e8913d; }
+  .card.red { border-left-color:#d85454; }
+  .card h3 { font-size:13pt; color:#0f2a4a; margin-bottom:1.2mm; }
+  .card p { font-size:11pt; }
+  .grid4 { display:grid; grid-template-columns:1fr 1fr; gap:3mm 5mm; margin-top:4mm; }
+
+  .row { display:flex; gap:8mm; align-items:flex-start; }
+  .colL { flex:0 0 auto; }
+  .colR { flex:1; min-width:0; }
+  img.shot { border-radius:4mm; box-shadow:0 4mm 10mm rgba(0,0,0,.45); }
+  img.cardImg { height:166mm; width:auto; display:block; border-radius:4mm; box-shadow:0 4mm 10mm rgba(0,0,0,.5); }
+  img.wide { width:100%; display:block; border-radius:4mm; box-shadow:0 3mm 8mm rgba(0,0,0,.35); }
+
+  .field { display:flex; align-items:center; gap:5mm; margin-bottom:4.5mm; }
+  .num { flex:0 0 auto; width:12mm; height:12mm; border-radius:50%; background:#1f7ac4; color:#fff; font-size:11pt; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  .field h4 { font-size:12.5pt; color:#0f2a4a; }
+  .field p { font-size:11pt; }
+
+  .step { display:flex; align-items:flex-start; gap:6mm; margin-bottom:5mm; }
+  .step .num { width:14mm; height:14mm; font-size:13pt; }
+  .step h3 { font-size:13.5pt; color:#0f2a4a; margin-bottom:1mm; }
+  .step p { font-size:11.5pt; }
+
+  .note { margin-top:7mm; background:#fff7e8; border:1px solid #e9c98a; border-radius:3mm; padding:4mm 6mm; }
+  .note p { font-size:11pt; color:#6b4d12; }
+  .chiprow { display:flex; flex-wrap:wrap; gap:3mm; }
+  .chip { padding:2.5mm 5mm; border-radius:20mm; font-size:10.5pt; font-weight:700; }
+  .chip.b { background:#dcebfb; color:#14538f; }
+  .chip.g { background:#d9f2e8; color:#0e6b5c; }
+  .chip.o { background:#fbe9d3; color:#9a5b16; }
+  .chip.r { background:#fbdcdc; color:#a83232; }
+
+  .mini { font-size:10.5pt; color:#5a6b7a; margin-top:3mm; }
+  .pane { display:flex; gap:6mm; }
+  .pane .card { flex:1; }
+  .alarm { display:flex; align-items:flex-start; gap:4mm; margin-bottom:3mm; }
+  .alarm .chiprow .chip { font-size:11pt; }
+  .alarm h4 { font-size:12pt; margin-bottom:.8mm; }
+  .alarm p { font-size:10.5pt; }
+  .alarm .chip { min-width:30mm; text-align:center; flex:0 0 auto; margin-top:.5mm; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: KAPAK -->
+<section class="slide k1 white">
+  <div class="bg"></div>
+  <div class="kicker">Bilgilendirme · Ağustos 2026</div>
+  <h1>Çamkent Aqua — Web Panel<br>Kullanım Kılavuzu</h1>
+  <p style="margin-top:8mm; max-width:210mm;">Web panel; site suyu ve yangın hattının durumunu internetten canlı izlemenizi sağlar. Bu kılavuz; giriş sayfasını, girişten sonra açılan kontrol panelini ve güvenlik kurallarını adım adım anlatır.</p>
+  <div style="margin-top:10mm; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.35); border-radius:4mm; padding:6mm 9mm; display:inline-block;">
+    <p style="font-size:11.5pt; color:#cfe6fa; letter-spacing:1px;">PANEL ADRESİ</p>
+    <p style="font-family:Consolas,'Courier New',monospace; font-size:26pt; font-weight:bold; color:#fff; margin-top:2mm;">http://85.104.57.50:8080</p>
+    <p style="font-size:12pt; color:#b9d6f0; margin-top:2mm;">Bu adresi tarayıcınızın adres çubuğuna yazıp Enter'a basın.</p>
+  </div>
+  <div class="tag">Kullanıcı Kılavuzu</div>
+</section>
+
+<!-- SLIDE 2: NE DEĞİŞTİ -->
+<section class="slide k2">
+  <div class="bg"></div>
+  <h2>Yeni Giriş Sisteminde Neler Var?</h2>
+  <div class="cards">
+    <div class="card green">
+      <h3>1. Şifre artık anında geliyor</h3>
+      <p>Numaranız hane defterinde kayıtlıysa, "Erişim Talep Et" butonuna bastığınızda şifreniz <b>onay beklenmeden</b> ekrana gelir ve şifre alanına otomatik yazılır.</p>
+    </div>
+    <div class="card green">
+      <h3>2. Giriş yalnızca kayıtlı numaralara açık</h3>
+      <p>Sisteme yalnızca hane kaydı yapılmış numaralar girebilir. Kaydı olmayanların talebi <b>kuyruğa alınır</b>; yönetici onayladığında şifreniz ekrana gelir. Talebiniz <b>ilk anda görülmeyebilir</b> — beklemede kaldığını düşünüp tekrar tekrar başvurmayın, <b>kuyrukta durur</b>; yönetici gördüğünde mutlaka gereken işlemi yapar.</p>
+    </div>
+    <div class="card red">
+      <h3>3. Taşınan kullanıcı tamamen engellenir</h3>
+      <p>Yönetici numarayı sildiğinde o kişinin tüm oturumları kapanır ve bir daha giremez.</p>
+    </div>
+    <div class="card orange">
+      <h3>4. 30 gün hatırlama</h3>
+      <p>Bir kez giriş yaptıktan sonra tarayıcınız sizi 30 gün boyunca hatırlar; sürekli şifre sormaz.</p>
+    </div>
+    <div class="card orange">
+      <h3>5. Haneniz doluyken yeni numara</h3>
+      <p>Bir haneye en fazla 3 numara kaydı eklenebilir. Hane doluysa sistem, silinecek eski kaydı seçmenizi ister; siz seçtikten sonra talep yöneticiye gider.</p>
+    </div>
+    <div class="card green">
+      <h3>6. Panel artık daha bilgilendirici</h3>
+      <p>Başlıkta <b>Toplam / Aktif kullanıcı</b> sayacı ve 4 adet <b>sensör sağlık LED'i</b> (SİTE, YANGIN, ALT SİTE, ŞEBEKE) görünür; sensör arızası ve yangın durumu kırmızı bantlarla gösterilir.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3: GİRİŞ SAYFASI -->
+<section class="slide k3">
+  <div class="bg"></div>
+  <div class="row">
+    <div class="colL">
+      <img class="cardImg" src="login_card.png" alt="Giriş sayfası">
+    </div>
+    <div class="colR">
+      <h2 style="color:#fff;">Giriş Sayfası</h2>
+      <p style="color:#9fb4d4; margin-bottom:4mm;">Tarayıcıya <b style="color:#35d0ff; font-family:Consolas,monospace;">http://85.104.57.50:8080</b> yazdığınızda bu sayfa açılır. Üstte <b>şifreli giriş</b>, altta <b>ilk giriş / erişim talebi</b> bölümleri bulunur.</p>
+      <div class="field">
+        <div class="num">1</div>
+        <div><h4 style="color:#fff;">Telefon numarası</h4><p>Girişte kullandığınız 11 haneli numara. Hane defterinde kayıtlı olmalıdır.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">2</div>
+        <div><h4 style="color:#fff;">Şifre</h4><p>6 haneli şifre. Kayıtlıysanız talep ettiğinizde buraya otomatik yazılır.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">3</div>
+        <div><h4 style="color:#fff;">Giriş Yap</h4><p>Numara + şifre ile panele girer. İkisi doğruysa kontrol paneli açılır.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">4</div>
+        <div><h4 style="color:#fff;">Ad Soyad + Hane No</h4><p>İlk girişte veya numara değişikliğinde doldurulur. Yöneticinin kaydettiği hane numaranızı girin.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">5</div>
+        <div><h4 style="color:#fff;">Erişim Talep Et</h4><p>Şifre almak için bu butona basın. Kayıtlıysanız şifre anında gelir; kayıtlı değilseniz yönetici onayı beklenir.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">6</div>
+        <div><h4 style="color:#fff;">Durum mesajı</h4><p>Talebin durumu ve yönlendirmeler bu alanda gösterilir; onaylanınca şifre burada otomatik dolar.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4: GİRİŞ AKIŞI -->
+<section class="slide k4 white">
+  <div class="bg"></div>
+  <h2>Giriş Akışı: Adım Adım</h2>
+  <div class="row" style="gap:10mm;">
+    <div style="flex:1;">
+      <div class="step">
+        <div class="num">1</div>
+        <div><h3>Panel adresini yazın</h3><p>Tarayıcınızın adres çubuğuna <b>http://85.104.57.50:8080</b> yazıp Enter'a basın. Giriş sayfası açılır.</p></div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div><h3>Numaranızı yazın</h3><p>11 haneli telefon numaranızı girin ve <b>"Erişim Talep Et"</b>e basın.</p></div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div><h3>Şifreniz anında gelsin</h3><p>Kayıtlıysanız şifre ekranda belirir ve şifre alanına <b>otomatik yazılır</b>.</p></div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div><h3>Giriş Yap</h3><p><b>"Giriş Yap"</b>a basın; kontrol paneli açılır.</p></div>
+      </div>
+      <div class="step">
+        <div class="num">5</div>
+        <div><h3>Şifreyi unuttuysanız</h3><p>2. adımı tekrarlamanız yeterli. Yeni şifreniz yine <b>anında</b> gelir — yönetici beklemenize gerek yoktur.</p></div>
+      </div>
+    </div>
+    <div style="flex:1;">
+      <div class="note">
+        <p><b>Kayıtlı değil misiniz?</b> Talebiniz <b>kuyruğa alınır</b> — ilk anda görülmese de beklemede durur, kaybolmaz. Sayfa 2 saniyede bir kontrol eder; yönetici onaylayınca şifre otomatik dolar. Yönetici talebi gördüğünde <b>mutlaka gereken işlemi yapar</b>; bu yüzden tekrar tekrar başvurmanıza gerek yoktur.</p>
+      </div>
+      <div class="note" style="background:#eafaf1; border-color:#8ed0b0; margin-top:5mm;">
+        <p><b>İpucu:</b> Şifre 30 gün hatırlandığı için ilk girişten sonra aynı cihazda tekrar sormaz. "Çıkış" yapmazsanız aynı oturum açık kalır.</p>
+      </div>
+      <div class="note" style="background:#fdecec; border-color:#e5a2a2; margin-top:5mm;">
+        <p><b>Dikkat:</b> 5 kez yanlış şifre yazarsanız 10 dakika kilitlenirsiniz. Şifreniz anında geldiği için kopyalayıp yapıştırın.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5: PANEL GENEL BAKIŞ -->
+<section class="slide k5">
+  <div class="bg"></div>
+  <h2>Kontrol Paneli — Genel Bakış</h2>
+  <div class="row">
+    <div class="colL" style="width:128mm;">
+      <img class="wide" src="web_panel_normal.png" alt="Kontrol paneli genel görünüm">
+    </div>
+    <div class="colR">
+      <p style="margin-bottom:5mm;">Panel tek sayfada bölümlerden oluşur; değerler her 2 saniyede bir güncellenir.</p>
+      <div class="field">
+        <div class="num">1</div>
+        <div><h4>Başlık çubuğu</h4><p>Sistem adı, canlı saat, bağlantı ışıkları ve <b>Toplam / Aktif kullanıcı</b> sayaçları.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">2</div>
+        <div><h4>Sensör sağlık LED'leri</h4><p><b>SİTE / YANGIN / ALT SİTE / ŞEBEKE</b> sensörleri. Yeşil = sağlıklı, kırmızı = sensör hatası var.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">3</div>
+        <div><h4>Özet kutuları</h4><p>Site suyu miktarı, yangın rezervi, kot farkı ve site pompası durumu tek bakışta.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">4</div>
+        <div><h4>Üst istasyon (UPSIDE)</h4><p>Tank dolulukları, hat basınçları ve pompa kumanda kartları.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">5</div>
+        <div><h4>Hidrant akış bandı</h4><p>Yangın pompası çalışınca suyun yukarı (60 m) basıldığını gösterir.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">6</div>
+        <div><h4>Alt istasyon (DOWNSIDE)</h4><p>Kuyu başı basınçları, pompa çıkışları ve depolar.</p></div>
+      </div>
+      <div class="field">
+        <div class="num">7</div>
+        <div><h4>Durum bantları</h4><p>Her istasyonun altında sistem normal / uyarı / kritik bilgisi ve ilk alarm mesajı.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: ÜST BÖLÜM DETAY -->
+<section class="slide k6">
+  <div class="bg"></div>
+  <h2>Üst Bölüm — Neyi Gösterir?</h2>
+  <img class="wide" src="panel_upper.png" style="max-height:87mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel üst bölüm">
+  <div class="grid4">
+    <div class="card">
+      <h3>Başlık &amp; Özet</h3>
+      <p>Üstte canlı saat, "SİSTEM NORMAL / ESP32 / MODBUS / UDP" bağlantı ışıkları, <b>Toplam / Aktif kullanıcı</b> sayacı ve <b>sensör sağlık LED'leri</b>. Özet kutuları: <b>Site Suyu</b> (depodaki ton), <b>Yangın Rezervi</b> (dolu/kapasite), <b>Kot Farkı</b> (60 m ≈ 6 bar) ve <b>Site Pompası</b> durumu.</p>
+    </div>
+    <div class="card">
+      <h3>Su Tankları</h3>
+      <p><b>TANK 1</b> kullanma suyu deposu, <b>YANGIN REZERVİ</b> 4 tankın toplamı. Doluluk çubuğun yüzdesi olarak, miktar ton olarak gösterilir.</p>
+    </div>
+    <div class="card">
+      <h3>Hat Basınçları</h3>
+      <p><b>SİTE</b> ve <b>YANGIN</b> göstergeleri bar cinsinden basıncı gösterir. Yangın basıncı her saniye UDP ile iletilir.</p>
+    </div>
+    <div class="card">
+      <h3>Kumanda &amp; Durum</h3>
+      <p><b>Site Pompası</b>, <b>Yangın Pompası</b>, <b>Büyük Yangın</b> ve <b>Dolum Valfi</b> kartları çalışıyor / beklemede durumunu ve frekans-akım-gerilim değerlerini gösterir. Alt bant istasyonun genel durumunu verir.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6b: YANGIN & UYARI EKRANLARI -->
+<section class="slide k10">
+  <div class="bg"></div>
+  <h2>Yangın ve Uyarı Ekranları</h2>
+  <div class="row">
+    <div class="colL" style="width:108mm;">
+      <img class="wide" src="web_panel_fire.png" alt="Yangın durumunda panel">
+    </div>
+    <div class="colR">
+      <p style="margin-bottom:4mm;">Yangın düğmesine basıldığında panelde kırmızı <b>"GERÇEK YANGIN AKTİF — BÜYÜK POMPA DEVRE DE!"</b> bandı belirir. Sensör hatasıyla birlikteyse mesaj <b>"MANUEL KONTROL GEREKLİ"</b> uyarısına döner.</p>
+      <div class="alarm">
+        <div class="chip r">KRİTİK</div>
+        <div><h4>GERÇEK YANGIN AKTİF — BÜYÜK POMPA DEVRE DE!</h4><p>Gerçek yangın modu açık, büyük yangın pompası çalışıyor.</p></div>
+      </div>
+      <div class="alarm">
+        <div class="chip r">KRİTİK</div>
+        <div><h4>GERÇEK YANGIN + YANGIN SENSÖRÜ HATASI — MANUEL KONTROL GEREKLİ!</h4><p>Sensör verisi yok ama yangın aktif — görevli müdahalesi şart.</p></div>
+      </div>
+      <div class="alarm">
+        <div class="chip r">KRİTİK</div>
+        <div><h4>YANGIN SENSÖRÜ HATASI — BASINÇ VERİSİ YOK, MANUEL KONTROL GEREKLİ!</h4><p>Yangın basınç sensörü ölü; pompa sürekli çalışmaya geçer.</p></div>
+      </div>
+      <div class="alarm">
+        <div class="chip o">UYARI</div>
+        <div><h4>SİTE SENSÖRÜ HATASI — SİTE POMPASI DURDURULDU</h4><p>Site basınç sensörü ölü; site pompası güvenlik için durdurulur.</p></div>
+      </div>
+      <div class="alarm">
+        <div class="chip o">UYARI</div>
+        <div><h4>YANGIN POMPASI AKTİF — SÜREKLİ BASINÇ</h4><p>Yangın pompası devrede, hatta sürekli basınç sağlanıyor.</p></div>
+      </div>
+      <div class="alarm">
+        <div class="chip o">UYARI</div>
+        <div><h4>UPSIDE ÇEVRİMDIŞI — VERİ GELMİYOR</h4><p>Üst istasyonla bağlantı koptu; alt istasyon verisi yine güncel.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7: ALT BÖLÜM DETAY -->
+<section class="slide k7">
+  <div class="bg"></div>
+  <h2>Alt Bölüm — Neyi Gösterir?</h2>
+  <img class="wide" src="panel_lower.png" style="max-height:90mm; width:auto; max-width:100%; display:block; margin:0 auto;" alt="Panel alt bölüm">
+  <div class="grid4">
+    <div class="card">
+      <h3>Basınçlar</h3>
+      <p><b>Şebeke</b> belediye girişi (kontrol onunla yapılmaz), <b>SİTE</b> alt 7.0 / üst 9.0 bar aralığında izlenir, <b>YANGIN</b> 2.0 AÇ / 2.5 KAPA eşiklerine göre çalışır.</p>
+    </div>
+    <div class="card">
+      <h3>Pompa Çıkışları</h3>
+      <p><b>SİTE·İNV</b>, <b>SİTE·YEDEK</b>, <b>KUYU</b> ve <b>HİDRANT</b> çıkışları saniyede bir geri okunur; çalışan karo yeşil yanar, faz kontrolü aktiftir.</p>
+    </div>
+    <div class="card">
+      <h3>Depolar &amp; Güvenlik</h3>
+      <p><b>YANGIN TANKI</b> (5 ton) kuyu ile dolar; alt sensör kuruysa hidrant çalışmaz. <b>SİTE TANKI</b> (10 ton) şebekeyle dolar; seviye düşükse site pompası durur.</p>
+    </div>
+    <div class="card">
+      <h3>Durum bandı</h3>
+      <p>Alt istasyonun genel sağlığı: <b>NORMAL</b> (yeşil), <b>UYARI</b> (sarı), <b>KRİTİK</b> (kırmızı). Alarm varsa ilk mesaj burada görünür.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8: GÜVENLİK -->
+<section class="slide k8">
+  <div class="bg"></div>
+  <h2>Güvenlik &amp; Dikkat Edilecekler</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>Aynı evden 3 kişi</h3>
+      <p>Bir hane kaydına en fazla 3 numara tanımlanabilir. Aynı hanede oturanlar her cihazdan rahatça girebilir; oturum sayısı sınırı yoktur.</p>
+    </div>
+    <div class="card orange">
+      <h3>Şifreniz numaranıza bağlıdır</h3>
+      <p>Şifre telefon numaranıza özel üretilir. Başka bir numarayla giriş yapılmaz. Numarasını değiştiren kullanıcı, yeni numarasını yöneticiye kaydettirmelidir.</p>
+    </div>
+    <div class="card red">
+      <h3>Taşınan kullanıcı engellenir</h3>
+      <p>Yönetici bir numarayı sildiğinde o kişi paneli açamaz. Numarası silinen birinin yeniden girebilmesi için yöneticinin kayıt açması gerekir.</p>
+    </div>
+    <div class="card green">
+      <h3>5 yanlış deneme = 10 dk kilit</h3>
+      <p>Ardışık 5 yanlış şifrede o cihaz (IP) 10 dakika engellenir. Şifre anında geldiği için sorun yaşanmaz.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: YÖNETİCİ -->
+<section class="slide k9 white">
+  <div class="bg"></div>
+  <h2>Yönetici Notları</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>web_sifirla — Tüm şifreleri sıfırla</h3>
+      <p>"true" yapılınca <b>tüm şifreler geçersiz</b> olur ve tüm oturumlar kapanır. Herkes şifresini yeniden talep ederek anında alır.</p>
+    </div>
+    <div class="card">
+      <h3>web_sil_tel — Kullanıcıyı sil</h3>
+      <p>11 haneli numarayı yazın. Kayıtlıysa cevap <b>"Silindi"</b> döner; numara defterden çıkar, oturumları kapanır. Kayıt yoksa <b>"Kayit yok !"</b> mesajı gelir.</p>
+    </div>
+    <div class="card">
+      <h3>web_engelli — Engelli numara listesi</h3>
+      <p>Virgülle ayrılmış numara listesi (ör. "0532...,0533..."). Bu numaralar ne talep gönderebilir ne de giriş yapabilir.</p>
+    </div>
+    <div class="card">
+      <h3>web_talep — Onay kuyruğu</h3>
+      <p><b>web_talep_bekliyor</b> ile bekleyen talepleri okuyun; <b>web_talep_aksiyon</b> ile onaylayın/reddedin. Onaylanan kullanıcı şifresini anında alır. Dolu haneye (3 kayıt) ekleme için değişim onayı istenir.</p>
+    </div>
+  </div>
+  <div class="chiprow" style="margin-top:8mm;">
+    <div class="chip g">Kayıtlı numara → şifre anında</div>
+    <div class="chip b">Kayıtsız numara → yönetici onayı</div>
+    <div class="chip o">web_sifirla → tüm şifreler geçersiz</div>
+    <div class="chip r">web_sil_tel → kullanıcı engelli</div>
+    <div class="chip r">web_engelli → numara engelli</div>
+    <div class="chip b">web_talep → onay kuyruğu</div>
+  </div>
+</section>
+
+</body>
+</html>

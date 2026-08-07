@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 800px; height: 480px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0a1a2e;
+    color: #d8e6f4;
+  }
+  .wrap { width: 800px; height: 480px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+
+  .header {
+    height: 46px; background: linear-gradient(180deg, #12314f, #0e2740);
+    border: 1px solid #1d4468; border-radius: 6px;
+    display: flex; align-items: center; padding: 0 12px; position: relative;
+  }
+  .title { font-size: 19px; font-weight: 700; color: #7fd4ff; letter-spacing: 1px; }
+  .title small { color: #5c7ea0; font-weight: 400; font-size: 11px; margin-left: 10px; }
+
+  .row { display: flex; gap: 8px; }
+  .panel { background: linear-gradient(180deg, #122a44, #0e2138); border: 1px solid #1d4468; border-radius: 6px; padding: 8px; position: relative; }
+  .panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6fa8d0; margin-bottom: 4px; }
+
+  /* placeholder slot */
+  .slot {
+    position: absolute; border: 1.5px dashed #4a86b8; border-radius: 4px;
+    background: rgba(13,31,53,.75);
+    color: #6b8fae; font-size: 10px; letter-spacing: .5px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: Consolas, monospace;
+  }
+
+  .tick { position: absolute; width: 2px; background: #f1c40f; }
+  .ticklbl { position: absolute; font-size: 10px; color: #6fa8d0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="title">DOWNSIDE · KONTROL PANELİ</div>
+    <div class="slot" style="left:344px;top:9px;width:96px;height:28px;">cfaz_ok</div>
+    <div class="slot" style="left:448px;top:9px;width:96px;height:28px;">cinv_ok</div>
+    <div class="slot" style="left:552px;top:9px;width:96px;height:28px;">csu_var</div>
+    <div class="slot" style="left:656px;top:9px;width:120px;height:28px;">bt0</div>
+  </div>
+
+  <div class="row" style="height:138px;">
+    <div class="panel" style="width:256px;">
+      <h3>SİTE BASINCI</h3>
+      <div class="slot" style="left:8px;top:36px;width:240px;height:36px;">xsite_bar</div>
+      <span class="ticklbl" style="left:12px;top:112px;">ALT 7.0</span>
+      <span class="ticklbl" style="right:12px;top:112px;">ÜST 9.0</span>
+    </div>
+    <div class="panel" style="width:256px;">
+      <h3>ŞEBEKE BASINCI</h3>
+      <div class="slot" style="left:8px;top:36px;width:240px;height:36px;">xline_bar</div>
+      <span class="ticklbl" style="left:12px;top:112px;">BELEDİYE GİRİŞİ</span>
+    </div>
+    <div class="panel" style="width:256px;">
+      <h3>YANGIN BASINCI (UDP)</h3>
+      <div class="slot" style="left:8px;top:36px;width:240px;height:36px;">xfire_bar</div>
+      <span class="ticklbl" style="left:12px;top:112px;">2.0 AÇ</span>
+      <span class="ticklbl" style="right:12px;top:112px;">2.5 KAPA</span>
+    </div>
+  </div>
+
+  <div class="row" style="height:110px;">
+    <div class="panel" style="width:388px;">
+      <h3>YANGIN TANKI · 5 TON <span style="color:#7ea8cc;text-transform:none;">(kuyu doldurur)</span></h3>
+      <div class="slot" style="left:8px;top:36px;width:372px;height:34px;">jfire_tank</div>
+      <div class="tick" style="left:200px;top:34px;height:38px;"></div>
+      <div class="slot" style="left:8px;top:76px;width:130px;height:24px;">cfired_sens</div>
+      <div class="slot" style="left:146px;top:76px;width:130px;height:24px;">cfireu_sens</div>
+    </div>
+    <div class="panel" style="width:388px;">
+      <h3>SİTE TANKI · 10 TON <span style="color:#7ea8cc;text-transform:none;">(şebeke doldurur)</span></h3>
+      <div class="slot" style="left:8px;top:36px;width:372px;height:34px;">jsite_tank</div>
+      <div class="slot" style="left:8px;top:76px;width:130px;height:24px;">cs_sens</div>
+    </div>
+  </div>
+
+  <div class="row" style="height:76px;">
+    <div class="panel" style="width:190px;">
+      <h3 style="margin-bottom:0;">SİTE · İNV</h3>
+      <div class="slot" style="left:8px;top:28px;width:174px;height:32px;">csite_inv</div>
+    </div>
+    <div class="panel" style="width:190px;">
+      <h3 style="margin-bottom:0;">SİTE · YEDEK</h3>
+      <div class="slot" style="left:8px;top:28px;width:174px;height:32px;">csite_yedek</div>
+    </div>
+    <div class="panel" style="width:190px;">
+      <h3 style="margin-bottom:0;">KUYU</h3>
+      <div class="slot" style="left:8px;top:28px;width:174px;height:32px;">cksu</div>
+    </div>
+    <div class="panel" style="width:190px;">
+      <h3 style="margin-bottom:0;">HİDRANT</h3>
+      <div class="slot" style="left:8px;top:28px;width:174px;height:32px;">chidr</div>
+    </div>
+  </div>
+
+  <div class="slot" style="position:relative;left:0;top:0;width:784px;height:26px;">tstatus (durum satırı)</div>
+
+</div>
+</body>
+</html>

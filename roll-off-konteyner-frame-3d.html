@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Roll-Off Konteyner Çerçevesi — 3D</title>
+<style>
+  body{margin:0;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;background:#0e1621;}
+  canvas{display:block}
+  #info{position:absolute;top:16px;left:16px;color:#dbe7f3;background:rgba(11,20,30,.72);
+        padding:12px 16px;border-radius:10px;border:1px solid #2a3d52;font-size:13px;line-height:1.55;max-width:320px;}
+  #info h1{margin:0 0 4px;font-size:16px;color:#7fd4ff;}
+  #info small{color:#9fb6c9;}
+  #legend{position:absolute;bottom:16px;left:16px;color:#dbe7f3;background:rgba(11,20,30,.72);
+          padding:10px 14px;border-radius:10px;border:1px solid #2a3d52;font-size:12px;line-height:1.9;}
+  .chip{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px;}
+  #btnbar{position:absolute;top:16px;right:16px;display:flex;gap:8px;}
+  button{background:#1c3c57;color:#dbe7f3;border:1px solid #2a5d85;border-radius:8px;padding:9px 14px;
+         font-size:13px;cursor:pointer;}
+  button:hover{background:#26517a}
+  #dims{position:absolute;bottom:16px;right:16px;color:#9fb6c9;background:rgba(11,20,30,.72);
+        padding:10px 14px;border-radius:10px;border:1px solid #2a3d52;font-size:12px;line-height:1.8;}
+</style>
+</head>
+<body>
+<div id="info">
+  <h1>ROLL-OFF KONTEYNER ÇERÇEVESİ (SAÇSIZ)</h1>
+  <small>6.000 × 2.500 × 2.200 mm · kaynaklı iskelet<br>
+  Farenizle sürükleyin: döndür · tekerlek: zoom · sağ tık: kaydır</small>
+</div>
+<div id="btnbar">
+  <button id="rotBtn">Otomatik döndür: AÇIK</button>
+  <button id="modeBtn">Mod: Katı</button>
+</div>
+<div id="legend">
+  <span class="chip" style="background:#24598b"></span>Kızak rayı / traversler<br>
+  <span class="chip" style="background:#3d6f9e"></span>Köşe ve ara kolonlar<br>
+  <span class="chip" style="background:#c0504d"></span>Kanca çubuğu (ön üst)<br>
+  <span class="chip" style="background:#6f93b0"></span>Üst başlık çerçevesi
+</div>
+<div id="dims">L 6.000 mm · G 2.500 mm · Y 2.200 mm<br>~30 m³ · açık üst · arka kapı</div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1621);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 200);
+camera.position.set(8, 5.5, 9);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.1, 0);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.6;
+
+scene.add(new THREE.HemisphereLight(0xbfd8f2, 0x1a2b3a, 1.0));
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(6, 10, 5);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x9fc8ff, 0.7);
+fill.position.set(-6, 3, -6);
+scene.add(fill);
+
+const grid = new THREE.GridHelper(10, 10, 0x2f4a66, 0x1d3046);
+grid.position.y = -0.02;
+scene.add(grid);
+
+// ---------- çerçeve elemanları ----------
+const L=6, W=2.5, H=2.2;
+const zRail = 1.125;
+const railColor=0x24598b, postColor=0x3d6f9e, topColor=0x6f93b0, hookColor=0xc0504d;
+
+function member(w,h,d,x,y,z,color){
+  const g=new THREE.BoxGeometry(w,h,d);
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color,metalness:.55,roughness:.4}));
+  m.position.set(x,y,z);
+  const e=new THREE.EdgesGeometry(g);
+  m.add(new THREE.LineSegments(e,new THREE.LineBasicMaterial({color:0x0b3d66})));
+  scene.add(m);
+  return m;
+}
+
+// kızak rayları (alt, boyuna)
+member(L, 0.30, 0.26, 0, 0.15,  zRail, railColor);
+member(L, 0.30, 0.26, 0, 0.15, -zRail, railColor);
+
+// traversler (enine kirişler)
+[-2.7,-1.8,-0.9,0,0.9,1.8,2.7].forEach(x=>{
+  member(0.22, 0.30, 2.05, x, 0.15, 0, railColor);
+});
+
+// köşe kolonları
+[[-2.9,zRail],[2.9,zRail],[-2.9,-zRail],[2.9,-zRail]].forEach(p=>{
+  member(0.20, H, 0.20, p[0], H/2, p[1], postColor);
+});
+
+// ara kolonlar (yanlar)
+[-1.45,0,1.45].forEach(x=>{
+  member(0.15, H, 0.15, x, H/2,  zRail, postColor);
+  member(0.15, H, 0.15, x, H/2, -zRail, postColor);
+});
+
+// üst başlık çerçevesi
+member(L, 0.16, 0.16, 0, H-0.08,  zRail, topColor);
+member(L, 0.16, 0.16, 0, H-0.08, -zRail, topColor);
+member(0.16, 0.16, 2.26,  -2.9, H-0.08, 0, topColor);
+member(0.16, 0.16, 2.26,   2.9, H-0.08, 0, topColor);
+
+// kanca çubuğu (ön üst)
+member(0.18, 0.26, 2.26, -3.02, 2.0, 0, hookColor);
+
+// arka kapı çerçevesi ek kolonları
+member(0.16, H, 0.16, 2.9, H/2, 0.45, postColor);
+member(0.16, H, 0.16, 2.9, H/2, -0.45, postColor);
+
+// ---------- kontroller ----------
+const rotBtn=document.getElementById('rotBtn');
+rotBtn.onclick=()=>{controls.autoRotate=!controls.autoRotate;
+  rotBtn.textContent='Otomatik döndür: '+(controls.autoRotate?'AÇIK':'KAPALI');};
+const modeBtn=document.getElementById('modeBtn');
+let wireframe=false;
+modeBtn.onclick=()=>{wireframe=!wireframe;
+  scene.traverse(o=>{ if(o.isMesh) o.visible=!wireframe; });
+  modeBtn.textContent='Mod: '+(wireframe?'Tel kafes':'Katı');};
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>

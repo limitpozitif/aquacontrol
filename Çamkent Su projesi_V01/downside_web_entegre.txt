@@ -1,0 +1,3785 @@
+
+/* 2.0.17 derleme çakışması: WebServer.h/HTTPClient.h önce gelmeli.
+   (thingProperties.h'den önce esp-idf http_parser.h işlenmeli, yoksa
+   "use of enum 'http_method' without previous declaration" + HTTP_GET hatası)
+   Not: HTTPClient artık yalnızca bu derleme sırası için kalıyor — UPSIDE verisi
+   UDP ile alınıyor, HTTP ile çekim yok. */
+#include <WebServer.h>
+#include <HTTPClient.h>
+
+#include "thingProperties.h"
+#include <Wire.h>
+#include <Adafruit_MCP23X17.h>
+#include <Adafruit_ADS1X15.h>
+#include <Preferences.h>
+#include <time.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <stddef.h>
+
+/* ===================================================== */
+/* WEB HOST EKİ (BLOK A) — include + sabitler + global   */
+/* downside_web_ek.txt dosyasından gömüldü.              */
+/* ===================================================== */
+static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9(
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çamkent Aqua — Kontrol Paneli</title>
+<link rel="stylesheet" href="style.css?v=8">
+    <script src="app.js?v=12" defer></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= HEADER ================= -->
+  <header class="hero">
+    <div class="hero-top">
+      <div class="logo"><span class="logo-badge">💧</span><span>ÇAMKENT <em>AQUA</em></span></div>
+      <div class="clock"><span id="time">--</span><small>CANLI VERİ</small></div>
+    </div>
+    <div class="hero-sub">Site Suyu &amp; Yangın Hattı Kontrol Sistemi &nbsp;·&nbsp; UPSIDE ⇄ DOWNSIDE &nbsp;·&nbsp; v10</div>
+    <div class="hero-users">
+      <div class="hero-user"><span>👥 Toplam Kullanıcı</span><strong id="summaryUsers">--</strong></div>
+      <div class="hero-user"><span>🟢 Aktif Kullanıcı</span><strong id="summaryActive">--</strong></div>
+    </div>
+    <div class="status-leds">
+      <div class="led"><span class="dot"></span>SİSTEM NORMAL</div>
+      <div class="led"><span class="dot"></span>ESP32</div>
+      <div class="led"><span class="dot"></span>MODBUS</div>
+      <div class="led"><span class="dot"></span>UDP BAĞLANTI</div>
+      <div class="led" id="ledSensSite"><span class="dot"></span>SİTE SENS</div>
+      <div class="led" id="ledSensFire"><span class="dot"></span>YANGIN SENS</div>
+      <div class="led" id="ledSensDownSite"><span class="dot"></span>ALT SİTE SENS</div>
+      <div class="led" id="ledSensLine"><span class="dot"></span>ŞEBEKE SENS</div>
+    </div>
+  </header>
+
+  <!-- ================= SUMMARY ================= -->
+  <section class="summary">
+    <div class="summary-box"><div>💧 Site Suyu</div><strong id="summarySite">--</strong></div>
+    <div class="summary-box"><div>🔥 Yangın Rezervi</div><strong id="summaryFire">--</strong></div>
+    <div class="summary-box"><div>⛰ Kot Farkı</div><strong>60 m · ~6 bar</strong></div>
+    <div class="summary-box"><div>⚙ Site Pompası</div><strong id="summaryPump">--</strong></div>
+  </section>
+
+  <!-- ================= UPSIDE ================= -->
+  <section class="station upside">
+    <div class="station-head">
+      <span class="badge up">▲ UPSIDE</span>
+      <h2>Üst İstasyon — Depo Yönetimi</h2>
+      <span class="station-tag">5 tank · site + yangın hattı · kot farkı ~60 m</span>
+    </div>
+
+    <div class="station-grid">
+      <!-- TANKS -->
+      <div class="card">
+        <h3>Su Tankları</h3>
+        <div class="tank-row">
+          <div class="tank-lbl"><b>TANK 1</b><small>Kullanma suyu</small></div>
+          <div class="tank-track"><div class="tank-fill water" id="tk1Fill"></div></div>
+          <div class="tank-val" id="tk1Val">--</div>
+          <div class="tank-ton" id="tk1Ton">--</div>
+        </div>
+        <div class="tank-row">
+          <div class="tank-lbl"><b>YANGIN REZERVİ</b><small>4 tank · toplam 20 t</small></div>
+          <div class="tank-track"><div class="tank-fill fire" id="tkFireFill"></div></div>
+          <div class="tank-val" id="tkFireVal">--</div>
+          <div class="tank-ton" id="tkFireTon">--</div>
+        </div>
+      </div>
+
+      <!-- GAUGES -->
+      <div class="card">
+        <h3>Hat Basınçları</h3>
+        <div class="gauges-row">
+          <div class="gauge-wrap">
+            <div id="gaugeSite"></div>
+            <label>SİTE</label>
+          </div>
+          <div class="gauge-wrap">
+            <div id="gaugeFire"></div>
+            <label>YANGIN</label>
+          </div>
+        </div>
+        <div class="gauge-note">YANGIN basıncı her saniye UDP ile DOWNSIDE'a iletilir</div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="card">
+        <h3>Kumanda</h3>
+        <div class="ctrl on" id="ctrlSitePump">
+          <div class="row"><span class="ctrl-name">SİTE POMPASI</span><span class="ctrl-state" id="ctrlSitePumpSt">--</span></div>
+          <span class="ctrl-val">sürücülü · 35–50 Hz kademeli</span>
+          <div class="meta"><span>Frekans <b id="ctrlSiteFreq">--</b></span><span>Akım <b id="ctrlSiteCur">--</b></span><span>Gerilim <b id="ctrlSiteVolt">--</b></span></div>
+        </div>
+        <div class="ctrl off" id="ctrlFirePump">
+          <div class="row"><span class="ctrl-name">YANGIN POMPASI <small>(küçük)</small></span><span class="ctrl-state" id="ctrlFirePumpSt">--</span></div>
+          <span class="ctrl-val">sürücülü · 35–50 Hz kademeli</span>
+          <div class="meta"><span>Frekans <b id="ctrlFireFreq">--</b></span><span>Akım <b id="ctrlFireCur">--</b></span><span>Gerilim <b id="ctrlFireVolt">--</b></span></div>
+        </div>
+        <div class="ctrl warn off" id="ctrlBigFire">
+          <div class="row"><span class="ctrl-name">BÜYÜK YANGIN <small>(fire1)</small></span><span class="ctrl-state" id="ctrlBigFireSt">--</span></div>
+          <span class="ctrl-val">gerçek yangın · bulut butonu · 25–50 Hz</span>
+        </div>
+        <div class="ctrl on" id="ctrlFillValve">
+          <div class="row"><span class="ctrl-name">DOLUM VALFİ</span><span class="ctrl-state" id="ctrlFillValveSt">--</span></div>
+          <span class="ctrl-val" id="ctrlFillValveNote">oto dolum</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alarm normal station-status" id="upAlarm"><span class="pulse"></span><span id="upAlarmText">UPSIDE verisi bekleniyor…</span></div>
+  </section>
+
+  <!-- ================= FLOW ================= -->
+  <div class="flow off" id="flowBox">
+    <div class="flow-pipe"><span class="flow-water"></span></div>
+    <div class="flow-text"><span id="flowTxt">HİDRANT POMPASI beklemede</span>
+      <small id="flowNote">hidrant çalışınca su yukarı (60 m) basılır</small>
+    </div>
+  </div>
+
+
+  <!-- ================= DOWNSIDE ================= -->
+  <section class="station downside">
+    <div class="station-head">
+      <span class="badge down">▼ DOWNSIDE</span>
+      <h2>Alt İstasyon — Kuyu Başı</h2>
+      <span class="station-tag">kuyu · hidrant · şebeke girişi · MCP röle kartı</span>
+    </div>
+
+    <div class="station-grid">
+      <!-- PRESSURES -->
+      <div class="card">
+        <h3>Basınçlar</h3>
+
+        <div class="press-card">
+          <div class="press-top"><span class="press-name">ŞEBEKE</span><span class="pval"><span id="dps1Val">--</span></span></div>
+          <span class="press-note">Belediye girişi · kontrol bu değerle yapılmaz</span>
+          <div class="pbar"><div class="pfill" id="dps1Fill"></div></div>
+        </div>
+
+        <div class="press-card">
+          <div class="press-top"><span class="press-name">SİTE</span><span class="pval"><span id="dps2Val">--</span></span></div>
+          <span class="press-note">Alt 7.0 · Üst 9.0 bar (60 m kot payı dahil)</span>
+          <div class="pbar"><div class="pfill" id="dps2Fill"></div><span class="tick" style="left:70%"></span><span class="tick" style="left:90%"></span></div>
+        </div>
+
+        <div class="press-card">
+          <div class="press-top"><span class="press-name">YANGIN (UDP)</span><span class="pval"><span id="dps3Val">--</span></span></div>
+          <span class="press-note">Upside'dan gelen değer · 2.0 AÇ · 2.5 KAPA</span>
+          <div class="pbar"><div class="pfill red" id="dps3Fill"></div><span class="tick" style="left:40%"></span><span class="tick" style="left:50%"></span></div>
+        </div>
+      </div>
+
+      <!-- PUMPS -->
+      <div class="card">
+        <h3>Pompa Çıkışları</h3>
+        <div class="pump-grid">
+          <div class="pump-tile off" id="dpk1"><div class="gear">⚙</div><div class="name">SİTE · İNV</div><div class="st" id="dpk1St">--</div></div>
+          <div class="pump-tile off" id="dpk2"><div class="gear">⚙</div><div class="name">SİTE · YEDEK</div><div class="st" id="dpk2St">--</div></div>
+          <div class="pump-tile on" id="dpk3"><div class="gear">🌀</div><div class="name">KUYU</div><div class="st" id="dpk3St">--</div></div>
+          <div class="pump-tile off" id="dpk4"><div class="gear">💧</div><div class="name">HİDRANT</div><div class="st" id="dpk4St">--</div></div>
+        </div>
+        <div class="pump-note">Çıkışlar her saniye geri okunur · faz kontrolü aktif</div>
+      </div>
+
+      <!-- TANKS -->
+      <div class="card">
+        <h3>Depolar &amp; Güvenlik</h3>
+
+        <div class="dt-card">
+          <div class="dt-head"><span class="dt-name">YANGIN TANKI</span><span class="dt-cap">5 TON</span></div>
+          <div class="dt-fill-note">kuyu doldurur · alt sensör kuruysa hidrant çalışmaz</div>
+          <div class="tankbar fire">
+            <div class="tfill" id="dpt1Fill"></div>
+            <span class="mark" style="left:50%"></span>
+            <span class="mark" style="left:100%"></span>
+            <span class="lbl" id="dpt1Pct">--</span>
+          </div>
+          <div class="sensor-row">
+            <span>Alt sensör: <b class="ok" id="dpt1S1">--</b></span>
+            <span>Üst sensör: <b class="no" id="dpt1S2">--</b></span>
+            <span class="chip mid" id="dpt1Chip">--</span>
+          </div>
+        </div>
+
+        <div class="dt-card">
+          <div class="dt-head"><span class="dt-name">SİTE TANKI</span><span class="dt-cap">10 TON</span></div>
+          <div class="dt-fill-note">şehir şebekesi doldurur · alt seviye kuruysa site pompası çalışmaz</div>
+          <div class="tankbar">
+            <div class="tfill" id="dpt2Fill"></div>
+            <span class="lbl" id="dpt2Pct">--</span>
+          </div>
+          <div class="sensor-row">
+            <span>Alt seviye: <b class="ok" id="dpt2S1">--</b></span>
+            <span class="chip on" id="dpt2Chip">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alarm normal station-status" id="downAlarm"><span class="pulse"></span><span id="downAlarmText">Sistemler taranıyor…</span></div>
+  </section>
+
+  <footer>ÇAMKENT AQUA HMI v3.0 · Kontrol Paneli · UPSIDE ⇄ DOWNSIDE</footer>
+
+</div>
+</body>
+</html>
+
+)CAMKENTP9";
+static const char WEB_LOGIN_HTML[] PROGMEM = R"CAMKENTP9(
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş — Çamkent Aqua</title>
+<style>
+  :root{--bg0:#0a1120;--bg1:#0e1730;--bg2:#131d3a;--line:#223157;--line2:#2e4070;
+        --txt:#e8f0ff;--dim:#8aa0c8;--water:#35d0ff;--ok:#3ef59a;--bad:#ff5d6c;--warn:#ffd166}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:radial-gradient(1200px 700px at 20% -10%,#16224a 0%,#0a1120 55%) fixed,#0a1120;
+            font:14px/1.45 "Segoe UI",system-ui,Arial,sans-serif;color:var(--txt);min-height:100vh}
+  .wrap{max-width:380px;margin:0 auto;padding:40px 18px}
+  .card{background:linear-gradient(180deg,rgba(19,29,58,.85),rgba(10,17,32,.9));
+        border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);
+        padding:26px 24px}
+  .logo{font-weight:800;font-size:20px;letter-spacing:1px;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .logo em{font-style:normal;color:var(--water)}
+  .sub{font-size:12px;color:var(--dim);margin-bottom:22px;letter-spacing:.4px}
+  label{display:block;font-size:11px;letter-spacing:1.2px;color:var(--dim);margin:14px 0 6px}
+  input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:8px;
+        color:var(--txt);font-size:16px;padding:12px 14px;outline:none}
+  input:focus{border-color:var(--water)}
+  button{width:100%;margin-top:22px;background:linear-gradient(135deg,#1c7fb8,var(--water));
+         border:0;border-radius:8px;color:#04212f;font-weight:800;font-size:15px;letter-spacing:1px;
+         padding:14px;cursor:pointer}
+  button:active{transform:translateY(1px)}
+  .err{display:none;margin-top:14px;font-size:12.5px;color:var(--bad);
+       border:1px solid rgba(255,93,108,.45);border-radius:8px;padding:10px;background:rgba(255,93,108,.08)}
+  .info{margin-top:18px;font-size:11px;color:var(--dim);line-height:1.6;border-top:1px dashed var(--line);padding-top:14px}
+  .spinner{display:none;text-align:center;margin-top:16px;font-size:12px;color:var(--dim);letter-spacing:1px}
+  .btn2{margin-top:10px;background:transparent;border:1px solid var(--line2);border-radius:8px;
+        color:var(--water);font-weight:700;font-size:13px;letter-spacing:1px;padding:12px;cursor:pointer}
+  .btn2:hover{border-color:var(--water)}
+  .sep{margin:18px 0 12px;display:flex;align-items:center;gap:10px;color:var(--dim);font-size:11px;
+        letter-spacing:1px;font-weight:700}
+  .sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--line2)}
+  select{width:100%;box-sizing:border-box;background:#0d1220;border:1px solid var(--line2);
+        border-radius:8px;color:#cbd5f0;font:inherit;padding:12px;margin-bottom:12px;cursor:pointer}
+  select:focus{outline:none;border-color:var(--water)}
+  .status{display:none;margin-top:14px;font-size:12.5px;border-radius:8px;padding:10px;line-height:1.5}
+  .status.ok{color:var(--ok);border:1px solid rgba(62,245,154,.45);background:rgba(62,245,154,.08)}
+  .status.warn{color:var(--warn);border:1px solid rgba(255,209,102,.45);background:rgba(255,209,102,.08)}
+  .status.bad{color:var(--bad);border:1px solid rgba(255,93,108,.45);background:rgba(255,93,108,.08)}
+  .status.neu{color:var(--dim);border:1px solid var(--line2);background:rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo"><span>💧</span><span>ÇAMKENT <em>AQUA</em></span></div>
+    <div class="sub">Güvenli giriş — telefon numaranız ve sistem şifrenizle</div>
+
+    <label for="tel">TELEFON NUMARASI</label>
+    <input id="tel" type="tel" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" autocomplete="tel" placeholder="05XX XXX XX XX" autofocus>
+
+    <label for="sifre">ŞİFRE</label>
+    <input id="sifre" type="password" inputmode="numeric" autocomplete="current-password" placeholder="6 haneli şifre">
+
+    <div class="sep">İLK GİRİŞ / NUMARA DEĞİŞİKLİĞİ</div>
+    <label for="ad">AD SOYAD</label>
+    <input id="ad" type="text" autocomplete="name" placeholder="Ad Soyad">
+    <label for="hane">HANE NO</label>
+    <input id="hane" type="text" inputmode="numeric" autocomplete="off" placeholder="Örn: 12">
+    <label for="eski" id="eskiLabel" style="display:none">HANENİZ DOLU — SİLİNECEK ESKİ NUMARA</label>
+    <select id="eski" style="display:none"></select>
+
+    <button id="btn">GİRİŞ YAP</button>
+    <button id="btnTalep" class="btn2">ERİŞİM TALEP ET</button>
+    <div class="err" id="err"></div>
+    <div class="status" id="st"></div>
+    <div class="spinner" id="sp">Doğrulanıyor…</div>
+
+    <div class="info">
+      İlk giriş için ad soyad ve hane no ile "Erişim Talep Et" deyin; yönetici onaylayınca şifreniz bu alana otomatik dolar.<br>
+      Bir haneye en fazla 3 numara kaydı eklenebilir. Haneniz doluysa silinecek eski kayıt için numara seçmenizi sistem sorar.<br>
+      Giriş telefon numaranıza bağlıdır — her cihazdan kullanılabilir.
+    </div>
+  </div>
+</div>
+
+<script>
+  const tel = document.getElementById("tel");
+  const sifre = document.getElementById("sifre");
+  const err = document.getElementById("err");
+  const sp = document.getElementById("sp");
+  const btn = document.getElementById("btn");
+
+  function hata(msg) { err.textContent = msg; err.style.display = "block"; }
+
+  function gir() {
+    err.style.display = "none";
+    const t = tel.value.trim();
+    const s = sifre.value.trim();
+    if (t.length !== 11) { hata("11 haneli telefon numarası girin (05XX XXX XX XX)."); return; }
+    if (s.length < 4) { hata("Şifre girin."); return; }
+    sp.style.display = "block";
+    btn.disabled = true;
+
+    fetch("/login?tel=" + encodeURIComponent(t) + "&sifre=" + encodeURIComponent(s),
+          { cache: "no-store" })
+      .then(r => r.json().catch(() => null))
+      .then(d => {
+        if (d && d.ok) { location.href = "/"; return; }
+        sp.style.display = "none";
+        btn.disabled = false;
+        hata((d && d.msg) || "Giriş başarısız.");
+      })
+      .catch(() => {
+        sp.style.display = "none";
+        btn.disabled = false;
+        hata("Bağlantı kurulamadı. Tekrar deneyin.");
+      });
+  }
+
+  btn.addEventListener("click", gir);
+  [tel, sifre].forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") gir(); }));
+
+  const btnTalep = document.getElementById("btnTalep");
+  const st = document.getElementById("st");
+  const ad = document.getElementById("ad");
+  const hane = document.getElementById("hane");
+  const eskiSel = document.getElementById("eski");
+  const eskiLabel = document.getElementById("eskiLabel");
+  let token = null;
+  let pollTimer = null;
+  let bekleDegisim = false;
+
+  function durum(msg, cls) {
+    st.textContent = msg;
+    st.className = "status" + (cls ? " " + cls : " neu");
+    st.style.display = "block";
+  }
+
+  function talepGonder(degisim) {
+    const t = tel.value.trim();
+    fetch("/talep?tel=" + encodeURIComponent(t) +
+          "&ad=" + encodeURIComponent(ad.value.trim()) +
+          "&hane=" + encodeURIComponent(hane.value.trim()) +
+          "&degisim=" + (degisim ? "1" : "0") +
+          (degisim && eskiSel.value ? "&eski=" + encodeURIComponent(eskiSel.value) : ""),
+          { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => {
+        if (d.durum === "onaylandi") {
+          sifre.value = d.sifre;
+          durum("Şifreniz hazır. GİRİŞ YAP butonuyla devam edin.", "ok");
+          btnTalep.style.display = "none";
+          sifre.focus();
+          return;
+        }
+        if (d.durum === "isleniyor") {
+          eskiLabel.style.display = "none";
+          eskiSel.style.display = "none";
+          bekleDegisim = false;
+          token = d.token;
+          durum("Talebiniz alındı. Uygun ise onaylanacaktır; şifreniz geldiğinde burada görünecektir.", "neu");
+          pollTimer = setInterval(poll, 2000);
+        } else if (d.durum === "mesgul") {
+          durum("Talep kuyruğu şu an dolu. Yönetici onayladıkça yeniden deneyin.", "warn");
+          btnTalep.disabled = false;
+        } else if (d.durum === "degisim_onay") {
+          eskiSel.innerHTML = "";
+          (d.eski || "").split("|").filter(x => x).forEach(ent => {
+            const p = ent.split(";");
+            const o = document.createElement("option");
+            o.value = p[0];
+            o.textContent = p[0] + " (" + (p[1] || "?") + ")";
+            eskiSel.appendChild(o);
+          });
+          eskiLabel.style.display = "block";
+          eskiSel.style.display = "block";
+          bekleDegisim = true;
+          durum("Bu hanede en fazla 3 numara kaydı olabilir. Listeden silinecek eski kaydı seçip talebi tekrar gönderin.", "warn");
+          btnTalep.disabled = false;
+        } else {
+          durum("Talep alınamadı. Tekrar deneyin.", "bad");
+          btnTalep.disabled = false;
+        }
+      })
+      .catch(() => {
+        durum("Bağlantı kurulamadı. Tekrar deneyin.", "bad");
+        btnTalep.disabled = false;
+      });
+  }
+
+  function talep() {
+    err.style.display = "none";
+    const t = tel.value.trim();
+    if (t.length !== 11) { hata("11 haneli telefon numarası girin (05XX XXX XX XX)."); return; }
+    if (ad.value.trim().length < 2) { hata("Ad soyad girin."); return; }
+    if (hane.value.trim().length < 1) { hata("Hane no girin."); return; }
+    btnTalep.disabled = true;
+    durum("Talebiniz işleniyor…", "neu");
+    if (bekleDegisim) { bekleDegisim = false; talepGonder(1); }
+    else talepGonder(0);
+  }
+
+  function poll() {
+    if (!token) return;
+    fetch("/durum?tel=" + encodeURIComponent(tel.value.trim()) +
+          "&token=" + encodeURIComponent(token), { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => {
+        if (d.durum === "onaylandi") {
+          clearInterval(pollTimer); pollTimer = null;
+          sifre.value = d.sifre;
+          durum("Şifreniz hazır. GİRİŞ YAP butonuyla devam edin.", "ok");
+          btnTalep.style.display = "none";
+          sifre.focus();
+        } else if (d.durum === "red") {
+          clearInterval(pollTimer); pollTimer = null;
+          durum("Talebiniz reddedildi. Yöneticiyle iletişime geçin.", "bad");
+          btnTalep.disabled = false;
+          token = null;
+        } else if (d.durum === "zaman_asimi" || d.durum === "yok") {
+          clearInterval(pollTimer); pollTimer = null;
+          durum(d.durum === "zaman_asimi"
+                ? "Talep süresi doldu. Yeniden deneyin."
+                : "Talep bulunamadı. Yeniden deneyin.", "warn");
+          btnTalep.disabled = false;
+          token = null;
+        }
+      })
+      .catch(() => {});
+  }
+
+  btnTalep.addEventListener("click", talep);
+</script>
+</body>
+</html>
+
+)CAMKENTP9";
+static const char WEB_STYLE_CSS[] PROGMEM = R"CAMKENTP9(
+:root{
+  --bg0:#0a1120;
+  --bg1:#0e1730;
+  --bg2:#131d3a;
+  --line:#223157;
+  --line2:#2e4070;
+  --txt:#e8f0ff;
+  --dim:#8aa0c8;
+  --water:#35d0ff;
+  --fire:#ff8a3d;
+  --fire2:#ffb057;
+  --ok:#3ef59a;
+  --warn:#ffd166;
+  --bad:#ff5d6c;
+  --cyan:#5df2ff;
+  --rad:14px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:radial-gradient(1200px 700px at 20% -10%,#16224a 0%,#0a1120 55%) fixed,#0a1120}
+body{font:14px/1.45 "Segoe UI",system-ui,Arial,sans-serif;color:var(--txt);min-height:100vh}
+.app{max-width:1200px;margin:0 auto;padding:18px 20px 30px}
+
+/* ---------- header ---------- */
+.hero{background:linear-gradient(135deg,rgba(22,34,74,.9),rgba(10,17,32,.85));border:1px solid var(--line);border-radius:var(--rad);padding:16px 22px;box-shadow:var(--shadow);margin-bottom:14px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(53,208,255,.06) 50%,transparent 70%);pointer-events:none}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:22px;letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.logo em{font-style:normal;color:var(--water)}
+.logo-badge{font-size:20px}
+.clock{text-align:right;color:var(--dim)}
+.clock span{display:block;font:20px/1 "Consolas",monospace;color:var(--cyan);letter-spacing:1px}
+.clock small{font-size:10px;letter-spacing:2px}
+.hero-sub{color:var(--dim);margin-top:10px;font-size:12.5px;letter-spacing:.4px}
+.hero-users{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hero-user{font-size:11px;letter-spacing:1px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.02);font-family:inherit}
+.hero-user strong{font-weight:700;color:var(--ok);font-family:inherit}
+.hero-user:first-child strong{color:var(--water)}
+.status-leds{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.led{font-size:10.5px;letter-spacing:1px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.02)}
+.led .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:blink 2.4s infinite}
+.led.bad{color:var(--bad);border-color:var(--bad)}
+.led.bad .dot{background:var(--bad);box-shadow:0 0 8px var(--bad);animation:blink .8s infinite}
+.led.warn{color:var(--warn);border-color:var(--warn)}
+.led.warn .dot{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---------- summary ---------- */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.summary-box{background:var(--bg2);border:1px solid var(--line);border-radius:var(--rad);padding:14px 16px;box-shadow:var(--shadow)}
+.summary-box div{font-size:11px;letter-spacing:1.2px;color:var(--dim);margin-bottom:6px}
+.summary-box strong{font-size:24px;font-family:"Consolas",monospace;color:var(--water);text-shadow:0 0 18px rgba(53,208,255,.4)}
+.summary-box:nth-child(2) strong{color:var(--fire2);text-shadow:0 0 18px rgba(255,176,87,.4)}
+.summary-box:nth-child(3) strong{color:var(--warn)}
+.summary-box:nth-child(4) strong{color:var(--ok)}
+
+/* ---------- stations ---------- */
+.station{background:linear-gradient(180deg,rgba(19,29,58,.85),rgba(10,17,32,.9));border:1px solid var(--line);border-radius:var(--rad);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px}
+.station-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.badge{font-size:11px;font-weight:800;letter-spacing:1.5px;padding:6px 12px;border-radius:8px}
+.badge.up{background:rgba(53,208,255,.12);color:var(--water);border:1px solid rgba(53,208,255,.35)}
+.badge.down{background:rgba(255,141,61,.12);color:var(--fire2);border:1px solid rgba(255,141,61,.35)}
+.station-head h2{font-size:17px;letter-spacing:.4px}
+.station-tag{color:var(--dim);font-size:11.5px;margin-left:auto}
+.station-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:1000px){
+  .upside .station-grid{grid-template-columns:1.25fr 1fr .9fr}
+  .downside .station-grid{grid-template-columns:1fr 1fr 1.05fr}
+}
+
+/* ---------- cards ---------- */
+.card{background:rgba(10,17,32,.55);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{font-size:11px;letter-spacing:1.6px;color:var(--dim);margin-bottom:12px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+
+/* ---------- tanks (upside) ---------- */
+.tank-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tank-lbl{width:96px;flex:none}
+.tank-lbl b{font-size:12px;display:block}
+.tank-lbl small{font-size:10px;color:var(--dim)}
+.tank-track{flex:1;height:22px;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+.tank-fill{height:100%;width:0%;transition:width .8s cubic-bezier(.2,.7,.3,1);border-radius:4px;position:relative}
+.tank-fill.water{background:linear-gradient(90deg,#1c7fb8,var(--water));box-shadow:0 0 12px rgba(53,208,255,.35)}
+.tank-fill.fire{background:linear-gradient(90deg,#b8521c,var(--fire));box-shadow:0 0 12px rgba(255,138,61,.3)}
+.tank-val{width:56px;text-align:right;font:bold 13px/1 "Consolas",monospace;color:var(--txt);flex:none}
+.tank-ton{width:40px;text-align:right;font:11px "Consolas",monospace;color:var(--dim);flex:none}
+
+/* ---------- gauges ---------- */
+.gauges-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.gauge-wrap{text-align:center}
+.gauge-wrap label{display:block;margin-top:2px;font-size:11px;letter-spacing:1.6px;color:var(--dim)}
+.gauge-note{margin-top:12px;font-size:11px;color:var(--dim);border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center}
+
+/* ---------- controls ---------- */
+.ctrl{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:rgba(0,0,0,.25);transition:.25s}
+.ctrl.on{border-color:rgba(62,245,154,.45);box-shadow:0 0 14px rgba(62,245,154,.08)}
+.ctrl.off{opacity:.62}
+.ctrl.warn{border-color:rgba(255,93,108,.5)}
+.ctrl .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ctrl-name{font-size:12px;font-weight:700;letter-spacing:.6px}
+.ctrl-name small{color:var(--dim);font-weight:500}
+.ctrl-state{font-size:10.5px;font-weight:800;letter-spacing:1px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.ctrl.on .ctrl-state{color:var(--ok);border-color:rgba(62,245,154,.5);text-shadow:0 0 8px rgba(62,245,154,.6)}
+.ctrl.off .ctrl-state{color:var(--bad)}
+.ctrl.warn .ctrl-state{color:var(--bad);border-color:rgba(255,93,108,.5)}
+.ctrl-val{display:block;font-size:10.5px;color:var(--dim);margin-top:4px}
+.ctrl .meta{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.ctrl .meta span{font-size:10.5px;color:var(--dim)}
+.ctrl .meta b{color:var(--cyan);font-family:"Consolas",monospace}
+
+/* ---------- flow ---------- */
+.flow{display:flex;align-items:center;gap:14px;padding:10px 16px;margin-bottom:14px;background:rgba(19,29,58,.5);border:1px solid var(--line);border-radius:var(--rad)}
+.flow-pipe{flex:1;height:14px;background:rgba(0,0,0,.5);border:1px solid var(--line2);border-radius:8px;overflow:hidden;position:relative}
+.flow-water{position:absolute;inset:0;background:linear-gradient(90deg,rgba(53,208,255,0),rgba(53,208,255,.85),rgba(53,208,255,0));width:40%;opacity:.15;transition:opacity .3s}
+.flow.on .flow-water{animation:flowx 2.2s linear infinite;opacity:1}
+@keyframes flowx{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.flow-text{font-size:11px;color:var(--water);letter-spacing:.6px;text-align:right;white-space:nowrap}
+.flow-text small{display:block;color:var(--dim);font-size:10px}
+
+/* ---------- downside pressures ---------- */
+.press-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:rgba(0,0,0,.22)}
+.press-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.press-name{font-size:11.5px;font-weight:700;letter-spacing:.6px}
+.pval{font:bold 20px "Consolas",monospace;color:var(--cyan)}
+.pval::after{content:" bar";font-size:11px;color:var(--dim)}
+.press-note{display:block;font-size:10px;color:var(--dim);margin-bottom:8px}
+.pbar{height:12px;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+.pfill{height:100%;width:0%;background:linear-gradient(90deg,#1c7fb8,var(--water));transition:width .7s ease;border-radius:5px}
+.pfill.red{background:linear-gradient(90deg,#b8521c,var(--fire))}
+.tick{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.28)}
+.pbar .tick:last-child{background:rgba(255,209,102,.5)}
+
+/* ---------- downside pump tiles ---------- */
+.pump-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pump-tile{border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center;background:rgba(0,0,0,.25);transition:.25s}
+.pump-tile.on{border-color:rgba(62,245,154,.5);box-shadow:0 0 16px rgba(62,245,154,.12)}
+.pump-tile .gear{font-size:22px;margin-bottom:4px}
+.pump-tile.on .gear{animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pump-tile .name{font-size:10.5px;letter-spacing:.6px;color:var(--dim)}
+.pump-tile .st{margin-top:6px;font-size:11px;font-weight:800;letter-spacing:1px;color:var(--bad)}
+.pump-tile.on .st{color:var(--ok);text-shadow:0 0 8px rgba(62,245,154,.5)}
+.pump-note{font-size:10px;color:var(--dim);margin-top:12px;text-align:center}
+
+/* ---------- downside tanks ---------- */
+.dt-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:rgba(0,0,0,.22)}
+.dt-head{display:flex;justify-content:space-between;margin-bottom:4px}
+.dt-name{font-size:12px;font-weight:700}
+.dt-cap{font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:10px;padding:1px 8px}
+.dt-fill-note{font-size:10px;color:var(--dim);margin-bottom:8px}
+.tankbar{height:18px;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+.tankbar .tfill{height:100%;width:0%;background:linear-gradient(90deg,#1c7fb8,var(--water));transition:width .7s ease}
+.tankbar.fire .tfill{background:linear-gradient(90deg,#b8521c,var(--fire))}
+.mark{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,209,102,.6)}
+.tankbar .lbl{position:absolute;right:6px;top:50%;transform:translateY(-50%);font:bold 10px "Consolas",monospace;color:#fff;text-shadow:0 1px 3px #000}
+.sensor-row{display:flex;gap:14px;margin-top:9px;flex-wrap:wrap;font-size:11px;color:var(--dim)}
+.sensor-row b.ok{color:var(--ok)}
+.sensor-row b.no{color:var(--bad)}
+.chip{font-size:10px;font-weight:700;letter-spacing:.6px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+.chip.on{color:var(--ok);border-color:rgba(62,245,154,.5)}
+.chip.mid{color:var(--warn);border-color:rgba(255,209,102,.5)}
+
+/* ---------- alarm ---------- */
+.alarm{display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:var(--rad);font-size:13px;font-weight:700;letter-spacing:.8px;margin-bottom:14px}
+.alarm.normal{background:rgba(62,245,154,.08);border:1px solid rgba(62,245,154,.35);color:var(--ok)}
+.alarm.warn{background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.45);color:var(--warn)}
+.alarm.critical{background:rgba(255,93,108,.12);border:1px solid rgba(255,93,108,.55);color:var(--bad);animation:alarmflash 1s infinite}
+@keyframes alarmflash{0%,100%{background:rgba(255,93,108,.12)}50%{background:rgba(255,93,108,.3)}}
+.pulse{width:12px;height:12px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);flex:none}
+.alarm.warn .pulse{background:var(--warn);box-shadow:0 0 12px var(--warn)}
+.alarm.critical .pulse{background:var(--bad);box-shadow:0 0 12px var(--bad);animation:blink .5s infinite}
+.station-status{margin:16px 0 0}
+
+footer{text-align:center;color:var(--dim);font-size:10.5px;letter-spacing:1.4px;padding:14px 0 6px;opacity:.7}
+
+/* ---------- mobile ---------- */
+@media(max-width:640px){
+  .app{padding:10px 10px 20px}
+  .hero{padding:14px}
+  .hero-top{flex-direction:column;align-items:flex-start}
+  .clock{text-align:left;width:100%;display:flex;justify-content:space-between;align-items:baseline}
+  .logo{font-size:18px}
+  .summary{grid-template-columns:1fr 1fr;gap:8px}
+  .summary-box{padding:12px}
+  .summary-box strong{font-size:19px}
+  .station{padding:14px 12px}
+  .station-head{flex-direction:column;align-items:flex-start;gap:8px}
+  .station-tag{margin-left:0}
+  .station-head h2{font-size:15px}
+  .flow{flex-direction:column;align-items:stretch;gap:8px}
+  .flow-text{white-space:normal;text-align:left}
+  .gauge-note{font-size:10px}
+  .pump-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .tank-lbl{width:84px}
+  .tank-val{width:44px;font-size:12px}
+  .tank-ton{width:34px}
+  .led{font-size:9.5px;padding:3px 9px}
+  .status-leds{gap:6px}
+}
+
+)CAMKENTP9";
+static const char WEB_APP_JS[] PROGMEM = R"CAMKENTP9(
+/* =========================================================
+   ÇAMKENT AQUA — Kontrol Paneli (UPSIDE + DOWNSIDE)
+   CANLI SÜRÜM: demo veri yerine DOWNSIDE /data ucundan çeker.
+   Oturum yoksa (401) giriş sayfasına yönlendirir.
+   ========================================================= */
+
+const $ = (id) => document.getElementById(id);
+
+/* ---------------- CANVAS GAUGE ---------------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+const drawGauge = (el, value, max, color) => {
+  if (!el) return;
+  const W = 150, H = 95, cx = W / 2, cy = H - 10, r = 62, th = 11;
+  const pt = (a) => {
+    const rad = Math.PI - a * Math.PI / 180;
+    return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
+  };
+  const arc = (a1, a2) => {
+    const [x1, y1] = pt(a1), [x2, y2] = pt(a2);
+    const large = (a2 - a1) > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+  };
+  const v = Math.max(0, Math.min(max, value));
+  const a2 = (v / max) * 180;
+
+  let svg = el.querySelector("svg");
+  if (!svg) {
+    svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.style.width = "150px";
+    svg.style.display = "block";
+    el.appendChild(svg);
+  }
+  const grad = document.createElementNS(SVGNS, "linearGradient");
+  grad.id = "g" + (color.charCodeAt(0) * 7 % 997);
+  grad.innerHTML = `<stop offset="0%" stop-color="${color}" stop-opacity=".55"/><stop offset="100%" stop-color="${color}"/>`;
+  svg.innerHTML = `
+    <defs></defs>
+    <path d="${arc(0, 180)}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="${th}" stroke-linecap="round"/>
+    <path d="${arc(0, a2)}" fill="none" stroke="url(#g${grad.id})" stroke-width="${th}" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy - 20}" text-anchor="middle" font-family="Consolas,monospace" font-size="24" font-weight="bold" fill="#e8f0ff">${v.toFixed(1)}</text>
+    <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Consolas,monospace" font-size="10" fill="#8aa0c8">bar</text>`;
+  const defs = svg.querySelector("defs");
+  defs.appendChild(grad);
+}
+
+/* ---------------- DOM SYNC ---------------- */
+const setFill = (id, pct) => {
+  const el = $(id);
+  if (el) el.style.width = Math.max(0, Math.min(100, pct)) + "%";
+}
+const setTxt = (id, t) => {
+  const el = $(id);
+  if (el) el.textContent = t;
+}
+const setSensor = (id, v) => {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = v ? "VAR" : "YOK";
+  el.className = v ? "ok" : "no";
+}
+const setCtrl = (id, on) => {
+  const el = $(id);
+  if (!el) return;
+  el.classList.remove("on", "off");
+  el.classList.add(on ? "on" : "off");
+}
+const setPump = (id, stId, on) => {
+  const el = $(id);
+  if (el) el.classList.remove("on", "off"), el.classList.add(on ? "on" : "off");
+  setTxt(stId, on ? "ÇALIŞIYOR" : "BEKLEMEDE");
+}
+const setLed = (id, ok) => {
+  const el = $(id);
+  if (el) el.classList.toggle("bad", !ok);
+}
+
+/* ---------------- RENDER ---------------- */
+let data = null;
+let lastOk = 0;         // son başarılı güncelleme zamanı (ms)
+let upOffline = false;  // UPSIDE verisine ulaşılamıyor mu
+
+const render = () => {
+  const s = data.site || {}, f = data.fire || {}, d = data.down || {};
+  const sWater = s.water || { ton: 0, cap: 0 };
+  const fTanks = (f.tanks || []).map(t => t || { ton: 0, cap: 0 });
+  const sPump = s.pump || { on: false, freq: 0, cur: 0, volt: 0 };
+  const fPump = f.pump || { on: false, freq: 0, cur: 0, volt: 0 };
+  const fBig = f.big || { on: false, freq: 0 };
+  const fv = data.fillValve || { on: false };
+  const dp = d.pumps || {};
+  const ft = d.fireTank || { pct: 0, s1: false, s2: false };
+  const st = d.siteTank || { pct: 0, s1: false };
+
+  const fireTotal = fTanks.reduce((a, t) => a + t.ton, 0);
+  const fireCap = fTanks.reduce((a, t) => a + t.cap, 0);
+
+  /* upside start bayrakları + motor durumu: kapalı / beklemede / çalışıyor */
+  const sStart = !!data.siteStart, fStart = !!data.fireStart, f1Start = !!data.fire1Start;
+  const sysOff = !!data.sysOff;
+  const motorState = (freq, started) => {
+    if (sysOff) return "SİSTEM KAPATILDI";
+    if (!started) return "KAPALI";
+    if (freq >= 1.0) return "ÇALIŞIYOR";
+    return "BEKLEMEDE";
+  };
+
+  /* summary */
+  setTxt("summarySite", sWater.ton.toFixed(1) + " t");
+  setTxt("summaryFire", fireTotal.toFixed(1) + " / " + fireCap.toFixed(0) + " t");
+  setTxt("summaryUsers", data.kullaniciSay !== undefined ? String(data.kullaniciSay) : "--");
+  setTxt("summaryActive", data.aktifSay !== undefined ? String(data.aktifSay) : "--");
+  setTxt("summaryPump", motorState(sPump.freq, sStart));
+
+  /* upside tanks */
+  setFill("tk1Fill", sWater.cap > 0 ? Math.min(100, (sWater.ton / sWater.cap) * 100) : 0);
+  setTxt("tk1Val", sWater.cap > 0 ? Math.round(Math.min(100, (sWater.ton / sWater.cap) * 100)) + "%" : "--");
+  setTxt("tk1Ton", sWater.ton.toFixed(1) + "t");
+
+  setFill("tkFireFill", fireCap > 0 ? Math.min(100, (fireTotal / fireCap) * 100) : 0);
+  setTxt("tkFireVal", fireCap > 0 ? Math.round(Math.min(100, (fireTotal / fireCap) * 100)) + "%" : "--");
+  setTxt("tkFireTon", fireTotal.toFixed(1) + "t");
+
+  /* gauges */
+  drawGauge($("gaugeSite"), s.pressure || 0, 3.0, "#35d0ff");
+  drawGauge($("gaugeFire"), f.pressure || 0, 3.0, "#ff8a3d");
+
+  /* controls */
+  setCtrl("ctrlSitePump", sPump.freq >= 1);
+  setTxt("ctrlSitePumpSt", motorState(sPump.freq, sStart));
+  setTxt("ctrlSiteFreq", sPump.freq.toFixed(1) + " Hz");
+  setTxt("ctrlSiteCur", sPump.cur.toFixed(1) + " A");
+  setTxt("ctrlSiteVolt", Math.round(sPump.volt) + " V");
+
+  setCtrl("ctrlFirePump", fPump.freq >= 1);
+  setTxt("ctrlFirePumpSt", motorState(fPump.freq, fStart));
+  setTxt("ctrlFireFreq", fPump.freq.toFixed(1) + " Hz");
+  setTxt("ctrlFireCur", fPump.cur.toFixed(1) + " A");
+  setTxt("ctrlFireVolt", Math.round(fPump.volt) + " V");
+
+  setCtrl("ctrlBigFire", fBig.freq >= 1);
+  setTxt("ctrlBigFireSt", motorState(fBig.freq, f1Start));
+
+  setCtrl("ctrlFillValve", fv.on);
+  setTxt("ctrlFillValveSt", fv.on ? "AÇIK" : "KAPALI");
+  setTxt("ctrlFillValveNote", fv.on ? "yangın tanklarını dolduruyor" : "oto dolum bekliyor");
+
+  /* downside pressures */
+  setTxt("dps1Val", (d.p1 || 0).toFixed(2));
+  setFill("dps1Fill", ((d.p1 || 0) / 12) * 100);
+  setTxt("dps2Val", (d.p2 || 0).toFixed(2));
+  setFill("dps2Fill", ((d.p2 || 0) / 12) * 100);
+  setTxt("dps3Val", (d.p3 || 0).toFixed(2));
+  setFill("dps3Fill", ((d.p3 || 0) / 5) * 100);
+
+  /* downside pumps */
+  setPump("dpk1", "dpk1St", !!(dp.inv && dp.inv.on));
+  setPump("dpk2", "dpk2St", !!(dp.yedek && dp.yedek.on));
+  setPump("dpk3", "dpk3St", !!(dp.kuyu && dp.kuyu.on));
+  setPump("dpk4", "dpk4St", !!(dp.hidrant && dp.hidrant.on));
+
+  /* hydrant flow info: pompa açıksa su yukarı (60 m) basılır */
+  const hidOn = !!(dp.hidrant && dp.hidrant.on);
+  setCtrl("flowBox", hidOn);
+  setTxt("flowTxt", hidOn ? "HİDRANT POMPASI suyu yukarı basıyor" : "HİDRANT POMPASI beklemede");
+  setTxt("flowNote", hidOn ? "↑ 60 m · açık dolum valfi → yangın tankları doluyor" : "hidrant çalışınca su yukarı (60 m) basılır");
+
+  const verEl = $("ver");
+  if (verEl && data.ver) verEl.textContent = data.ver;
+
+  /* downside tanks */
+  setFill("dpt1Fill", ft.pct);
+  setTxt("dpt1Pct", Math.round(ft.pct) + "%");
+  setSensor("dpt1S1", ft.s1);
+  setSensor("dpt1S2", ft.s2);
+  setTxt("dpt1Chip", ft.pct < 50 ? "SEVİYE DÜŞÜK" : "SEVİYE YETERLİ");
+  $("dpt1Chip").className = "chip " + (ft.pct < 50 ? "mid" : "on");
+
+  setFill("dpt2Fill", st.pct);
+  setTxt("dpt2Pct", Math.round(st.pct) + "%");
+  setSensor("dpt2S1", st.s1);
+  setTxt("dpt2Chip", st.pct < 30 ? "SEVİYE DÜŞÜK" : "SEVİYE YETERLİ");
+  $("dpt2Chip").className = "chip " + (st.pct < 30 ? "mid" : "on");
+
+  /* sensör sağlık ledleri */
+  setLed("ledSensSite", s.pressureOK !== false);
+  setLed("ledSensFire", f.pressureOK !== false);
+  setLed("ledSensDownSite", d.siteSensorOK !== false);
+  setLed("ledSensLine", d.lineSensorOK !== false);
+
+  upStatus();
+  downStatus();
+}
+
+/* ---------------- İSTASYON DURUMLARI ---------------- */
+const upStatus = () => {
+  const a = $("upAlarm"), t = $("upAlarmText");
+  if (!a || !t) return;
+  const s = data.site || {}, f = data.fire || {};
+  const sWater = s.water || { ton: 0, cap: 0 };
+  const fTanks = (f.tanks || []).map(x => x || { ton: 0, cap: 0 });
+  const fireTotal = fTanks.reduce((acc, x) => acc + x.ton, 0);
+  const fireCap = fTanks.reduce((acc, x) => acc + x.cap, 0);
+  const firePct = fireCap > 0 ? (fireTotal / fireCap) * 100 : 0;
+  const f1Start = !!data.fire1Start, fStart = !!data.fireStart;
+  const sOK = s.pressureOK !== false, fOK = f.pressureOK !== false;
+  a.classList.remove("normal", "warn", "critical");
+
+  if (upOffline) {
+    a.classList.add("warn");
+    setTxt("upAlarmText", "UPSIDE ÇEVRİMDIŞI — VERİ GELMİYOR");
+  } else if (f1Start && !fOK) {
+    a.classList.add("critical");
+    setTxt("upAlarmText", "GERÇEK YANGIN + YANGIN SENSÖRÜ HATASI — MANUEL KONTROL GEREKLİ!");
+  } else if (!fOK) {
+    a.classList.add("critical");
+    setTxt("upAlarmText", "YANGIN SENSÖRÜ HATASI — BASINÇ VERİSİ YOK, MANUEL KONTROL GEREKLİ!");
+  } else if (!sOK) {
+    a.classList.add("warn");
+    setTxt("upAlarmText", "SİTE SENSÖRÜ HATASI — SİTE POMPASI DURDURULDU");
+  } else if (f1Start) {
+    a.classList.add("critical");
+    setTxt("upAlarmText", "GERÇEK YANGIN AKTİF — BÜYÜK POMPA DEVRE DE!");
+  } else if (fStart) {
+    a.classList.add("warn");
+    setTxt("upAlarmText", "YANGIN POMPASI AKTİF — SÜREKLİ BASINÇ");
+  } else if (sWater.ton < 1.5) {
+    a.classList.add("critical");
+    setTxt("upAlarmText", "DÜŞÜK SU SEVİYESİ — DEPO KONTROLÜ GEREKLİ! (" + sWater.ton.toFixed(1) + " t)");
+  } else if (firePct < 30) {
+    a.classList.add("warn");
+    setTxt("upAlarmText", "YANGIN REZERVİ DÜŞÜK — %" + Math.round(firePct));
+  } else {
+    a.classList.add("normal");
+    setTxt("upAlarmText", "ÜST İSTASYON NORMAL — site " + sWater.ton.toFixed(1) + " t · rezerv %" + Math.round(firePct));
+  }
+}
+
+const downStatus = () => {
+  const a = $("downAlarm"), t = $("downAlarmText");
+  if (!a || !t) return;
+  const d = data.down || {};
+  const ft = d.fireTank || { pct: 100 };
+  const p1 = d.p1 || 0, p2 = d.p2 || 0, p3 = d.p3 || 0;
+  const alarms = d.alarms || [];
+  a.classList.remove("normal", "warn", "critical");
+
+  const kritik = alarms.some(x => /bos|hatasi|yok|calisamaz/i.test(x));
+  if (kritik || ft.pct < 30) {
+    a.classList.add("critical");
+    setTxt("downAlarmText", (alarms.length ? alarms[0] + " — " : "") + "DÜŞÜK SU SEVİYESİ, DEPO KONTROLÜ GEREKLİ!");
+  } else if (alarms.length) {
+    a.classList.add("warn");
+    setTxt("downAlarmText", alarms[0]);
+  } else if (p2 < 2.0 || p3 > 2.9) {
+    a.classList.add("warn");
+    setTxt("downAlarmText", "BASINÇ UYARISI — HAT DEĞERLERİ SINIR DIŞINDA");
+  } else {
+    a.classList.add("normal");
+    setTxt("downAlarmText", "ALT İSTASYON NORMAL — şebeke " + p1.toFixed(1) + " · site " + p2.toFixed(1) + " · yangın " + p3.toFixed(1) + " bar");
+  }
+}
+
+/* ---------------- FETCH ---------------- */
+const fetchData = () => {
+  fetch("data", { cache: "no-store" })
+    .then(r => {
+      if (r.status === 401) { location.href = "login.html"; throw new Error("auth"); }
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    })
+    .then(j => {
+      data = j;
+      lastOk = Date.now();
+      upOffline = j.upOnline === false;
+      render();
+    })
+    .catch(e => {
+      if (e && e.message === "auth") return;
+      const a = $("downAlarm");
+      if (a) {
+        a.classList.remove("normal", "warn", "critical");
+        a.classList.add("warn");
+        const t = $("downAlarmText");
+        if (t) t.textContent = "VERİ GELMİYOR — bağlantı denetleniyor…";
+      }
+    });
+}
+
+/* ---------------- CLOCK ---------------- */
+const clock = () => {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  setTxt("time", p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()));
+}
+
+/* ---------------- BOOT ---------------- */
+clock();
+setInterval(clock, 1000);
+fetchData();
+setInterval(fetchData, 2000);
+
+)CAMKENTP9";
+#include <ArduinoJson.h>
+#include <mbedtls/md.h>
+
+// Web fonksiyon prototipleri — Arduino derleyicisi dev raw-string'lerde
+// otomatik prototip üretemediği için açıkça bildiriliyor.
+String webNorm(const String &s);
+void webSecretInit();
+void webSecretSifirla();
+String webSifreUret(const String &telNorm);
+bool webEngelliMi(const String &telNorm);
+String webYeniSid(const String &telNorm);
+String webSidFromCookie();
+bool webOturumVar();
+void webKilitTemiz(uint32_t ip);
+bool webKilitli(uint32_t ip);
+void webKilitArttir(uint32_t ip);
+void webSrvFile(const char *path, const char *type);
+void webSrvYasak();
+void webLogin();
+void webCikis();
+void webKok();
+void webData();
+int webKayitSayisi();
+int webAktifSayisi();
+String webTalepTokenUret();
+String webKayitOku();
+void webKayitYaz(const String &s);
+int webHaneKac(const String &hane);
+String webSoyad(const String &ad);
+String webTelGoster(const String &tel);
+String webHaneListe(const String &hane);
+bool webHaneTelVar(const String &hane, const String &tel);
+bool webHaneEkle(const String &hane, const String &ad, const String &tel);
+void webHaneSil(const String &hane, const String &tel);
+bool webTelKayitli(const String &telNorm);
+void webHaneTelSil(const String &telNorm);
+void webSesKaydet();
+void webSesYukle();
+void webOturumTelSil(const String &telNorm);
+String webKayitlilarListesi();
+String webHaneKayitListesi(const String &hane);
+String webTelHane(const String &tel);
+String webHamHaneListesi(const String &hane);
+String webAktiflerListesi(const String &haneFiltre = "");
+String webMetinSinirla(const String &s, int maxLen);
+void webAkisBasla();
+void webAkisBaslaHam();
+void webAkisAdim();
+void webTalepKaydet();
+void webTalepYukle();
+void webTalepGuncelle();
+void webTalepTemiz(int i);
+int webTalepBulToken(const String &tel, const String &token);
+int webTalepBulTel(const String &tel);
+void webTalepIste();
+void webTalepDurum();
+void webKayitOl();
+
+#define WEB_PORT    8080
+#define SES_TTL_MS  2592000000UL      // oturum ömrü: 30 gün
+#define MAX_SES     24
+#define MAX_KAZAN   (MAX_SES + 8)     // kilit takibi için IP sayısı
+#define LOCK_SINIR  5
+#define LOCK_SURESI 600000UL          // 10 dk
+
+WebServer webSrv(WEB_PORT);
+bool webStarted = false;
+
+String webSecret = "";
+
+struct WebOturum { char sid[17]; String tel; uint32_t son; };
+WebOturum webOturum[MAX_SES];
+
+struct WebKilit { uint32_t ip; uint8_t fail; uint32_t kilid; };
+WebKilit webKilit[MAX_KAZAN];
+
+// --- Erişim talebi kuyruğu (talep/onay akışı) ---
+// Talepler SÜRESİZ bekler; NVS'e (TALEP_ANAHTAR) kaydedilir, reboot'ta korunur.
+// Kullanıcı sayfayı kapatıp çıksa bile yönetici istediği zaman onaylayabilir;
+// onaylanan kullanıcı sonradan token'ı ile şifresini alır (yeni talep gerekmez).
+struct WebTalep { char ad[24]; char hane[12]; char tel[16]; char eski[16]; char token[17]; uint8_t durum; bool degisim; };
+enum { WT_BOS = 0, WT_BEKLIYOR = 1, WT_ONAYLANDI = 2, WT_RED = 3 };
+#define MAX_TALEP 10
+WebTalep webTalep[MAX_TALEP];
+#define TALEP_ANAHTAR "webtalep"   // kuyruğun NVS'teki anahtarı
+
+// --- Messenger akışı: kayıtlıları kullanıcı kullanıcı tek tek gönderir ---
+// Her mesaj ayrı bir "değişiklik" olduğu için Messenger her birini ayrı satır
+// gösterir; parça başına boyut küçük kaldığı için cloud ~256 bayt sınırı aşılmaz.
+#define WEB_AKIS_BEKLE_MS 500UL
+String webAkisDefter;          // kalan ham kayıtlar (hane;ad;tel|...)
+int webAkisToplam = 0;         // toplam kayıt sayısı
+int webAkisGonderilen = 0;     // gönderilen kayıt sayısı
+uint32_t webAkisSon = 0;       // son mesaj zamanı
+bool webAkisAktif = false;     // akış sürüyor mu
+bool webAkisHam = false;       // akış ham (raw) formatında mı
+bool webAkisBitti = false;     // son kayıt gönderildi → TAMAM ayrı adımda gitsin
+/* ===================================================== */
+
+WiFiUDP udp;
+const int udpPort = 4210;
+
+IPAddress broadcastIP;
+#define DEVICE_ID 2
+
+// DİKKAT: struct'lar KASITLI olarak packed DEĞİL. Karşı taraf (upside) aynı
+// ESP32/Arduino derleyicisini kullandığı için hizalama (padding) düzeni iki
+// tarafta da birebir aynıdır. UdprxPacket'in alan sırası/tipleri upside'ın
+// UdptxPacket'i ile BİREBİR AYNIDIR — değiştirilirse paket boyutu eşleşmez
+// ve iki taraf da paketi reddeder.
+struct UdptxPacket
+{
+  uint8_t deviceID;
+  bool reset_upside;
+  uint32_t counter;
+  uint16_t crc16;
+};
+
+struct UdprxPacket
+{
+  uint8_t deviceID;
+  uint32_t counter;
+  float siteTon;
+  float siteCap;
+  float sitePressure;
+  bool  sitePumpOn;
+  float sitePumpFreq;
+  float sitePumpCur;
+  uint16_t sitePumpVolt;
+  bool  siteFault;
+  float fireTon[4];
+  float fireCap;
+  float firePressure;
+  bool  firePumpOn;
+  float firePumpFreq;
+  float firePumpCur;
+  uint16_t firePumpVolt;
+  bool  fireBigOn;
+  bool  fireFault;
+  bool  fillValveOn;
+  float fireBigFreq;
+  bool  siteStart;
+  bool  fireStart;
+  bool  fire1Start;
+  bool  sysStopped;
+  bool  sitePressureOK;
+  bool  firePressureOK;
+  uint16_t crc16;
+};
+
+// CRC16 (Modbus polysiyle aynı, A001/FFFF) — paket bütünlük doğrulaması için.
+// crc16 alanı struct'ın SON elemanı olduğundan, CRC hesabı crc16 alanına kadar
+// (offsetof kadar) yapılır; karşı tarafın da aynı düzeni kullandığı varsayılır.
+uint16_t crc16(const uint8_t* data, size_t len) {
+  uint16_t crc = 0xFFFF;
+  for (size_t i = 0; i < len; i++) {
+    crc ^= data[i];
+    for (uint8_t j = 0; j < 8; j++) {
+      if (crc & 1) crc = (crc >> 1) ^ 0xA001;
+      else crc >>= 1;
+    }
+  }
+  return crc;
+}
+
+UdptxPacket txPacket;
+UdprxPacket rxPacket;
+
+bool udpStarted = false;
+bool remoteDataOK = false;
+uint32_t remoteLastSeen = 0;
+uint32_t upsideLastSeen = 0;   // son başarılı UDP paketinin zamanı (upOnline için)
+uint32_t udpCounter = 0;
+
+#define NTP_SERVER "pool.ntp.org"
+#define GMT_OFFSET_SEC 10800   // Türkiye = UTC+3 → 3*3600
+#define DAYLIGHT_OFFSET_SEC 0
+
+Preferences prefs;
+
+Adafruit_MCP23X17 mcp;
+Adafruit_ADS1115 ads;
+HardwareSerial nex(1);
+
+uint32_t lastYanBasincUpdate = 0;
+
+// Madde 1: downside'ın kendi site basınç sensörü sağlığı (4-20mA, V4=0.8V).
+bool siteSensorOK = false;
+uint32_t lastSiteBarUpdate = 0;
+// Madde 1: downside'ın şebeke (belediye girişi) basınç sensörü sağlığı — yalnızca ekran.
+bool lineSensorOK = false;
+uint32_t lastLineBarUpdate = 0;
+// Upside'dan gelen yangın basınç sensörü sağlığı (udpReceive'de güncellenir).
+bool rxFirePressureOK = false;
+// [EKLENDI 07/08] Madde 3: Upside'dan UDP ile gelen fire1_start (gerçek yangın) bayrağı.
+// Sensör ölüyken hidrantın kesintisiz (kör) modda çalışmasını tetikler.
+bool rxFire1Start = false;
+bool rxSitePressureOK = false;
+
+int wifiPercent = 0;
+int wifiRssi = -100;
+uint32_t tIo = 0;
+#define MAX_ALARM 10
+
+char alarmList[MAX_ALARM][100];
+uint8_t alarmCount = 0;
+uint8_t alarmIndex = 0;
+
+/* ===== PIN ===== */
+
+#define MCP_ADDR 0x20
+#define ADS_ADDR 0x48
+
+#define inv_en 8
+#define yedek_en 9
+#define kuyu_en 10
+#define hidr_en 11
+
+#define NEXTION_RX 26
+#define NEXTION_TX 27
+#define NEXTION_BAUD 9600
+
+// INPUTS
+typedef struct {
+
+  uint8_t fireAlt    : 1;
+  uint8_t fireUst    : 1;
+  uint8_t siteAlt    : 1;
+  uint8_t fazOK      : 1;
+  uint8_t inverterOK : 1;
+  uint8_t kuyu      : 1;
+
+  uint8_t reserved   : 2;
+
+} IoBits_t;
+
+IoBits_t io;
+
+/* ===== SENSOR ===== */
+
+float V4_CH0  = 0.8;
+float V20_CH0 = 2.80;
+float V4_CH1  = 0.8;
+float V20_CH1 = 2.80;
+float last_line_bar = -999;
+float last_site_bar = -999;
+
+const float SENSOR_MAX_BAR = 16.0;
+
+/* ===== GLOBAL ===== */
+bool udp_send_need = false;
+bool sys_start = false;
+bool kuyu_start = false;
+bool hidr_start = false;
+bool faz_stat = false;
+float line_bar = 0;
+float site_bar = 0;
+bool inv_stat = false;
+bool yedek_stat = false;
+bool kuyu_stat = false;
+bool hidr_stat = false;
+unsigned long lastliveUpdate = 0;
+int s;
+int l;
+bool cloudStarted = false;
+bool prefsNeedsSave = false;
+uint32_t lastPrefsChange = 0;
+char buffer1[30];
+char buffer2[30];
+bool hardreset = false;
+
+// Çıkışlar için beklenen durum. true = HIGH (pompa kapalı), false = LOW (pompa açık).
+bool expected_inv  = true;
+bool expected_yedek = true;
+bool expected_kuyu = true;
+bool expected_hidr = true;
+
+// Son yazılan çıkış durumları (mcpSetup recovery sonrası tümü zorla yazılır).
+static bool last_inv   = true;
+static bool last_yedek = true;
+static bool last_kuyu  = true;
+static bool last_hidr  = true;
+
+/* ===================================================== */
+/* UTILS */
+/* ===================================================== */
+
+// Nextion ekranına komut gönderir (komut + 3 adet 0xFF end marker).
+void nextionSend(const char* cmd) {
+  nex.print(cmd);
+  nex.write(0xFF);
+  nex.write(0xFF);
+  nex.write(0xFF);
+}
+
+// Nextion nesnesinin metin rengini (pco) ayarlar.
+void nextionSetPco(const char* obj, int color) {
+  char buffer[50];
+  snprintf(buffer, sizeof(buffer), "%s.pco=%d", obj, color);
+  nextionSend(buffer);
+}
+
+// Nextion nesnesinin arka plan rengini (bco) ayarlar.
+void nextionSetBco(const char* obj, int color) {
+  char buffer[50];
+  snprintf(buffer, sizeof(buffer), "%s.bco=%d", obj, color);
+  nextionSend(buffer);
+}
+
+// Alarm listesine mesaj ekler (aynen aynı mesaj varsa eklemez).
+void addAlarm(const char* msg) {
+  for (int i = 0; i < alarmCount; i++) {
+    if (strcmp(alarmList[i], msg) == 0)
+      return;
+  }
+  if (alarmCount < MAX_ALARM) {
+    strncpy(alarmList[alarmCount], msg, 99);
+    alarmList[alarmCount][99] = '\0';
+    alarmCount++;
+  }
+}
+
+/* ===================================================== */
+/* WEB HOST EKİ (BLOK B + BLOK C) — yardımcılar + uçlar */
+/* downside_web_ek.txt dosyasından gömüldü.             */
+/* ===================================================== */
+// Telefon numarasını sadece rakamlara çevirir (0-9 dışındaki tüm karakterleri atar).
+String webNorm(const String &s) {          // numarayı sadece rakama çevirir
+  String r;
+  for (unsigned i = 0; i < s.length(); i++) {
+    char c = s[i];
+    if (c >= '0' && c <= '9') r += c;
+  }
+  return r;
+}
+
+// Gizli anahtarı üretir/kaydeder; ilk açılışta rastgele oluşturup Preferences'a yazar.
+void webSecretInit() {                     // gizli anahtar: ilk açılışta üret
+  prefs.begin("settings", false);
+  if (!prefs.isKey("web_secret")) {
+    char hex[33];
+    for (int i = 0; i < 16; i++) snprintf(hex + i * 2, 3, "%02x", (uint8_t)esp_random());
+    prefs.putString("web_secret", hex);
+  }
+  webSecret = prefs.getString("web_secret", "");
+  prefs.end();
+}
+
+// Gizli anahtarı sıfırlar; böylece daha önce üretilmiş tüm şifreler geçersiz olur.
+void webSecretSifirla() {                  // tüm şifreleri geçersiz kılar
+  prefs.begin("settings", false);
+  char hex[33];
+  for (int i = 0; i < 16; i++) snprintf(hex + i * 2, 3, "%02x", (uint8_t)esp_random());
+  prefs.putString("web_secret", hex);
+  webSecret = prefs.getString("web_secret", hex);
+  prefs.end();
+  for (int i = 0; i < MAX_SES; i++) webOturum[i].sid[0] = 0;
+  webSesKaydet();
+}
+
+// Telefon numarası için 6 haneli şifre üretir (HMAC-SHA256; gizli anahtar + "camkent:"+numara).
+String webSifreUret(const String &telNorm) {
+  if (webSecret.length() == 0) return "";
+  String msg = "camkent:" + telNorm;
+  unsigned char out[32] = {0};
+  mbedtls_md_context_t ctx;
+  const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+  mbedtls_md_init(&ctx);
+  if (mbedtls_md_setup(&ctx, info, 1) != 0) { mbedtls_md_free(&ctx); return ""; }
+  mbedtls_md_hmac_starts(&ctx, (const unsigned char *)webSecret.c_str(), webSecret.length());
+  mbedtls_md_hmac_update(&ctx, (const unsigned char *)msg.c_str(), msg.length());
+  mbedtls_md_hmac_finish(&ctx, out);
+  mbedtls_md_free(&ctx);
+  uint32_t v = ((uint32_t)out[0] << 16) | ((uint32_t)out[1] << 8) | out[2];
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%06u", (unsigned)(v % 1000000));
+  return String(buf);
+}
+
+// Numaranın engelli listesinde (web_engelli, virgülle ayrılmış) olup olmadığını kontrol eder.
+bool webEngelliMi(const String &telNorm) { // web_engelli: "0532...,0533..." (virgülle)
+  String list = web_engelli;
+  int start = 0;
+  while (start <= (int)list.length()) {
+    int i = list.indexOf(',', start);
+    String one = (i < 0) ? list.substring(start) : list.substring(start, i);
+    if (webNorm(one) == telNorm) return true;
+    if (i < 0) break;
+    start = i + 1;
+  }
+  return false;
+}
+
+// Yeni oturum kimliği üretir (16 haneli rastgele) ve oturum tablosuna kaydeder.
+String webYeniSid(const String &telNorm) { // 16 hanelik rastgele oturum kimliği
+  static uint32_t seq = 0;
+  char id[17];
+  for (int i = 0; i < 16; i++) {
+    uint32_t r = esp_random();
+    id[i] = "0123456789abcdef"[r % 16];
+  }
+  id[16] = 0;
+  int slot = -1;
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] == 0) { slot = i; break; }
+  }
+  if (slot < 0) { slot = (int)(seq++ % MAX_SES); } // doluysa en eskiyi bul
+  memcpy(webOturum[slot].sid, id, 17);
+  webOturum[slot].tel = telNorm;
+  webOturum[slot].son = millis();
+  webSesKaydet();
+  return String(id);
+}
+
+// Tarayıcının gönderdiği Cookie başlığından oturum kimliğini (sid) çeker.
+String webSidFromCookie() {                // Cookie başlığından sid çeker
+  String c = webSrv.header("Cookie");
+  int p = c.indexOf("sid=");
+  if (p < 0) return "";
+  p += 4;
+  int e = c.indexOf(';', p);
+  String v = (e < 0) ? c.substring(p) : c.substring(p, e);
+  v.trim();
+  return v;
+}
+
+// Geçerli (süresi dolmamış) bir oturum var mı diye kontrol eder.
+bool webOturumVar() {                      // geçerli oturum var mı
+  String sid = webSidFromCookie();
+  if (sid.length() != 16) return false;
+  uint32_t now = millis();
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] != 0 && strcmp(webOturum[i].sid, sid.c_str()) == 0) {
+      if (now - webOturum[i].son > SES_TTL_MS) { webOturum[i].sid[0] = 0; return false; }
+      webOturum[i].son = now;
+      return true;
+    }
+  }
+  return false;
+}
+
+// Oturum tablosunu NVS'e kaydeder (reboot sonrası oturumlar korunur).
+void webSesKaydet() {
+  String s = "";
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] == 0) continue;
+    if (s.length() > 0) s += "|";
+    s += String(webOturum[i].sid) + ";" + webOturum[i].tel;
+  }
+  Preferences p;
+  p.begin("settings", false);
+  p.putString("web_ses", s);
+  p.end();
+}
+
+// Kayıtlı oturumları geri yükler (son etkinlik şimdi kabul edilir; TTL yine işler).
+void webSesYukle() {
+  Preferences p;
+  p.begin("settings", true);
+  String s = p.getString("web_ses", "");
+  p.end();
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    int a = kayit.indexOf(';');
+    if (kayit.length() > 16 && a == 16) {
+      String sid = kayit.substring(0, 16);
+      String tel = kayit.substring(a + 1);
+      for (int i = 0; i < MAX_SES; i++) {
+        if (webOturum[i].sid[0] == 0) {
+          memcpy(webOturum[i].sid, sid.c_str(), 17);
+          webOturum[i].tel = tel;
+          webOturum[i].son = millis();
+          break;
+        }
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+}
+
+// Bir numaranın tüm aktif oturumlarını düşürür (kullanıcı silme/engelleme).
+void webOturumTelSil(const String &telNorm) {
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] != 0 && webOturum[i].tel == telNorm) {
+      webOturum[i].sid[0] = 0;
+      webOturum[i].tel = "";
+    }
+  }
+  webSesKaydet();
+}
+
+// IP'nin hata sayacını ve kilidini sıfırlar (başarılı giriş sonrası).
+void webKilitTemiz(uint32_t ip) {
+  for (int i = 0; i < MAX_KAZAN; i++) if (webKilit[i].ip == ip) { webKilit[i].fail = 0; webKilit[i].kilid = 0; }
+}
+
+// IP şu anda kilitli mi diye kontrol eder (10 dakikalık süre içinde).
+bool webKilitli(uint32_t ip) {
+  for (int i = 0; i < MAX_KAZAN; i++) {
+    if (webKilit[i].ip == ip) return (millis() - webKilit[i].kilid < LOCK_SURESI);
+  }
+  return false;
+}
+
+// IP'nin hata sayacını artırır; 5'e ulaşırsa IP'yi 10 dakika kilitler.
+void webKilitArttir(uint32_t ip) {
+  for (int i = 0; i < MAX_KAZAN; i++) {
+    if (webKilit[i].ip == ip) {
+      if (millis() - webKilit[i].kilid >= LOCK_SURESI) webKilit[i].fail = 0;
+      webKilit[i].fail++;
+      if (webKilit[i].fail >= LOCK_SINIR) webKilit[i].kilid = millis();
+      return;
+    }
+  }
+  for (int i = 0; i < MAX_KAZAN; i++) {
+    if (webKilit[i].ip == 0) { webKilit[i].ip = ip; webKilit[i].fail = 1; return; }
+  }
+}
+
+// Gömülü (PROGMEM) web dosyasını istemciye gönderir; bilinmeyen yol 404 döner.
+void webSrvFile(const char *path, const char *type) {
+  const char *veri = 0;
+  if      (strcmp(path, "/index.html") == 0) veri = WEB_INDEX_HTML;
+  else if (strcmp(path, "/login.html") == 0) veri = WEB_LOGIN_HTML;
+  else if (strcmp(path, "/style.css")  == 0) veri = WEB_STYLE_CSS;
+  else if (strcmp(path, "/app.js")     == 0) veri = WEB_APP_JS;
+  if (!veri) { webSrv.send(404, "text/plain", "not found"); return; }
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.send_P(200, type, veri);
+}
+
+// Oturumu olmayan isteklere 401 (yetkisiz) yanıtı gönderir.
+void webSrvYasak() {
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.send(401, "application/json", "{\"err\":\"auth\"}");
+}
+
+// Giriş isteğini işler: IP kilidini kontrol eder, telefon+şifre doğrular,
+// doğruysa oturum cookie'si kurup ana sayfaya yönlendirir, yanlışsa 403 verir.
+void webLogin() {
+  uint32_t ip = (uint32_t)webSrv.client().remoteIP();
+  if (webKilitli(ip)) {
+    webSrv.sendHeader("Cache-Control", "no-store");
+    webSrv.send(429, "application/json", "{\"ok\":false,\"msg\":\"Cok fazla deneme. 10 dk sonra tekrar deneyin.\"}");
+    return;
+  }
+  String tel = webNorm(webSrv.arg("tel"));
+  String sif = webSrv.arg("sifre");
+  if (tel.length() != 11 || sif.length() < 4) {
+    webKilitArttir(ip);
+    webSrv.sendHeader("Cache-Control", "no-store");
+    webSrv.send(403, "application/json", "{\"ok\":false,\"msg\":\"Hatali giris\"}");
+    return;
+  }
+  bool engelli = webEngelliMi(tel);
+  bool kayitli = webTelKayitli(tel);
+  bool dogru   = (webSifreUret(tel) == sif);
+  if (engelli || !kayitli || !dogru) {
+    webKilitArttir(ip);
+    webSrv.sendHeader("Cache-Control", "no-store");
+    webSrv.send(403, "application/json", "{\"ok\":false,\"msg\":\"Hatali giris\"}");
+    return;
+  }
+  webKilitTemiz(ip);
+  for (int i = MAX_TALEP - 1; i >= 0; i--)
+    if (webTalep[i].durum != WT_BOS && String(webTalep[i].tel) == tel) webTalepTemiz(i);
+  String sid = webYeniSid(tel);
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.sendHeader("Set-Cookie", "sid=" + sid + "; Path=/; Max-Age=2592000");
+  webSrv.send(200, "application/json", "{\"ok\":true}");
+}
+
+// Oturumu sonlandırır: sid'i oturum tablosundan siler, cookie'yi temizler.
+void webCikis() {
+  String sid = webSidFromCookie();
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] != 0 && strcmp(webOturum[i].sid, sid.c_str()) == 0) {
+      webOturum[i].sid[0] = 0;
+      webOturum[i].tel = "";
+    }
+  }
+  webSesKaydet();
+  webSrv.sendHeader("Set-Cookie", "sid=; Path=/; Max-Age=0");
+  webSrv.sendHeader("Location", "/");
+  webSrv.send(302, "text/plain", "ok");
+}
+
+// Kök yol isteğini karşılar: oturum varsa paneli, yoksa giriş sayfasını gösterir.
+void webKok() {                            // oturum varsa panel, yoksa giriş
+  if (webOturumVar()) webSrvFile("/index.html", "text/html; charset=utf-8");
+  else                webSrvFile("/login.html", "text/html; charset=utf-8");
+}
+
+// /index.html isteğini karşılar; oturum yoksa 401 verir.
+void webIndex() {
+  if (!webOturumVar()) { webSrvYasak(); return; }
+  webSrvFile("/index.html", "text/html; charset=utf-8");
+}
+
+// Birleşik /data: DOWNSIDE değerlerini JSON yapar, UPSIDE'dan veri çeker
+// (erişilemezse sıfır dolgulu), oturumlu istemcilere JSON olarak döner.
+void webData() {                           // birleşik /data
+  if (!webOturumVar()) { webSrvYasak(); return; }
+
+  DynamicJsonDocument j(4096);
+
+  // ---- DOWNSIDE (down) ----
+  JsonObject down = j.createNestedObject("down");
+  down["p1"] = line_bar;
+  down["p2"] = site_bar;
+  down["p3"] = yan_basinc;
+  JsonObject dp = down.createNestedObject("pumps");
+  dp["inv"]["on"]     = !expected_inv;
+  dp["yedek"]["on"]   = !expected_yedek;
+  dp["kuyu"]["on"]    = !expected_kuyu;
+  dp["hidrant"]["on"] = !expected_hidr;
+  JsonObject ft = down.createNestedObject("fireTank");
+  ft["pct"] = io.fireUst ? 100 : (io.fireAlt ? 50 : 0);
+  ft["s1"]  = io.fireAlt;
+  ft["s2"]  = io.fireUst;
+  JsonObject st = down.createNestedObject("siteTank");
+  st["pct"] = io.siteAlt ? 100 : 0;
+  st["s1"]  = io.siteAlt;
+  down["faz"] = faz_stat;
+  down["siteSensorOK"] = siteSensorOK;   // Madde 1: downside site sensörü sağlığı
+  down["lineSensorOK"] = lineSensorOK;   // Madde 1: downside şebeke sensörü sağlığı (yalnızca ekran)
+  JsonArray alarms = down.createNestedArray("alarms");
+  for (uint8_t i = 0; i < alarmCount; i++) alarms.add(alarmList[i]);
+
+  j["time"] = millis() / 1000UL;
+  j["ver"] = "v10";
+  j["kullaniciSay"] = webKayitSayisi();
+  j["aktifSay"] = webAktifSayisi();
+
+  // ---- UPSIDE (UDP ile alınan veri) ----
+  bool upOK = remoteDataOK && (millis() - upsideLastSeen <= 5000);
+  if (upOK) {
+    JsonObject site = j.createNestedObject("site");
+    site["water"]["ton"] = rxPacket.siteTon;
+    site["water"]["cap"] = rxPacket.siteCap;
+    site["pressure"]     = rxPacket.sitePressure;
+    site["pump"]["on"]   = rxPacket.sitePumpOn;
+    site["pump"]["freq"] = rxPacket.sitePumpFreq;
+    site["pump"]["cur"]  = rxPacket.sitePumpCur;
+    site["pump"]["volt"] = rxPacket.sitePumpVolt;
+    site["fault"]        = rxPacket.siteFault;
+    site["pressureOK"]   = rxPacket.sitePressureOK;
+
+    JsonObject fire = j.createNestedObject("fire");
+    for (uint8_t i = 0; i < 4; i++) {
+      fire["tanks"][i]["ton"] = rxPacket.fireTon[i];
+      fire["tanks"][i]["cap"] = rxPacket.fireCap;
+    }
+    fire["pressure"]     = rxPacket.firePressure;
+    fire["pump"]["on"]   = rxPacket.firePumpOn;
+    fire["pump"]["freq"] = rxPacket.firePumpFreq;
+    fire["pump"]["cur"]  = rxPacket.firePumpCur;
+    fire["pump"]["volt"] = rxPacket.firePumpVolt;
+    fire["big"]["on"]    = rxPacket.fireBigOn;
+    fire["big"]["freq"]  = rxPacket.fireBigFreq;
+    fire["fault"]        = rxPacket.fireFault;
+    fire["pressureOK"]   = rxPacket.firePressureOK;
+
+    j["fillValve"]["on"] = rxPacket.fillValveOn;
+    j["siteStart"]  = rxPacket.siteStart;
+    j["fireStart"]  = rxPacket.fireStart;
+    j["fire1Start"] = rxPacket.fire1Start;
+    j["sysOff"] = rxPacket.sysStopped;
+    j["upOnline"] = true;
+    j["upMsg"] = "";
+  } else {
+    JsonObject site = j.createNestedObject("site");
+    site["water"]["ton"] = 0.0f; site["water"]["cap"] = 0.0f;
+    site["pressure"] = 0.0f;
+    site["pump"]["on"] = false; site["pump"]["freq"] = 0.0f;
+    site["pump"]["cur"] = 0.0f; site["pump"]["volt"] = 0;
+    site["fault"] = false;
+    site["pressureOK"] = false;
+    JsonObject fire = j.createNestedObject("fire");
+    fire["tanks"][0]["ton"] = 0.0f; fire["tanks"][0]["cap"] = 0.0f;
+    fire["tanks"][1]["ton"] = 0.0f; fire["tanks"][1]["cap"] = 0.0f;
+    fire["tanks"][2]["ton"] = 0.0f; fire["tanks"][2]["cap"] = 0.0f;
+    fire["tanks"][3]["ton"] = 0.0f; fire["tanks"][3]["cap"] = 0.0f;
+    fire["pressure"] = 0.0f;
+    fire["pump"]["on"] = false; fire["pump"]["freq"] = 0.0f;
+    fire["pump"]["cur"] = 0.0f; fire["pump"]["volt"] = 0;
+    fire["big"]["on"] = false;
+    fire["big"]["freq"] = 0.0f;
+    fire["fault"] = false;
+    fire["pressureOK"] = false;
+    j["fillValve"]["on"] = false;
+    j["siteStart"]  = false;
+    j["fireStart"]  = false;
+    j["fire1Start"] = false;
+    j["sysOff"] = false;
+    j["upOnline"] = false;
+    j["upMsg"] = "";
+  }
+
+  String out;
+  out.reserve(3000);
+  serializeJson(j, out);
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.send(200, "application/json", out);
+}
+
+// Talep token'ı üretir (16 haneli rastgele; oturum tablosuna dokunmaz).
+String webTalepTokenUret() {
+  String t = "";
+  for (int i = 0; i < 16; i++) t += (char)('0' + random(10));
+  return t;
+}
+
+// --- Onaylı hane kayıt defteri (Preferences/NVS) ---
+// Format: "hane;ad;tel|hane;ad;tel|..."  (';' ve '|' ad içinde temizlenir)
+// Bir haneye EN FAZLA 3 kullanıcı (numara) tanımlanabilir.
+#define KAYIT_ANAHTAR "webkayit"
+#define MAX_HANE_KULLANICI 3
+String webKayitOku() {
+  Preferences p;
+  p.begin("settings", true);
+  String s = p.getString(KAYIT_ANAHTAR, "");
+  p.end();
+  return s;
+}
+
+void webKayitYaz(const String &s) {
+  Preferences p;
+  p.begin("settings", false);
+  p.putString(KAYIT_ANAHTAR, s);
+  p.end();
+}
+
+// Hanedeki kullanıcı (kayıt) sayısını döner.
+int webHaneKac(const String &hane) {
+  String s = webKayitOku();
+  int n = 0, pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      if (a > 0 && kayit.substring(0, a) == hane) n++;
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return n;
+}
+
+// Ad Soyad'dan soyadı (son sözcük) döner — yalnızca panel listesinde gösterim için.
+String webSoyad(const String &ad) {
+  int sp = ad.lastIndexOf(' ');
+  return (sp < 0) ? ad : ad.substring(sp + 1);
+}
+
+// 11 haneli numarayı "0532 xxx xx xx" biçiminde gösterir (kısa ise olduğu gibi).
+String webTelGoster(const String &tel) {
+  if (tel.length() == 11)
+    return tel.substring(0, 4) + " " + tel.substring(4, 7) + " " +
+           tel.substring(7, 9) + " " + tel.substring(9, 11);
+  return tel;
+}
+
+// Hanedeki kayıtlı numaraları panel listesi için "tel;soyad|tel;soyad|..." döner.
+String webHaneListe(const String &hane) {
+  String s = webKayitOku();
+  String r = "";
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(0, a) == hane) {
+        if (r.length() > 0) r += "|";
+        r += kayit.substring(b + 1) + ";" + webSoyad(kayit.substring(a + 1, b));
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return r;
+}
+
+// Numara o hanenin kayıtlıları arasında mı.
+bool webHaneTelVar(const String &hane, const String &tel) {
+  String s = webKayitOku();
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(0, a) == hane && kayit.substring(b + 1) == tel) return true;
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return false;
+}
+
+// Kullanıcı ekler: aynı hane+tel varsa adı günceller; yeni kullanıcı için
+// hane doluysa (3) false döner (defter değişmez). 11 haneli olmayan tel reddedilir.
+bool webHaneEkle(const String &hane, const String &ad, const String &tel) {
+  if (tel.length() != 11) return false;
+  String s = webKayitOku();
+  String yeni = "";
+  bool vardi = false;
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(0, a) == hane && kayit.substring(b + 1) == tel) {
+        yeni += hane + ";" + ad + ";" + tel + "|";   // ad güncelle
+        vardi = true;
+      } else {
+        yeni += kayit + "|";
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  if (!vardi) {
+    if (webHaneKac(hane) >= MAX_HANE_KULLANICI) return false;  // hane dolu
+    yeni += hane + ";" + ad + ";" + tel + "|";
+  }
+  webKayitYaz(yeni);
+  return true;
+}
+
+// Belirtilen numarayı o haneden siler (numara değişikliği onayında).
+void webHaneSil(const String &hane, const String &tel) {
+  String s = webKayitOku();
+  String yeni = "";
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      bool sil = (a > 0 && b > a && kayit.substring(0, a) == hane && kayit.substring(b + 1) == tel);
+      if (!sil) yeni += kayit + "|";
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  webKayitYaz(yeni);
+}
+
+// Numara herhangi bir hanede kayıtlı mı (silinen/taşınan kullanıcı girişini engeller).
+bool webTelKayitli(const String &telNorm) {
+  String s = webKayitOku();
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(b + 1) == telNorm) return true;
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return false;
+}
+
+// Numarayı hangi hanede olursa olsun kayıt defterinden siler (taşınan kullanıcı).
+void webHaneTelSil(const String &telNorm) {
+  String s = webKayitOku();
+  String yeni = "";
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      bool sil = (a > 0 && b > a && kayit.substring(b + 1) == telNorm);
+      if (!sil) yeni += kayit + "|";
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  webKayitYaz(yeni);
+}
+
+// Kayıtlı (onaylı) kullanıcıların listesini "hane - ad - tel" satırlarıyla döndürür.
+// Cloud dashboard'a web_kullanici_liste değişkeniyle gösterilir.
+// NOT: Arduino Cloud String değişkeni ~256 baytla sınırlı; webMetinSinirla() ile
+// güvenli uzunluğa (190) kısaltılmalı, aksi halde cevap buluta ulaşmaz.
+String webMetinSinirla(const String &s, int maxLen) {
+  if ((int)s.length() <= maxLen) return s;
+  return s.substring(0, maxLen);
+}
+
+String webKayitlilarListesi() {
+  String s = webKayitOku();
+  String satir = "";
+  int n = 0;
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a) {
+        n++;
+        satir += kayit.substring(0, a) + " | " +
+                 kayit.substring(a + 1, b) + " | " + webTelGoster(kayit.substring(b + 1)) + "\r\n";
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  if (n == 0) {
+    if (s.length() > 0)
+      return "KAYITLI YOK (ham veri: " + s + ")";  // tanı: defter içeriğini göster
+    return "KAYITLI KULLANICI YOK (defter bos)";
+  }
+  return "KAYITLI (" + String(n) + ")\r\n" + satir;
+}
+
+// Belirli bir hanedeki kayıtları "hane | ad | tel" satırlarıyla döndürür.
+// Messenger'a "liste 27" gibi yazınca yalnızca o hane gösterilir.
+String webHaneKayitListesi(const String &hane) {
+  String s = webKayitOku();
+  String satir = "";
+  int n = 0;
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(0, a) == hane) {
+        n++;
+        satir += kayit.substring(0, a) + " | " +
+                 kayit.substring(a + 1, b) + " | " + webTelGoster(kayit.substring(b + 1)) + "\r\n";
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  if (n == 0) return "HANE " + hane + ": kayit yok";
+  return "HANE " + hane + " (" + String(n) + " kayit)\r\n" + satir;
+}
+
+// Telefon numarasının kayıtlı olduğu hane; kayıtlı değilse boş döner.
+String webTelHane(const String &tel) {
+  String s = webKayitOku();
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a && kayit.substring(b + 1) == tel) return kayit.substring(0, a);
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return "";
+}
+
+// NVS'teki ham defterin yalnızca belirli hanedeki kayıtlarını döndürür ("ham 27").
+String webHamHaneListesi(const String &hane) {
+  String s = webKayitOku();
+  String r = "";
+  int pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) {
+      int a = kayit.indexOf(';');
+      if (a > 0 && kayit.substring(0, a) == hane) r += kayit + "|";
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  if (r.length() == 0) return "NVS webkayit hane " + hane + ": []";
+  return "NVS webkayit hane " + hane + ": [" + r + "]";
+}
+
+// Şu an paneli açık olan (anlık aktif) kullanıcıların listesi.
+// Panel her 2 sn'de /data çeker ve her istekte webOturumVar() "son"u tazeler;
+// son etkinlik 10 sn içindeyse o kullanıcı ANLIK AKTİF sayılır.
+// haneFiltre doluysa yalnızca o haneye kayıtlı aktif numaralar gösterilir ("aktif 27").
+String webAktiflerListesi(const String &haneFiltre) {
+  #define AKTIF_ESIK_MS 10000UL
+  String unique[16];
+  bool online[16];
+  uint8_t uc = 0;
+  uint32_t now = millis();
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] == 0 || webOturum[i].tel.length() < 7) continue;
+    bool var = false;
+    for (uint8_t j = 0; j < uc; j++) if (unique[j] == webOturum[i].tel) { var = true; break; }
+    if (!var && uc < 16) { unique[uc] = webOturum[i].tel; online[uc] = false; uc++; }
+  }
+  int onSay = 0;
+  for (uint8_t j = 0; j < uc; j++) {
+    uint32_t sonGiris = 0;
+    for (int i = 0; i < MAX_SES; i++)
+      if (webOturum[i].sid[0] != 0 && webOturum[i].tel == unique[j] && webOturum[i].son > sonGiris)
+        sonGiris = webOturum[i].son;
+    online[j] = ((uint32_t)(now - sonGiris) <= AKTIF_ESIK_MS);
+    if (online[j] && (haneFiltre.length() == 0 || webTelHane(unique[j]) == haneFiltre)) onSay++;
+  }
+  if (onSay == 0) {
+    if (haneFiltre.length() > 0) return "HANE " + haneFiltre + ": AKTIF KULLANICI YOK";
+    return "SU AN AKTIF KULLANICI YOK";
+  }
+  String r = "ANLIK AKTIF KULLANICILAR (" + String(onSay) + ")\r\n";
+  uint8_t no = 0;
+  for (uint8_t j = 0; j < uc; j++)
+    if (online[j] && (haneFiltre.length() == 0 || webTelHane(unique[j]) == haneFiltre)) {
+      no++;
+      r += String(no) + ". " + webTelGoster(unique[j]) + " - ONLINE\r\n";
+    }
+  return r;
+}
+
+// Kayıt defterindeki toplam kullanıcı (kayıt) sayısı.
+int webKayitSayisi() {
+  String s = webKayitOku();
+  int n = 0, pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) n++;
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  return n;
+}
+
+// Şu an aktif (10 sn içinde paneli kullanan) benzersiz kullanıcı sayısı.
+int webAktifSayisi() {
+  const uint32_t ESIK = 10000UL;
+  String unique[16];
+  uint8_t uc = 0;
+  uint32_t now = millis();
+  for (int i = 0; i < MAX_SES; i++) {
+    if (webOturum[i].sid[0] == 0 || webOturum[i].tel.length() < 7) continue;
+    bool var = false;
+    for (uint8_t j = 0; j < uc; j++) if (unique[j] == webOturum[i].tel) { var = true; break; }
+    if (!var && uc < 16) { unique[uc] = webOturum[i].tel; uc++; }
+  }
+  int onSay = 0;
+  for (uint8_t j = 0; j < uc; j++) {
+    uint32_t sonGiris = 0;
+    for (int i = 0; i < MAX_SES; i++)
+      if (webOturum[i].sid[0] != 0 && webOturum[i].tel == unique[j] && webOturum[i].son > sonGiris)
+        sonGiris = webOturum[i].son;
+    if ((uint32_t)(now - sonGiris) <= ESIK) onSay++;
+  }
+  return onSay;
+}
+
+// Kuyruğu NVS'e yazar (talepler reboot'ta korunur). Format her kayıt:
+//   ad;hane;tel;eski;token;durum;degisim   (kayıtlar | ile ayrılır)
+void webTalepKaydet() {
+  String s;
+  for (int i = 0; i < MAX_TALEP; i++) {
+    if (webTalep[i].durum == WT_BOS) continue;
+    if (s.length() > 0) s += "|";
+    s += String(webTalep[i].ad) + ";" + String(webTalep[i].hane) + ";" +
+         String(webTalep[i].tel) + ";" + String(webTalep[i].eski) + ";" +
+         String(webTalep[i].token) + ";" + String((int)webTalep[i].durum) + ";" +
+         String(webTalep[i].degisim ? "1" : "0");
+  }
+  Preferences p;
+  p.begin("settings", false);
+  if (s.length() == 0) p.remove(TALEP_ANAHTAR);
+  else p.putString(TALEP_ANAHTAR, s);
+  p.end();
+}
+
+// Kuyruğu NVS'ten okur (setup sırasında çağrılır).
+void webTalepYukle() {
+  memset(webTalep, 0, sizeof(webTalep));
+  Preferences p;
+  p.begin("settings", true);
+  String s = p.getString(TALEP_ANAHTAR, "");
+  p.end();
+  int idx = 0, pos = 0;
+  while (pos <= (int)s.length() && idx < MAX_TALEP) {
+    int e = s.indexOf('|', pos);
+    String rec = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (rec.length() > 0) {
+      String alan[7];
+      int n = 0, q = 0;
+      while (q <= (int)rec.length() && n < 7) {
+        int se = rec.indexOf(';', q);
+        alan[n++] = (se < 0) ? rec.substring(q) : rec.substring(q, se);
+        if (se < 0) break;
+        q = se + 1;
+      }
+      if (n >= 6 && alan[2].length() == 11) {
+        strncpy(webTalep[idx].ad, alan[0].c_str(), sizeof(webTalep[idx].ad) - 1);
+        strncpy(webTalep[idx].hane, alan[1].c_str(), sizeof(webTalep[idx].hane) - 1);
+        strncpy(webTalep[idx].tel, alan[2].c_str(), sizeof(webTalep[idx].tel) - 1);
+        strncpy(webTalep[idx].eski, alan[3].c_str(), sizeof(webTalep[idx].eski) - 1);
+        strncpy(webTalep[idx].token, alan[4].c_str(), sizeof(webTalep[idx].token) - 1);
+        webTalep[idx].durum = (uint8_t)alan[5].toInt();
+        webTalep[idx].degisim = (n >= 7 && alan[6] == "1");
+        idx++;
+      }
+    }
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  webTalepGuncelle();
+}
+
+// Cloud göstergelerini kuyruğa göre günceller: web_talep_bekliyor bayrağı ve
+// onay için sıradaki (ilk bekleyen) talebin bilgisi web_talep_bilgi'ye yazılır.
+void webTalepGuncelle() {
+  int bekliyor = 0, ilk = -1;
+  for (int i = 0; i < MAX_TALEP; i++) {
+    if (webTalep[i].durum == WT_BEKLIYOR) {
+      if (ilk < 0) ilk = i;
+      bekliyor++;
+    }
+  }
+  web_talep_bekliyor = (bekliyor > 0);
+  if (ilk < 0) {
+    if (web_talep_bilgi.length() > 0) web_talep_bilgi = "";
+  } else {
+    String b = "BEKLEYEN TALEP: " + String(bekliyor) + "\r\n";
+    b += "Sira: " + String(ilk + 1) + "/" + String(bekliyor) + "\r\n";
+    b += "Ad Soyad : " + String(webTalep[ilk].ad) + "\r\n";
+    b += "Hane No : " + String(webTalep[ilk].hane) + "\r\n";
+    b += "Telefon No : " + webTelGoster(String(webTalep[ilk].tel)) + "\r\n";
+    if (webTalep[ilk].degisim)
+      b += "DEGISIM: eski " + webTelGoster(String(webTalep[ilk].eski)) +
+           " -> " + webTelGoster(String(webTalep[ilk].tel)) + "\r\n";
+    web_talep_bilgi = b;
+  }
+}
+
+// i. talebi kuyruktan çıkarır (arkadakileri kaydırır), NVS + cloud'u günceller.
+void webTalepTemiz(int i) {
+  if (i < 0 || i >= MAX_TALEP) return;
+  for (int k = i; k < MAX_TALEP - 1; k++) webTalep[k] = webTalep[k + 1];
+  memset(&webTalep[MAX_TALEP - 1], 0, sizeof(WebTalep));
+  webTalepKaydet();
+  webTalepGuncelle();
+}
+
+// token+tel eşleşen talebin indeksini döner, yoksa -1.
+int webTalepBulToken(const String &tel, const String &token) {
+  for (int i = 0; i < MAX_TALEP; i++) {
+    if (webTalep[i].durum == WT_BOS) continue;
+    if (tel == String(webTalep[i].tel) && token == String(webTalep[i].token)) return i;
+  }
+  return -1;
+}
+
+// Aynı telefona ait ilk talebi (durum fark etmez) döner, yoksa -1.
+int webTalepBulTel(const String &tel) {
+  for (int i = 0; i < MAX_TALEP; i++) {
+    if (webTalep[i].durum == WT_BOS) continue;
+    if (tel == String(webTalep[i].tel)) return i;
+  }
+  return -1;
+}
+
+// /talep: ad+hane+tel ile talep oluşturur. Talepler süresiz kuyrukta bekler.
+// Kural (soyad fark etmez): aynı haneye en fazla 3 numara kaydı.
+//  - numara zaten hanede → şifre yenileme
+//  - hane < 3 kayıt → normal ekleme (aynı soyad + yeni numara da dahil)
+//  - hane dolu (3) → "degisim_onay": panel hangi eski kaydın silineceğini
+//    sorar, degisim=1 + eski ile tekrar çağırır.
+void webTalepIste() {
+  String tel = webNorm(webSrv.arg("tel"));
+  String hane = webNorm(webSrv.arg("hane"));
+  String ad = webSrv.arg("ad");
+  ad.replace(';', ' '); ad.replace('|', ' '); ad.trim();
+  bool degisim = (webSrv.arg("degisim") == "1");
+  if (tel.length() != 11 || hane.length() < 1 || ad.length() < 2) {
+    webSrv.sendHeader("Cache-Control", "no-store");
+    webSrv.send(400, "application/json", "{\"durum\":\"hatali\"}");
+    return;
+  }
+
+  // Kayıtlı (onaylı) numara → onay gerekmez, şifre anında verilir (ad güncellenir).
+  if (webHaneTelVar(hane, tel)) {
+    webHaneEkle(hane, ad, tel);
+    int t = webTalepBulTel(tel);
+    if (t >= 0) webTalepTemiz(t);   // artık gereksiz talep kaydını kaldır
+    webSrv.sendHeader("Cache-Control", "no-store");
+    webSrv.send(200, "application/json",
+      "{\"durum\":\"onaylandi\",\"sifre\":\"" + webSifreUret(tel) + "\"}");
+    return;
+  }
+
+  // Aynı numaranın önceki talebini kontrol et (süresiz kuyruk).
+  for (int i = 0; i < MAX_TALEP; i++) {
+    if (webTalep[i].durum == WT_BOS) continue;
+    if (String(webTalep[i].tel) != tel) continue;
+    if (webTalep[i].durum == WT_BEKLIYOR) {
+      // Hâlâ bekliyor → aynı token'ı dön (mükerrer talep oluşmaz).
+      webSrv.sendHeader("Cache-Control", "no-store");
+      webSrv.send(200, "application/json",
+        "{\"durum\":\"isleniyor\",\"token\":\"" + String(webTalep[i].token) + "\"}");
+      return;
+    }
+    if (webTalep[i].durum == WT_ONAYLANDI) {
+      // Onaylanmış ama şifre alınmamış (kullanıcı çıkmıştı) → şifreyi anında ver.
+      webHaneEkle(String(webTalep[i].hane), String(webTalep[i].ad), String(webTalep[i].tel));
+      webSrv.sendHeader("Cache-Control", "no-store");
+      webSrv.send(200, "application/json",
+        "{\"durum\":\"onaylandi\",\"sifre\":\"" + webSifreUret(tel) + "\"}");
+      return;
+    }
+    // WT_RED → kullanıcı yeniden başvuruyor; eski red talebi yerine yenisi eklenir.
+    webTalepTemiz(i);
+    break;
+  }
+
+  bool degisiklik = false;
+  String eski = webNorm(webSrv.arg("eski"));
+
+  if (webHaneTelVar(hane, tel)) {
+    // Numara zaten hanede kayıtlı → şifre yenileme (ad güncellenir).
+  } else if (webHaneKac(hane) < MAX_HANE_KULLANICI) {
+    // Haneye yeni numara ekleniyor; hane dolu değilse (3) normal ekleme.
+    // Soyad fark etmez: aynı soyad + aynı hane + yeni numara da kayıt olabilir.
+  } else {
+    // Hane dolu (3 kayıt): yeni numara için silinecek eski kayıt seçilmeli.
+    if (!degisim || !webHaneTelVar(hane, eski)) {
+      String liste = webHaneListe(hane);
+      webSrv.sendHeader("Cache-Control", "no-store");
+      webSrv.send(200, "application/json",
+        "{\"durum\":\"degisim_onay\",\"eski\":\"" + liste + "\"}");
+      return;
+    }
+    degisiklik = true;
+  }
+
+  // Boş yuva bul; kuyruk doluysa önce RED, sonra ONAYLANDI atılır (BEKLIYOR asla atılmaz).
+  int yuv = -1;
+  for (int i = 0; i < MAX_TALEP; i++)
+    if (webTalep[i].durum == WT_BOS) { yuv = i; break; }
+  if (yuv < 0) {
+    for (int i = 0; i < MAX_TALEP; i++)
+      if (webTalep[i].durum == WT_RED) { yuv = i; break; }
+    if (yuv < 0)
+      for (int i = 0; i < MAX_TALEP; i++)
+        if (webTalep[i].durum == WT_ONAYLANDI) { yuv = i; break; }
+    if (yuv < 0) {
+      webSrv.sendHeader("Cache-Control", "no-store");
+      webSrv.send(200, "application/json", "{\"durum\":\"mesgul\"}");
+      return;
+    }
+    webTalepTemiz(yuv);
+  }
+
+  strncpy(webTalep[yuv].ad, ad.c_str(), sizeof(webTalep[yuv].ad) - 1);
+  webTalep[yuv].ad[sizeof(webTalep[yuv].ad) - 1] = 0;
+  strncpy(webTalep[yuv].hane, hane.c_str(), sizeof(webTalep[yuv].hane) - 1);
+  webTalep[yuv].hane[sizeof(webTalep[yuv].hane) - 1] = 0;
+  strncpy(webTalep[yuv].tel, tel.c_str(), sizeof(webTalep[yuv].tel) - 1);
+  webTalep[yuv].tel[sizeof(webTalep[yuv].tel) - 1] = 0;
+  strncpy(webTalep[yuv].eski, eski.c_str(), sizeof(webTalep[yuv].eski) - 1);
+  webTalep[yuv].eski[sizeof(webTalep[yuv].eski) - 1] = 0;
+  String token = webTalepTokenUret();
+  strncpy(webTalep[yuv].token, token.c_str(), sizeof(webTalep[yuv].token) - 1);
+  webTalep[yuv].token[sizeof(webTalep[yuv].token) - 1] = 0;
+  webTalep[yuv].durum = WT_BEKLIYOR;
+  webTalep[yuv].degisim = degisiklik;
+
+  webTalepKaydet();
+  webTalepGuncelle();
+
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.send(200, "application/json",
+    "{\"durum\":\"isleniyor\",\"token\":\"" + token + "\"}");
+}
+
+// /durum: login sayfasının poll'u. Şifre yalnızca token+tel eşleşirse döner.
+// Talepler süresiz olduğundan zaman aşımı yok: kullanıcı çıksa bile onaylandığında
+// şifresini alabilir; reddedildiyse "red", hâlâ bekliyorsa "bekliyor" görür.
+void webTalepDurum() {
+  String tel = webNorm(webSrv.arg("tel"));
+  String token = webSrv.arg("token");
+  int i = webTalepBulToken(tel, token);
+  String cevap;
+  if (i < 0) {
+    cevap = "{\"durum\":\"yok\"}";
+  } else if (webTalep[i].durum == WT_BEKLIYOR) {
+    cevap = "{\"durum\":\"bekliyor\"}";
+  } else if (webTalep[i].durum == WT_ONAYLANDI) {
+    cevap = "{\"durum\":\"onaylandi\",\"sifre\":\"" + webSifreUret(tel) + "\"}";
+  } else {
+    cevap = "{\"durum\":\"red\"}";
+  }
+  webSrv.sendHeader("Cache-Control", "no-store");
+  webSrv.send(200, "application/json", cevap);
+}
+
+void webKayitOl() {
+  webSrv.on("/login", webLogin);
+  webSrv.on("/logout", webCikis);
+  webSrv.on("/data", webData);
+  webSrv.on("/talep", webTalepIste);
+  webSrv.on("/durum", webTalepDurum);
+  webSrv.on("/index.html", webIndex);
+  webSrv.on("/style.css", HTTP_GET, []() { webSrvFile("/style.css", "text/css; charset=utf-8"); });
+  webSrv.on("/app.js",   HTTP_GET, []() { webSrvFile("/app.js", "application/javascript; charset=utf-8"); });
+  webSrv.on("/", webKok);
+  webSrv.on("/login.html", HTTP_GET, []() { webSrvFile("/login.html", "text/html; charset=utf-8"); });
+  webSrv.onNotFound([]() {
+    webSrv.send(404, "text/plain", "404");
+  });
+  const char *webHdr[] = { "Cookie" };        // oturum cookie'sini okumak için zorunlu
+  webSrv.collectHeaders(webHdr, 1);
+}
+/* ===================================================== */
+
+// Alarm listesinden mesajı kaldırır (birebir eşleşen ilk kayıt).
+void clearAlarm(const char* msg) {
+  for (int i = 0; i < alarmCount; i++) {
+    if (strcmp(alarmList[i], msg) == 0) {
+      for (int j = i; j < alarmCount - 1; j++)
+        strcpy(alarmList[j], alarmList[j + 1]);
+      alarmCount--;
+      return;
+    }
+  }
+}
+
+// Değeri [a, b] aralığına sıkıştırır.
+float clampf(float x, float a, float b) {
+  if (x < a) return a;
+  if (x > b) return b;
+  return x;
+}
+
+// Analog voltajı bar'a çevirir (4-20 mA: V4=V(4mA), V20=V(20mA), ölçek 0..SENSOR_MAX_BAR).
+float voltsToBar(float V, float V4, float V20) {
+  if (fabs(V20 - V4) < 0.0001f)
+    return 0;
+  float ratio = (V - V4) / (V20 - V4);
+  float bar = ratio * SENSOR_MAX_BAR;
+  return clampf(bar, 0, SENSOR_MAX_BAR);
+}
+
+// WiFi sinyal gücünü (RSSI) yüzdeye çevirir (-100..-50 dBm → %0..%100).
+int wifiToPercent(int rssi) {
+  if (rssi <= -100) return 0;
+  if (rssi >= -50)  return 100;
+  return 2 * (rssi + 100);
+}
+
+// Ayarlar değiştiyse ve 1 saniye beklenildiyse Preferences'a yazar (debounce).
+void saveToPrefsDelayed() {
+  if (prefsNeedsSave && (millis() - lastPrefsChange > 1000)) {
+    prefs.begin("settings", false);
+    prefs.putFloat("siteAlt", site_alt_limit);
+    prefs.putFloat("siteUst", site_ust_limit);
+    prefs.putBool("sstart", sys_start);
+    prefs.putBool("kstart", kuyu_start);
+    prefs.putBool("hstart", hidr_start);
+    prefs.end();
+    prefsNeedsSave = false;
+  }
+}
+
+// Kayıtlı ayarları ve sayaçları Preferences'tan okur, Nextion ekranına yansıtır.
+void loadFromPrefs() {
+  prefs.begin("settings", true);
+  site_alt_limit = prefs.getFloat("siteAlt", 2.0);
+  site_ust_limit = prefs.getFloat("siteUst", 8.0);
+  sys_start = prefs.getBool("sstart", false);
+  kuyu_start = prefs.getBool("kstart", false);
+  hidr_start = prefs.getBool("hstart", false);
+  rcnt = prefs.getLong("rcnt", 0);
+  prefs.end();
+
+  buffer1[0] = '\0';
+  buffer2[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.x0.val=%d", int(site_alt_limit * 10.0f));
+  snprintf(buffer2, sizeof(buffer2), "page1.x1.val=%d", int(site_ust_limit * 10.0f));
+  nextionSend(buffer1);
+  nextionSend(buffer2);
+  buffer1[0] = '\0';
+  buffer2[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.h0.val=%d", int(site_alt_limit * 10.0f));
+  snprintf(buffer2, sizeof(buffer2), "page1.h1.val=%d", int(site_ust_limit * 10.0f));
+  nextionSend(buffer1);
+  nextionSend(buffer2);
+
+  sistem_start = sys_start;
+  snprintf(buffer1, sizeof(buffer1), "page0.bt0.val=%d", (int)sys_start);
+  nextionSend(buffer1);
+  nextionSend(sys_start ? "page0.bt0.txt=\"Stop\"" : "page0.bt0.txt=\"Start\"");
+
+  ckuyu_start = kuyu_start;
+  nextionSend(kuyu_start ? "page1.c0.val=1" : "page1.c0.val=0");
+
+  chidr_start = hidr_start;
+  nextionSend(hidr_start ? "page1.c1.val=1" : "page1.c1.val=0");
+}
+
+// Durum satırını 1,5 saniyede bir günceller: alarm yoksa "Sistem Normal",
+// varsa sırayla alarm mesajlarını (kırmızı) gösterir.
+void updateStatusDisplay() {
+  static uint32_t last = 0;
+
+  if (millis() - last < 1500)
+    return;
+  last = millis();
+
+  if (alarmCount == 0) {
+    nextionSend("page0.tstatus.txt=\"Sistem Normal\"");
+    nextionSend("page0.tstatus.pco=2016");
+    nextionSend("page0.tstatus.bco=0");
+  } else {
+    if (alarmIndex >= alarmCount)
+      alarmIndex = 0;
+
+    char buffer[150];
+    snprintf(buffer, sizeof(buffer), "page0.tstatus.txt=\"%s\"", alarmList[alarmIndex]);
+    nextionSend(buffer);
+    nextionSend("page0.tstatus.pco=63488");
+    nextionSend("page0.tstatus.bco=65504");
+
+    alarmIndex++;
+  }
+}
+
+/* ===================================================== */
+/* NEXTION */
+/* ===================================================== */
+
+// Nextion'dan gelen veri akışı: 0xFF (end marker/gürültü) ve 0x65
+// (dokunmatik olay, 7 byte) yok sayılır, tanınan kontrol ID'leri
+// (0x01..0x06) için 4 byte little-endian değer okunur.
+void readNextion() {
+  static uint32_t lastRead = 0;
+  if (millis() - lastRead < 50) return;
+  lastRead = millis();
+
+  while (nex.available() > 0) {
+    int first = nex.peek();
+    if (first < 0) break;
+
+    if (first == 0xFF) {         // end marker / gürültü
+      nex.read();
+      continue;
+    }
+
+    if (first == 0x65) {         // dokunmatik olay → 7 byte atla
+      if (nex.available() < 7) break;
+      for (int i = 0; i < 7; i++) nex.read();
+      continue;
+    }
+
+    if (first < 0x01 || first > 0x06) {  // tanınmayan byte → yeniden senkron
+      nex.read();
+      continue;
+    }
+
+    if (nex.available() < 5) break;      // eksik frame, bir sonraki tura bırak
+
+    uint8_t controlId = nex.read();
+    uint32_t value = 0;
+    for (int i = 0; i < 4; i++) {
+      value |= ((uint32_t)nex.read()) << (i * 8);
+    }
+
+    switch (controlId) {
+      case 0x01:  // site_alt_limit progress bar
+        site_alt_limit = value / 10.0f;
+        prefsNeedsSave = true;
+        lastPrefsChange = millis();
+        break;
+
+      case 0x02:  // site_ust_limit progress bar
+        site_ust_limit = value / 10.0f;
+        prefsNeedsSave = true;
+        lastPrefsChange = millis();
+        break;
+
+      case 0x03:  // page1 yüklendi → değerleri gönder
+        buffer1[0] = '\0';
+        buffer2[0] = '\0';
+        snprintf(buffer1, sizeof(buffer1), "page1.x0.val=%d", int(site_alt_limit * 10.0f));
+        snprintf(buffer2, sizeof(buffer2), "page1.x1.val=%d", int(site_ust_limit * 10.0f));
+        nextionSend(buffer1);
+        nextionSend(buffer2);
+        buffer1[0] = '\0';
+        buffer2[0] = '\0';
+        snprintf(buffer1, sizeof(buffer1), "page1.h0.val=%d", int(site_alt_limit * 10.0f));
+        snprintf(buffer2, sizeof(buffer2), "page1.h1.val=%d", int(site_ust_limit * 10.0f));
+        nextionSend(buffer1);
+        nextionSend(buffer2);
+        nextionSend(kuyu_start ? "page1.c0.val=1" : "page1.c0.val=0");
+        nextionSend(hidr_start ? "page1.c1.val=1" : "page1.c1.val=0");
+        break;
+
+      case 0x04:
+        sys_start = bool(value);
+        sistem_start = sys_start;
+        prefsNeedsSave = true;
+        lastPrefsChange = millis();
+        break;
+
+      case 0x05:
+        kuyu_start = bool(value);
+        ckuyu_start = kuyu_start;
+        prefsNeedsSave = true;
+        lastPrefsChange = millis();
+        break;
+
+      case 0x06:
+        hidr_start = bool(value);
+        chidr_start = hidr_start;
+        prefsNeedsSave = true;
+        lastPrefsChange = millis();
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
+/* ---- 1 saniyede bir güncelle ---- */
+
+// Nextion ekranını saniyede bir günceller: WiFi gücü, bar değerleri,
+// faz/yangın/site tankı/inverter/kuyu durumu ve alarm renkleri.
+void nextionUpdate() {
+  static uint32_t last = 0;
+
+  if (millis() - last < 1000)
+    return;
+  last = millis();
+
+  /* ===== WIFI ===== */
+  static int lastWifiPercent = -1;
+  static int lastCloudWifiPercent = -1;
+  if (WiFi.status() == WL_CONNECTED) {
+    nextionSetPco("page0.ccomm_ok", 2016);
+    nextionSetBco("page0.ccomm_ok", 0);
+    wifiRssi = WiFi.RSSI();
+    wifiPercent = wifiToPercent(wifiRssi);
+
+    if (wifiPercent != lastWifiPercent) {
+      lastWifiPercent = wifiPercent;
+      char buffer[30];
+      snprintf(buffer, sizeof(buffer), "page0.jwifi.val=%d", wifiPercent);
+      nextionSend(buffer);
+    }
+    if (cloudStarted && abs(wifiPercent - lastCloudWifiPercent) >= 5) {
+      wifi_guc = wifiPercent;
+      lastCloudWifiPercent = wifiPercent;
+    }
+    clearAlarm("Wifi Baglanti Yok");
+  } else {
+    if (lastWifiPercent != 0) {
+      lastWifiPercent = 0;
+      nextionSend("page0.jwifi.val=0");
+    }
+    nextionSetPco("page0.ccomm_ok", 63488);
+    nextionSetBco("page0.ccomm_ok", 65504);
+    addAlarm("Wifi Baglanti Yok");
+  }
+
+  s = (int)(site_bar * 10);
+  l = (int)(line_bar * 10);
+
+  buffer1[0] = '\0';
+  buffer2[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page0.xsite_bar.val=%d", s);
+  nextionSend(buffer1);
+  snprintf(buffer2, sizeof(buffer2), "page0.xline_bar.val=%d", l);
+  nextionSend(buffer2);
+  snprintf(buffer1, sizeof(buffer1), "page0.xfire_bar.val=%d", int(yan_basinc * 10));
+  nextionSend(buffer1);
+
+  /* ===== FAZ ===== */
+  if (io.fazOK) {
+    nextionSetPco("page0.cfaz_ok", 2016);
+    nextionSetBco("page0.cfaz_ok", 0);
+    clearAlarm("Faz Hatasi ! Sistem calisamaz...");
+  } else {
+    nextionSetPco("page0.cfaz_ok", 63488);
+    nextionSetBco("page0.cfaz_ok", 65504);
+    addAlarm("Faz Hatasi ! Sistem calisamaz...");
+  }
+
+  /* ===== YANGIN TANKI / SEVİYE ===== */
+  if (io.fireAlt == 0) {
+    addAlarm("Yangin tanki bos !");
+    nextionSetPco("page0.jfire_tank", 63488);
+    nextionSetPco("page0.cfired_sens", 63488);
+    nextionSetBco("page0.cfired_sens", 65504);
+    nextionSend("page0.jfire_tank.val=0");
+  } else {
+    clearAlarm("Yangin tanki bos !");
+    nextionSetPco("page0.jfire_tank", 1024);
+    nextionSetPco("page0.cfired_sens", 2016);
+    nextionSetBco("page0.cfired_sens", 0);
+    if (io.fireUst == 0) {
+      nextionSend("page0.jfire_tank.val=50");
+      nextionSetPco("page0.cfireu_sens", 63488);
+      nextionSetBco("page0.cfireu_sens", 65504);
+    } else {
+      nextionSend("page0.jfire_tank.val=100");
+      nextionSetPco("page0.cfireu_sens", 2016);
+      nextionSetBco("page0.cfireu_sens", 0);
+    }
+  }
+
+  /* ===== SITE TANKI ===== */
+  if (io.siteAlt) {
+    nextionSetPco("page0.jsite_tank", 1024);
+    nextionSetPco("page0.cs_sens", 2016);
+    nextionSetBco("page0.cs_sens", 0);
+    clearAlarm("Site tanki bos !");
+  } else {
+    nextionSetPco("page0.jsite_tank", 63488);
+    nextionSetPco("page0.cs_sens", 63488);
+    nextionSetBco("page0.cs_sens", 65504);
+    addAlarm("Site tanki bos !");
+  }
+
+  /* ===== INVERTER ===== */
+  if (io.inverterOK) {
+    nextionSetPco("page0.cinv_ok", 2016);
+    nextionSetBco("page0.cinv_ok", 0);
+    clearAlarm("Inverter hatasi !");
+  } else {
+    nextionSetPco("page0.cinv_ok", 63488);
+    nextionSetBco("page0.cinv_ok", 65504);
+    addAlarm("Inverter hatasi !");
+  }
+
+  /* ===== KUYU SUYU ===== */
+  if (io.kuyu) {
+    nextionSetPco("page0.csu_var", 2016);
+    nextionSetBco("page0.csu_var", 0);
+    clearAlarm("Kuyuda su yok !");
+  } else {
+    nextionSetPco("page0.csu_var", 63488);
+    nextionSetBco("page0.csu_var", 65504);
+    addAlarm("Kuyuda su yok !");
+  }
+
+  /* ===== START BEKLENIYOR ===== */
+  if (sys_start) {
+    clearAlarm("Start bekleniyor !");
+  } else {
+    addAlarm("Start bekleniyor !");
+  }
+
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page0.csite_inv.val=%d", inv_stat);
+  nextionSend(buffer1);
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page0.csite_yedek.val=%d", yedek_stat);
+  nextionSend(buffer1);
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page0.cksu.val=%d", kuyu_stat);
+  nextionSend(buffer1);
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page0.chidr.val=%d", hidr_stat);
+  nextionSend(buffer1);
+}
+
+/* ===================================================== */
+/* IO OKU */
+/* ===================================================== */
+
+// MCP çıkış genişletici üzerindeki 6 dijital girişi okur (yangın alt/üst, site alt, faz, inverter, kuyu).
+// [EKLENDI 07/08] Debounce: şamandıra/kontak girişleri yeni duruma ancak DEBOUNCE_MS süre boyunca
+// stabil kaldıktan sonra geçer (kontak zıplaması / su yüzeyi dalgalanması çırpınmayı önler).
+void readInputs() {
+  const uint32_t DB_MS = 300UL;
+  static bool raw[6] = {false, false, false, false, false, false};
+  static bool dbOut[6] = {false, false, false, false, false, false};
+  static uint32_t chg[6] = {0, 0, 0, 0, 0, 0};
+
+  bool r[6];
+  r[0] = !mcp.digitalRead(0);  // fireAlt
+  r[1] = !mcp.digitalRead(1);  // fireUst
+  r[2] = !mcp.digitalRead(2);  // siteAlt
+  r[3] = !mcp.digitalRead(3);  // fazOK
+  r[4] = !mcp.digitalRead(4);  // inverterOK
+  r[5] = !mcp.digitalRead(5);  // kuyu
+
+  for (int i = 0; i < 6; i++) {
+    if (r[i] != raw[i]) {
+      raw[i] = r[i];
+      chg[i] = millis();
+    } else if (r[i] != dbOut[i] && (millis() - chg[i]) >= DB_MS) {
+      dbOut[i] = r[i];
+    }
+  }
+
+  io.fireAlt    = dbOut[0];
+  io.fireUst    = dbOut[1];
+  io.siteAlt    = dbOut[2];
+  io.fazOK      = dbOut[3];
+  io.inverterOK = dbOut[4];
+  io.kuyu       = dbOut[5];
+}
+
+/* ===================================================== */
+/* MCP SETUP / OUTPUT FORCE */
+/* ===================================================== */
+
+// Tüm çıkışları beklenen duruma göre zorla yazar. mcpSetup recovery
+// sırasında çağrıldığında diğer kanalların (kuyu/hidrant) OFF'ta
+// kilitlenmesini önler.
+void forceWriteOutputs() {
+  mcp.digitalWrite(inv_en, expected_inv);
+  mcp.digitalWrite(yedek_en, expected_yedek);
+  mcp.digitalWrite(kuyu_en, expected_kuyu);
+  mcp.digitalWrite(hidr_en, expected_hidr);
+  last_inv   = expected_inv;
+  last_yedek = expected_yedek;
+  last_kuyu  = expected_kuyu;
+  last_hidr  = expected_hidr;
+}
+
+// MCP23017'yi I2C üzerinden başlatır; pin modlarını kurar, çıkışları güvenli duruma (kapalı) çeker.
+void mcpSetup() {
+  if (!mcp.begin_I2C(MCP_ADDR)) {
+    addAlarm("MCP Baglanti Hatasi");
+    return;
+  }
+
+  for (int i = 0; i <= 5; i++) {
+    mcp.pinMode(i, INPUT);
+  }
+
+  mcp.pinMode(inv_en, OUTPUT);
+  mcp.pinMode(yedek_en, OUTPUT);
+  mcp.pinMode(kuyu_en, OUTPUT);
+  mcp.pinMode(hidr_en, OUTPUT);
+
+  // Önce güvenli durum (hepsi kapalı)
+  mcp.digitalWrite(inv_en, HIGH);
+  mcp.digitalWrite(yedek_en, HIGH);
+  mcp.digitalWrite(kuyu_en, HIGH);
+  mcp.digitalWrite(hidr_en, HIGH);
+
+  forceWriteOutputs();
+}
+
+/* ===================================================== */
+/* KONTROL */
+/* ===================================================== */
+
+// Site su basınç kontrolü: histerezis ile inverter/yedek pompa seçimi yapar,
+// çıkışları yazar ve 1 saniyelik okuma ile MCP kilidi algılar (10 sn → recovery).
+void siteControl() {
+  static bool pumpRunning = false;
+  static uint32_t mismatchTimer = 0;
+  static uint32_t lastReadback = 0;
+  static bool recoveryActive = false;
+  static uint32_t recoveryStart = 0;
+
+  if (!hard_test) {
+
+    // Madde 1: site basınç sensörü 10 sn'dir geçerli örnek vermediyse bayat sayılır.
+    // (Kablo kopması / 4mA altı zaten ADC bloğunda siteSensorOK=false yapar.)
+    if ((millis() - lastSiteBarUpdate) > 10000UL) {
+      siteSensorOK = false;
+    }
+    if (!siteSensorOK) {
+      addAlarm("Site basinc sensoru bayat!");
+    } else {
+      clearAlarm("Site basinc sensoru bayat!");
+    }
+
+    // Madde 1: şebeke basınç sensörü 10 sn bayatsa işaretlenir (yalnızca ekran).
+    if ((millis() - lastLineBarUpdate) > 10000UL) {
+      lineSensorOK = false;
+    }
+    if (!lineSensorOK) {
+      addAlarm("Sebeke basinc sensoru bayat!");
+    } else {
+      clearAlarm("Sebeke basinc sensoru bayat!");
+    }
+
+    // SYSTEM OFF
+    if (!io.siteAlt || !io.fazOK || !sys_start || !siteSensorOK) {
+      expected_inv = true;
+      expected_yedek = true;
+      pumpRunning = false;
+      mismatchTimer = 0;
+      recoveryActive = false;
+    }
+    else {
+
+      // HYSTERESIS
+      if (!pumpRunning && site_bar < site_alt_limit)
+        pumpRunning = true;
+      else if (pumpRunning && site_bar > site_ust_limit)
+        pumpRunning = false;
+
+      // OUTPUT SELECT
+      if (pumpRunning) {
+        if (io.inverterOK) {
+          expected_inv = false;
+          expected_yedek = true;
+        } else {
+          expected_inv = true;
+          expected_yedek = false;
+        }
+      } else {
+        expected_inv = true;
+        expected_yedek = true;
+      }
+    }
+
+    // WRITE ONLY IF CHANGED
+    if (expected_inv != last_inv) {
+      last_inv = expected_inv;
+      mcp.digitalWrite(inv_en, expected_inv);
+    }
+    if (expected_yedek != last_yedek) {
+      last_yedek = expected_yedek;
+      mcp.digitalWrite(yedek_en, expected_yedek);
+    }
+
+    // READBACK 1 sn
+    if (millis() - lastReadback >= 1000) {
+      lastReadback = millis();
+
+      bool inv_state = mcp.digitalRead(inv_en);
+      bool yedek_state = mcp.digitalRead(yedek_en);
+
+      bool mismatch =
+        (inv_state != expected_inv) ||
+        (yedek_state != expected_yedek);
+
+      // Recovery sonrası kontrol
+      if (recoveryActive) {
+        if (millis() - recoveryStart >= 500) {
+          recoveryActive = false;
+          if (mismatch) {
+            addAlarm("MCP OUTPUT FROZEN!");
+            Rst_sys = true;
+          } else {
+            mismatchTimer = 0;
+          }
+        }
+      }
+      else {
+        if (mismatch) {
+          if (mismatchTimer == 0) {
+            mismatchTimer = millis();
+            addAlarm("in site control");
+          }
+          else if (millis() - mismatchTimer >= 10000) {
+            clearAlarm("in site control");
+            mcpSetup();
+            recoveryActive = true;
+            recoveryStart = millis();
+          }
+        } else {
+          mismatchTimer = 0;
+        }
+      }
+    }
+  }
+  else if (hard_test && io.fazOK) {
+    expected_inv = !hard_inv;
+    expected_yedek = !hard_yedek;
+
+    if (expected_inv != last_inv) {
+      last_inv = expected_inv;
+      mcp.digitalWrite(inv_en, expected_inv);
+    }
+    if (expected_yedek != last_yedek) {
+      last_yedek = expected_yedek;
+      mcp.digitalWrite(yedek_en, expected_yedek);
+    }
+  }
+}
+
+// Kuyu pompası kontrolü: su/faz/başlatma koşulları ve yangın üst sensörüne göre
+// çalıştırır; çıkış kilidini (MCP frozen) izleyip recovery uygular.
+void kuyuControl() {
+  static uint32_t mismatchTimer = 0;
+  static uint32_t lastReadback = 0;
+  static bool recoveryActive = false;
+  static uint32_t recoveryStart = 0;
+  // [EKLENDI 07/08] Madde 9: histerezis + max çalışma süresi koruması
+  static uint32_t kuyuRunStart = 0;
+  static bool kuyuRunLimitHit = false;
+  const unsigned long KUYU_MAX_RUN_MS = 3600000UL;   // 1 saat
+
+  if (!hard_test) {
+
+    // SYSTEM OFF / SAFETY STOP
+    if (!io.kuyu || !io.fazOK || !kuyu_start) {
+      expected_kuyu = true;
+      kuyuRunLimitHit = false;
+      clearAlarm("Kuyu pompasi max calisma suresi asildi!");
+      mismatchTimer = 0;
+      recoveryActive = false;
+    }
+    else {
+      // [EKLENDI 07/08] Madde 9: Histerezis — alt şamandıra (fireAlt) kuruysa başlat, üst şamandıra
+      // (fireUst) ıslaksa durdur. İkisi arasında son durum korunur → kontak zıplamasında
+      // çırpınma olmaz. fireUst arızalıysa (açık kaldı) 1 saat kesintisiz çalışmadan
+      // sonra pompa zorla durdurulur + alarm verilir; üst şamandıra tekrar görülünce kilit kalkar.
+      if (kuyuRunLimitHit) {
+        expected_kuyu = true;
+        addAlarm("Kuyu pompasi max calisma suresi asildi!");
+      } else {
+        if (!io.fireAlt) {
+          // tank alt seviyenin altına düştü → doldurmaya başla
+          if (expected_kuyu) kuyuRunStart = millis();
+          expected_kuyu = false;
+        } else if (io.fireUst) {
+          // tank doldu → durdur; üst şamandıra sağlıklı demektir, kilidi sıfırla
+          expected_kuyu = true;
+          kuyuRunLimitHit = false;
+          clearAlarm("Kuyu pompasi max calisma suresi asildi!");
+        }
+        // else: iki şamandıra arası → son durum korunur
+
+        if (!expected_kuyu && (millis() - kuyuRunStart >= KUYU_MAX_RUN_MS)) {
+          kuyuRunLimitHit = true;
+          expected_kuyu = true;
+        }
+      }
+    }
+
+    // WRITE ONLY IF CHANGED
+    if (expected_kuyu != last_kuyu) {
+      last_kuyu = expected_kuyu;
+      mcp.digitalWrite(kuyu_en, expected_kuyu);
+    }
+
+    // READBACK 1 sn
+    if (millis() - lastReadback >= 1000) {
+      lastReadback = millis();
+
+      bool kuyu_state = mcp.digitalRead(kuyu_en);
+      bool mismatch = (kuyu_state != expected_kuyu);
+
+      if (recoveryActive) {
+        if (millis() - recoveryStart >= 500) {
+          recoveryActive = false;
+          if (mismatch) {
+            addAlarm("MCP KUYU OUTPUT FROZEN!");
+            Rst_sys = true;
+          } else {
+            mismatchTimer = 0;
+          }
+        }
+      }
+      else {
+        if (mismatch) {
+          if (mismatchTimer == 0) {
+            mismatchTimer = millis();
+            addAlarm("in kuyu control");
+          }
+          else if (millis() - mismatchTimer >= 10000) {
+            clearAlarm("in kuyu control");
+            mcpSetup();
+            recoveryActive = true;
+            recoveryStart = millis();
+          }
+        } else {
+          mismatchTimer = 0;
+        }
+      }
+    }
+  }
+  else if (hard_test && io.fazOK) {
+    expected_kuyu = !hard_kuyu;
+
+    if (expected_kuyu != last_kuyu) {
+      last_kuyu = expected_kuyu;
+      mcp.digitalWrite(kuyu_en, expected_kuyu);
+    }
+  }
+}
+
+// Hidrant pompası kontrolü: basınç verisi geçerliyse histerezis, değilse 2 dk
+// döngü (aç/kapa) modunda çalışır; MCP kilidini izler.
+void hidrantControl() {
+  static uint32_t hidrantTimer = 0;
+  static bool hidrantCycle = false;
+  static bool pumpRunning = false;
+  static uint32_t mismatchTimer = 0;
+  static uint32_t lastReadback = 0;
+  static bool recoveryActive = false;
+  static uint32_t recoveryStart = 0;
+
+  if (!hard_test) {
+
+    // SAFETY STOP
+    if (!io.fireAlt || !io.fazOK || !hidr_start) {
+      expected_hidr = true;
+      hidrantTimer = millis();
+      hidrantCycle = false;
+      pumpRunning = false;
+      mismatchTimer = 0;
+      recoveryActive = false;
+    }
+    else {
+
+      // PRESSURE VALID MODE
+      // Madde 1: Upside yangın basınç sensörü bayat/ölüyse (firePressureOK=false)
+      // basınç verisi geçerli sayılmaz → zaman tabanlı 2/2 döngüsüne düşülür.
+      bool basincGecerli = ((millis() - lastYanBasincUpdate) < 20000UL) && remoteDataOK && rxFirePressureOK;
+
+      if (basincGecerli) {
+        // Histerezis
+        if (yan_basinc < 2.0f)
+          pumpRunning = true;
+        else if (yan_basinc >= 2.5f)
+          pumpRunning = false;
+        expected_hidr = pumpRunning ? false : true;
+        hidrantTimer = millis();
+        hidrantCycle = false;
+      }
+      else if (rxFire1Start) {
+        // [EKLENDI 07/08] Madde 3: Gerçek yangın (fire1_start) aktifken upside yangın basınç sensörü
+        // ölü/bayatsa hidrant tank bitene kadar kesintisiz çalışır (röle ON). Tank
+        // fireAlt'ın altına düşünce güvenlik STOP zaten devreye girer. fire1_start
+        // kalkınca veya sensör geri gelince normal kontrolüne dönülür.
+        expected_hidr = false;
+        hidrantTimer = millis();
+        hidrantCycle = false;
+      }
+      else {
+        // TIME BASED MODE
+        uint32_t elapsed = millis() - hidrantTimer;
+        if (!hidrantCycle) {
+          if (elapsed >= 120000UL) {
+            hidrantCycle = true;
+            hidrantTimer = millis();
+            expected_hidr = false;
+          }
+          else {
+            expected_hidr = true;
+          }
+        }
+        else {
+          if (elapsed >= 120000UL) {
+            hidrantCycle = false;
+            hidrantTimer = millis();
+            expected_hidr = true;
+          }
+          else {
+            expected_hidr = false;
+          }
+        }
+      }
+    }
+
+    // WRITE ONLY IF CHANGED
+    if (expected_hidr != last_hidr) {
+      last_hidr = expected_hidr;
+      mcp.digitalWrite(hidr_en, expected_hidr);
+    }
+
+    // READBACK 1 sn
+    if (millis() - lastReadback >= 1000UL) {
+      lastReadback = millis();
+      bool hidr_state = mcp.digitalRead(hidr_en);
+      bool mismatch = (hidr_state != expected_hidr);
+
+      if (recoveryActive) {
+        if (millis() - recoveryStart >= 500UL) {
+          recoveryActive = false;
+          if (mismatch) {
+            addAlarm("MCP HIDRANT OUTPUT FROZEN!");
+            Rst_sys = true;
+          } else {
+            mismatchTimer = 0;
+          }
+        }
+      }
+      else {
+        if (mismatch) {
+          if (mismatchTimer == 0) {
+            mismatchTimer = millis();
+            addAlarm("in hidr control");
+          }
+          else if (millis() - mismatchTimer >= 10000UL) {
+            clearAlarm("in hidr control");
+            mcpSetup();
+            recoveryActive = true;
+            recoveryStart = millis();
+          }
+        } else {
+          mismatchTimer = 0;
+        }
+      }
+    }
+  }
+  else if (hard_test && io.fazOK) {
+    expected_hidr = !hard_hidr;
+    if (expected_hidr != last_hidr) {
+      last_hidr = expected_hidr;
+      mcp.digitalWrite(hidr_en, expected_hidr);
+    }
+  }
+}
+
+/* ===================================================== */
+/* I2C WATCHDOG / UDP */
+/* ===================================================== */
+
+// 3 kere üst üste I2C ping'ine cevap gelmezse sistem resetlenir.
+void i2cPing() {
+  static uint8_t mcpFail = 0;
+  static uint8_t adsFail = 0;
+
+  Wire.beginTransmission(MCP_ADDR);
+  if (Wire.endTransmission() == 0) {
+    mcpFail = 0;
+  } else {
+    mcpFail++;
+    if (mcpFail >= 3) {
+      addAlarm("MCP I2C Koptu!");
+      Rst_sys = true;
+    }
+  }
+
+  Wire.beginTransmission(ADS_ADDR);
+  if (Wire.endTransmission() == 0) {
+    adsFail = 0;
+  } else {
+    adsFail++;
+    if (adsFail >= 3) {
+      addAlarm("ADS I2C Koptu!");
+      Rst_sys = true;
+    }
+  }
+}
+
+// UDP broadcast paketi gönderir (hedef UPSIDE; resetUpside bayrağı ile sıfırlama istenebilir).
+void udpSend(bool resetUpside) {
+  if (!udpStarted) return;
+
+  static uint32_t lastSend = 0;
+  if (millis() - lastSend < 1000) return;
+  lastSend = millis();
+
+  txPacket.deviceID = DEVICE_ID;
+  txPacket.reset_upside = resetUpside;
+  txPacket.counter = udpCounter++;
+  txPacket.crc16 = crc16((const uint8_t*)&txPacket, offsetof(UdptxPacket, crc16));
+
+  udp.beginPacket(broadcastIP, udpPort);
+  udp.write((uint8_t*)&txPacket, sizeof(txPacket));
+  udp.endPacket();
+}
+
+// UDP paketlerini dinler: UPSIDE'ın tüm verisini alır ve global'lere kaydeder.
+// CRC doğrulaması başarısız paketler yok sayılır; sensör OK bayrakları da
+// buradan alınır (firePressureOK → hidrant basınç kapısı).
+// 5 sn görülmezse veri eskir (remoteDataOK=false, yan_basinc sıfırlanır).
+void udpReceive() {
+  int packetSize = udp.parsePacket();
+  if (packetSize == sizeof(rxPacket)) {
+    udp.read((uint8_t*)&rxPacket, sizeof(rxPacket));
+    if (rxPacket.deviceID == 1) {
+      uint16_t calc = crc16((const uint8_t*)&rxPacket, offsetof(UdprxPacket, crc16));
+      if (rxPacket.crc16 == calc) {
+        remoteDataOK = true;
+        upsideLastSeen = millis();
+        rxSitePressureOK = rxPacket.sitePressureOK;
+        rxFirePressureOK = rxPacket.firePressureOK;
+        rxFire1Start = rxPacket.fire1Start;   // [EKLENDI 07/08] gerçek yangın bayrağı
+        if (fabs(yan_basinc - rxPacket.firePressure) >= 0.1f) {
+          yan_basinc = rxPacket.firePressure;
+        }
+        lastYanBasincUpdate = millis();
+        remoteLastSeen = millis();
+      }
+    }
+  }
+
+  if (millis() - remoteLastSeen > 5000) {
+    remoteDataOK = false;
+    rxSitePressureOK = false;
+    rxFirePressureOK = false;
+    rxFire1Start = false;   // [EKLENDI 07/08]
+    if (yan_basinc != 0.0f) {
+      yan_basinc = 0.0f;
+    }
+  }
+}
+
+/* ===================================================== */
+/* SETUP */
+/* ===================================================== */
+
+// Cihaz açılışında tüm donanımı ve yazılımı başlatır (seri, I2C, Nextion,
+// MCP, ADS, RS485, Preferences, web sunucu rotaları).
+void setup() {
+  Serial.begin(9600);
+  delay(50);
+
+  Wire.setClock(100000);
+  Wire.setTimeOut(100);
+  Wire.begin(21, 22);
+  delay(50);
+
+  /* ---- NEXTION ---- */
+  nex.begin(NEXTION_BAUD, SERIAL_8N1, NEXTION_RX, NEXTION_TX);
+  delay(500);
+  while (nex.available()) nex.read();  // Buffer temizle
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  mcpSetup();
+
+  /* ---- ADS ---- */
+  if (!ads.begin(ADS_ADDR)) {
+    addAlarm("ADS Baglanti Hatasi");
+  } else {
+    ads.setGain(GAIN_ONE);
+  }
+
+  /* ---- RS485 ---- */
+  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  delay(100);
+
+  /* ---- CLOUD / PREFERENCES ---- */
+  initProperties();
+  loadFromPrefs();
+  delay(50);
+
+  Rst_sys = false;
+
+  /* ===================================================== */
+  /* WEB HOST EKİ (BLOK D) — setup sonu                   */
+  /* downside_web_ek.txt dosyasından gömüldü.            */
+  /* ===================================================== */
+  webSecretInit();
+  webSesYukle();
+  webTalepYukle();             // bekleyen/onaylanan talep kuyruğunu NVS'ten yükler
+  webKayitOl();                // rotaları tanımlar (başlatmayı loop halleder)
+  /* ===================================================== */
+}
+
+/* ===================================================== */
+/* LOOP */
+/* ===================================================== */
+
+// Ana döngü: web sunucusunu besler, cloud günceller, LED, IO/ADC okur,
+// Nextion, kontroller, UDP ve gerektiğinde reset işlemlerini çalıştırır.
+void loop() {
+  /* ===================================================== */
+  /* WEB HOST EKİ (BLOK E) — loop başı                  */
+  /* downside_web_ek.txt dosyasından gömüldü.            */
+  /* ===================================================== */
+  if (WiFi.status() == WL_CONNECTED && !webStarted) {
+    webStarted = true;
+    webSrv.begin();
+  }
+  webSrv.handleClient();
+  /* ===================================================== */
+
+  static bool cloudInited = false;
+  static bool ledState = false;
+  static uint32_t lastLedToggle = 0;
+
+  // LED 500ms aralıklarla yanıp söner
+  if (millis() - lastLedToggle >= 500) {
+    lastLedToggle = millis();
+    ledState = !ledState;
+    digitalWrite(LED_BUILTIN, ledState);
+  }
+
+  /* ===== CLOUD (ilk 3 saniyeden sonra başlat) ===== */
+  if (!cloudInited && millis() > 3000) {
+    cloudInited = true;
+    ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+    setDebugMessageLevel(2);
+  }
+
+  // Kütüphane her döngüde update() çağrılmasını ister; bağlantı kurulamazsa
+  // bu çağrı yeniden bağlanmayı da yönetir.
+  if (cloudInited) {
+    ArduinoCloud.update();
+
+    // Messenger akışı: kayıtlıları 500 ms arayla tek tek gönderir
+    if (webAkisAktif && (uint32_t)(millis() - webAkisSon) >= WEB_AKIS_BEKLE_MS) {
+      webAkisAdim();
+    }
+
+    if (!cloudStarted && ArduinoCloud.connected()) {
+      cloudStarted = true;
+      configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+    }
+  }
+
+  /* ===== RESET (cloud'dan bağımsız çalışır) ===== */
+  if (Rst_sys) {
+    Rst_sys = false;
+    rcnt++;
+    if (hardreset) rcnt = 0;
+    hardreset = false;
+    prefs.begin("settings", false);
+    prefs.putLong("rcnt", rcnt);
+    prefs.end();
+    delay(1000);
+    ESP.restart();
+  }
+
+  /* ===== IO POLL (100ms) ===== */
+  if (millis() - tIo > 100) {
+    tIo = millis();
+
+    static uint32_t tI2cPing = 0;
+    if (millis() - tI2cPing >= 5000) {  // Her 5 saniyede bir
+      tI2cPing = millis();
+      i2cPing();
+    }
+
+    readInputs();
+
+    inv_stat   = expected_inv;
+    yedek_stat = expected_yedek;
+    kuyu_stat  = expected_kuyu;
+    hidr_stat  = expected_hidr;
+    faz_stat   = io.fazOK;
+  }
+
+  /* ===== ADC (500ms, non-blocking zamanlayıcılı) ===== */
+  static uint32_t tAdc = 0;
+  if (millis() - tAdc >= 500) {
+    tAdc = millis();
+
+    int16_t adc0 = ads.readADC_SingleEnded(1);
+    int16_t adc1 = ads.readADC_SingleEnded(3);
+
+    float V0 = adc0 * 0.125f / 1000.0f;
+    float V1 = adc1 * 0.125f / 1000.0f;
+
+    line_bar = voltsToBar(V0, V4_CH0, V20_CH0);
+    site_bar = voltsToBar(V1, V4_CH1, V20_CH1);
+
+    // Madde 1: 4-20mA alt eşik (V4=0.8V). 0.5V altı = kablo kopması/transdüser
+    // altı → site sensörü anında geçersiz. Geçerli örnekte zaman damgası tazelenir.
+    if (V1 >= 0.5f) {
+      siteSensorOK = true;
+      lastSiteBarUpdate = millis();
+    } else {
+      siteSensorOK = false;
+    }
+
+    // Madde 1: şebeke sensörü (V0) için aynı alt eşik + zaman damgası.
+    if (V0 >= 0.5f) {
+      lineSensorOK = true;
+      lastLineBarUpdate = millis();
+    } else {
+      lineSensorOK = false;
+    }
+
+    if (fabs(line_bar - last_line_bar) >= 0.5) {
+      line_basinc = line_bar;
+      last_line_bar = line_bar;
+    }
+    if (fabs(site_bar - last_site_bar) >= 0.5) {
+      site_basinc = site_bar;
+      last_site_bar = site_bar;
+    }
+  }
+
+  /* ===== CLOUD STATUS VAR SYNC (1s) ===== */
+  static uint32_t tCloud = 0;
+  if (cloudStarted && (millis() - tCloud > 1000)) {
+    tCloud = millis();
+
+    if (site_su_mevcut != io.siteAlt) site_su_mevcut = io.siteAlt;
+    if (fire_alt != io.fireAlt) fire_alt = io.fireAlt;
+    if (fire_ust != io.fireUst) fire_ust = io.fireUst;
+
+    if (inv_stat != inv_run) inv_run = inv_stat;
+    if (yedek_stat != yedek_run) yedek_run = yedek_stat;
+    if (kuyu_stat != kuyu_run) kuyu_run = kuyu_stat;
+    if (hidr_stat != hidr_run) hidr_run = hidr_stat;
+    if (faz_stat != enerji_ok) enerji_ok = faz_stat;
+
+    if (millis() - lastliveUpdate > 3000) {  // 3 saniyede bir
+      lastliveUpdate = millis();
+      isLive = !isLive;
+    }
+  }
+
+  /* ===== NEXTION ===== */
+  nextionUpdate();
+  updateStatusDisplay();
+  readNextion();
+
+  /* ===== KONTROL ===== */
+  udpReceive();
+  siteControl();
+  kuyuControl();
+  hidrantControl();
+  saveToPrefsDelayed();
+
+  /* ===== WIFI / UDP BAŞLAT ===== */
+  if (WiFi.status() == WL_CONNECTED) {
+    IPAddress ip = WiFi.localIP();
+    if (ip != IPAddress(0, 0, 0, 0)) {
+      String newIP = ip.toString();
+      if (local_ip != newIP) {
+        local_ip = newIP;
+      }
+      if (!udpStarted) {
+        udp.begin(udpPort);
+        broadcastIP = ip;
+        broadcastIP[3] = 255;
+        udpStarted = true;
+      }
+    }
+  }
+
+  if (udp_send_need) {
+    udp_send_need = false;
+    bool doReset = up_reset;
+    up_reset = false;
+    udpSend(doReset);
+  }
+}
+
+/* ===================================================== */
+/* CLOUD CALLBACKS */
+/* ===================================================== */
+
+// Cloud'dan site alt limiti değiştiğinde: kayıt isteği ve Nextion güncellemesi yapar.
+void onSiteAltLimitChange() {
+  prefsNeedsSave = true;
+  lastPrefsChange = millis();
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.h0.val=%d", int(roundf(site_alt_limit * 10)));
+  nextionSend(buffer1);
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.x0.val=%d", int(roundf(site_alt_limit * 10)));
+  nextionSend(buffer1);
+}
+
+// Cloud'dan site üst limiti değiştiğinde: kayıt isteği ve Nextion güncellemesi yapar.
+void onSiteUstLimitChange() {
+  prefsNeedsSave = true;
+  lastPrefsChange = millis();
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.h1.val=%d", int(roundf(site_ust_limit * 10)));
+  nextionSend(buffer1);
+  buffer1[0] = '\0';
+  snprintf(buffer1, sizeof(buffer1), "page1.x1.val=%d", int(roundf(site_ust_limit * 10)));
+  nextionSend(buffer1);
+}
+
+// Cloud'dan sistem start/stop komutu geldiğinde durumu alır ve Nextion'a yansıtır.
+void onSistemStartChange() {
+  sys_start = sistem_start;
+  snprintf(buffer1, sizeof(buffer1), "page0.bt0.val=%d", (int)sys_start);
+  nextionSend(buffer1);
+  nextionSend(sys_start ? "page0.bt0.txt=\"Stop\"" : "page0.bt0.txt=\"Start\"");
+  prefsNeedsSave = true;
+  lastPrefsChange = millis();
+}
+
+// Cloud'dan kuyu start değişince durumu alır ve Nextion'a yansıtır.
+void onCkuyuStartChange() {
+  kuyu_start = ckuyu_start;
+  nextionSend(kuyu_start ? "page1.c0.val=1" : "page1.c0.val=0");
+  prefsNeedsSave = true;
+  lastPrefsChange = millis();
+}
+
+// Cloud'dan hidrant start değişince durumu alır ve Nextion'a yansıtır.
+void onChidrStartChange() {
+  hidr_start = chidr_start;
+  nextionSend(hidr_start ? "page1.c1.val=1" : "page1.c1.val=0");
+  prefsNeedsSave = true;
+  lastPrefsChange = millis();
+}
+
+// Boş callback'ler (bu değişkenlerin yazılımda ek işlemi yoktur).
+void onHidrCanworkChange()  {}
+void onHardTestChange()     {}
+void onHardInvChange()      {}
+void onHardYedekChange()    {}
+void onHardKuyuChange()     {}
+void onHardHidrChange()     {}
+void onLineBasincChange()   {}
+void onSiteBasincChange()   {}
+void onYanginBasincChange() {}
+void onSiteSuMevcutChange() {}
+void onFireAltChange()      {}
+void onFireUstChange()      {}
+void onHidrRunChange()      {}
+void onIsLiveChange()       {}
+void onYanBasincChange()    {}
+
+// Cloud'dan sistem reset isteği gelince donanımsal sıfırlama bayrağını kurar.
+void onRstSysChange() {
+  if (Rst_sys) {
+    hardreset = true;
+  }
+}
+
+// Cloud'dan MCP yeniden kurulum isteği gelince MCP'yi tekrar başlatır.
+void onMcpSetupChange() {
+  if (mcp_setup) {
+    mcp_setup = false;
+    mcpSetup();
+  }
+}
+
+// Cloud'dan UPSIDE sıfırlama isteği gelince UDP üzerinden iletilecek bayrağı kurar.
+void onUpResetChange() {
+  if (up_reset) udp_send_need = true;
+}
+
+/* ===================================================== */
+/* WEB HOST EKİ (BLOK F) — cloud callback'leri          */
+/* downside_web_ek.txt dosyasından gömüldü.            */
+/* ===================================================== */
+// Cloud'da "şifreleri sıfırla" bayrağı gelince gizli anahtar yenilenir (tüm şifreler geçersiz olur).
+void onWebSifirlaChange() {    // true yapınca tüm şifreler geçersiz olur
+  if (web_sifirla) {
+    web_sifirla = false;
+    webSecretSifirla();
+    ArduinoCloud.update();
+  }
+}
+
+// Cloud'dan "kullanıcı sil" telefonu gelir: hane defterinden çıkarır, oturumlarını düşürür.
+// (web_sil_tel değişkenini Arduino Cloud editöründe String olarak ekleyin,
+//  bu callback'i "On Change" ile bağlayın. Bir kullanıcı taşındığında kullanılır.)
+void onWebSilTelChange() {}
+
+// Arduino Cloud'un ürettiği initProperties() bu "On Change" callback'lerini bekler.
+// web_talep_bekliyor / web_talep_bilgi yalnızca cihaz->cloud olduğu için boş callback yeterli;
+// web_engelli ise loop'ta webEngelliMi() ile okunur, burada aksiyon gerekmez.
+void onWebTalepBekliyorChange() {}
+void onWebTalepBilgiChange() {}
+void onWebEngelliChange() {}
+
+// Cloud'dan talep aksiyonu gelir: 1 = onayla, 2 = reddet (sıradaki ilk bekleyen talep).
+// Onayda hane defterine işlenir (degisim ise eski numara yenisiyle değiştirilir).
+// Talepler düşmediği için onaylanan kullanıcı sonradan token'ı ile şifresini alır.
+// Dashboard için: "talep var" bayrağı, onay bekleyen kalmadığında düşer; bilgi alanı
+// her aksiyondan sonra sıradaki bekleyen talebi gösterir.
+void onWebTalepAksiyonChange() {
+  int ilk = -1;
+  for (int i = 0; i < MAX_TALEP; i++)
+    if (webTalep[i].durum == WT_BEKLIYOR) { ilk = i; break; }
+  if (web_talep_aksiyon == 1 && ilk >= 0) {
+    if (webTalep[ilk].degisim) {
+      webHaneSil(String(webTalep[ilk].hane), String(webTalep[ilk].eski));
+      webHaneEkle(String(webTalep[ilk].hane), String(webTalep[ilk].ad), String(webTalep[ilk].tel));
+      webOturumTelSil(String(webTalep[ilk].eski));
+    } else {
+      webHaneEkle(String(webTalep[ilk].hane), String(webTalep[ilk].ad), String(webTalep[ilk].tel));
+    }
+    webTalep[ilk].durum = WT_ONAYLANDI;
+  } else if (web_talep_aksiyon == 2 && ilk >= 0) {
+    webTalep[ilk].durum = WT_RED;
+  }
+  web_talep_aksiyon = 0;
+  webTalepKaydet();
+  webTalepGuncelle();
+  ArduinoCloud.update();
+}
+/* ===================================================== */
+
+/*
+  Since TelSil is READ_WRITE variable, onTelSilChange() is
+  executed every time a new value is received from IoT Cloud.
+*/
+void onTelSilChange()  {
+  // Add your code here to act upon TelSil change
+  if(tel_sil){
+      String tel = webNorm(web_sil_tel);
+      if (tel.length() != 11){  // sadece 11 haneli numara işlenir
+          web_sil_tel = "Hatalı numara !";
+          ArduinoCloud.update();
+          return;  
+      }
+      if (!webTelKayitli(tel)) {
+          web_sil_tel = "Kayit yok !";
+          ArduinoCloud.update();
+          return;
+      }
+      webHaneTelSil(tel);
+      webOturumTelSil(tel);
+      web_sil_tel = "Silindi";
+      tel_sil = false;
+      ArduinoCloud.update();
+  }
+}
+
+/* ===================================================== */
+/* KULLANICI LİSTELERİ — dashboard butonları            */
+/* ===================================================== */
+
+// Messenger akışını başlatır: "liste" komutu gelince kayıtlıları 500 ms arayla
+// tek tek mesaj olarak gönderir (webAkisAdim loop() içinde çalışır).
+void webAkisBasla() {
+  String s = webKayitOku();
+  int n = 0, pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) n++;
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  webAkisToplam = n;
+  webAkisGonderilen = 0;
+  webAkisDefter = s;
+  webAkisAktif = true;
+  webAkisHam = false;
+  webAkisBitti = false;
+  webAkisSon = millis();
+  if (n == 0) {
+    web_kullanici_liste = (s.length() > 0)
+      ? "KAYITLI YOK (ham veri: " + s + ")"
+      : "KAYITLI KULLANICI YOK (defter bos)";
+    webAkisAktif = false;
+  } else {
+    web_kullanici_liste = "KAYITLI (" + String(n) + ") - listeleniyor";
+  }
+  ArduinoCloud.update();
+}
+
+// Ham defter akışını başlatır: "ham" komutu gelince ham kayıtları (hane;ad;tel)
+// tek tek mesaj olarak gönderir (kırpma yok).
+void webAkisBaslaHam() {
+  String s = webKayitOku();
+  int n = 0, pos = 0;
+  while (pos <= (int)s.length()) {
+    int e = s.indexOf('|', pos);
+    String kayit = (e < 0) ? s.substring(pos) : s.substring(pos, e);
+    if (kayit.length() > 0) n++;
+    if (e < 0) break;
+    pos = e + 1;
+  }
+  webAkisToplam = n;
+  webAkisGonderilen = 0;
+  webAkisDefter = s;
+  webAkisAktif = true;
+  webAkisHam = true;
+  webAkisBitti = false;
+  webAkisSon = millis();
+  if (n == 0) {
+    web_kullanici_liste = (s.length() > 0)
+      ? "KAYITLI YOK (ham veri: " + s + ")"
+      : "KAYITLI KULLANICI YOK (defter bos)";
+    webAkisAktif = false;
+  } else {
+    web_kullanici_liste = "NVS webkayit ham (" + String(n) + " kayit) - listeleniyor";
+  }
+  ArduinoCloud.update();
+}
+
+// Akışın bir adımını gönderir (loop() her 500 ms'de çağırır).
+void webAkisAdim() {
+  webAkisSon = millis();
+  if (webAkisBitti) {   // son kayıt gönderildi; TAMAM mesajı ayrı adımda gönderilir
+    web_kullanici_liste = "TAMAM - " + String(webAkisToplam) + " kayit goruntulendi";
+    webAkisBitti = false;
+    webAkisAktif = false;
+    ArduinoCloud.update();
+    return;
+  }
+  int e = webAkisDefter.indexOf('|');
+  String kayit = (e < 0) ? webAkisDefter : webAkisDefter.substring(0, e);
+  webAkisDefter = (e < 0) ? "" : webAkisDefter.substring(e + 1);
+  if (kayit.length() > 0) {
+    if (webAkisHam) {
+      web_kullanici_liste = String(webAkisGonderilen + 1) + "/" + String(webAkisToplam) + " | " + kayit;
+    } else {
+      int a = kayit.indexOf(';');
+      int b = kayit.indexOf(';', a + 1);
+      if (a > 0 && b > a) {
+        web_kullanici_liste = String(webAkisGonderilen + 1) + "/" + String(webAkisToplam) + " | " +
+                              kayit.substring(0, a) + " | " + kayit.substring(a + 1, b) + " | " +
+                              webTelGoster(kayit.substring(b + 1));
+      }
+    }
+  }
+  webAkisGonderilen++;
+  if (webAkisGonderilen >= webAkisToplam || webAkisDefter.length() == 0)
+    webAkisBitti = true;   // son kayıt gönderildi → TAMAM'ı bir sonraki adımda gönder
+  ArduinoCloud.update();
+}
+
+void onWebKullaniciListeChange() {
+  String ham = web_kullanici_liste;
+  ham.trim();
+  // Cihaz akış mesajları ("KAYITLI (", "1/3 |", "TAMAM -" vb.) cloud'dan geri
+  // yansıyınca bu callback de tetiklenir. Bunlar komut değildir → akışı bozmadan yok say.
+  bool komut =
+       ham == "liste" || ham.startsWith("liste ") || ham == "listeS" ||
+       ham.startsWith("sil ") ||
+       ham == "aktif" || ham.startsWith("aktif ") ||
+       ham == "ham" || ham.startsWith("ham ");
+  if (!komut) return;
+  webAkisAktif = false;   // yeni komut geldi → devam eden akışı durdur
+  if (ham == "liste" || ham.startsWith("liste ")) {
+    if (ham.startsWith("liste ")) {
+      String hane = webNorm(ham.substring(6));
+      if (hane.length() >= 1 && hane.length() <= 4) {
+        web_kullanici_liste = webMetinSinirla(webHaneKayitListesi(hane), 190);   // hane bazlı
+        ArduinoCloud.update();
+        return;
+      }
+    }
+    webAkisBasla();   // liste → Messenger akışı (her kullanıcı ayrı mesaj)
+    return;
+  }
+  if (ham == "listeS") {
+    web_kullanici_liste = webMetinSinirla(webKayitlilarListesi(), 190);
+    ArduinoCloud.update();
+    return;
+  }
+  if (ham.startsWith("sil ")) {
+    String tel = webNorm(ham.substring(4));
+    if (tel.length() != 11) {
+      web_kullanici_liste = "Hatali numara (11 hane girin)";
+      ArduinoCloud.update();
+      return;
+    }
+    if (!webTelKayitli(tel)) {
+      web_kullanici_liste = "Kayit yok";
+      ArduinoCloud.update();
+      return;
+    }
+    webHaneTelSil(tel);
+    webOturumTelSil(tel);
+    web_kullanici_liste = webTelGoster(tel) + " silindi";
+    ArduinoCloud.update();
+    return;
+  }
+  if (ham == "aktif" || ham.startsWith("aktif ")) {
+    String hane = "";
+    if (ham.startsWith("aktif ")) hane = webNorm(ham.substring(6));
+    if (hane.length() >= 1 && hane.length() <= 4)
+      web_kullanici_liste = webMetinSinirla(webAktiflerListesi(hane), 190);   // hane bazlı
+    else
+      web_kullanici_liste = webMetinSinirla(webAktiflerListesi(), 190);
+    ArduinoCloud.update();
+    return;
+  }
+  if (ham == "ham" || ham.startsWith("ham ")) {
+    String hane = "";
+    if (ham.startsWith("ham ")) hane = webNorm(ham.substring(4));
+    if (hane.length() >= 1 && hane.length() <= 4) {
+      web_kullanici_liste = webMetinSinirla(webHamHaneListesi(hane), 190);   // hane bazlı
+      ArduinoCloud.update();
+    } else {
+      webAkisBaslaHam();   // ham → Messenger akışı (ham kayıtlar tek tek, kırpma yok)
+    }
+    return;
+  }
+  if (ham.length() < 5) return;
+  int a = ham.indexOf(';');
+  int b = ham.indexOf(';', a + 1);
+  if (a > 0 && b > a) {
+    String hane = webNorm(ham.substring(0, a));
+    String ad = ham.substring(a + 1, b);
+    ad.replace(';', ' '); ad.replace('|', ' '); ad.trim();
+    String tel = webNorm(ham.substring(b + 1));
+    if (hane.length() >= 1 && ad.length() >= 2 && tel.length() == 11) {
+      if (webHaneEkle(hane, ad, tel)) {
+        web_kullanici_liste = webMetinSinirla(webKayitlilarListesi(), 190);
+      } else {
+        web_kullanici_liste = "Hane dolu !";
+      }
+    } else {
+      return;
+    }
+  } else {
+    return;
+  }
+  ArduinoCloud.update();
+}
+
+
+
+
+

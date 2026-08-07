@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#0b3d66"/>
+    </marker>
+    <marker id="arrW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#0b3d66"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="700" fill="#f4f7fb"/>
+
+  <!-- Title -->
+  <text x="40" y="55" font-size="24" font-weight="700" fill="#0b3d66">ROLL-OFF KONTEYNER</text>
+  <text x="42" y="80" font-size="15" fill="#44546a">~30 m³ Ağır Hizmet Tipi — 6.000 × 2.500 × 2.200 mm</text>
+
+  <!-- ISO box -->
+  <!-- A=500,420 B=760,570 C=647,635 D=387,485 ; top -120 -->
+  <!-- hidden edges -->
+  <line x1="647" y1="635" x2="387" y2="485" stroke="#9db4c8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="760" y1="570" x2="647" y2="635" stroke="#9db4c8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="760" y1="450" x2="647" y2="515" stroke="#9db4c8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="647" y1="515" x2="387" y2="365" stroke="#9db4c8" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+  <!-- long side face -->
+  <polygon points="500,420 760,570 760,450 500,300" fill="#dbe6f1" stroke="#24598b" stroke-width="2.5"/>
+  <!-- short front face -->
+  <polygon points="500,420 387,485 387,365 500,300" fill="#c3d5e6" stroke="#24598b" stroke-width="2.5"/>
+  <!-- wall thickness inner top (open top rim) -->
+  <polygon points="500,300 760,450 647,515 387,365" fill="none" stroke="#24598b" stroke-width="2"/>
+  <polygon points="506,304 753,449 642,511 393,369" fill="#eef4fa" stroke="#8fa9c0" stroke-width="1"/>
+
+  <!-- skid rails on long side -->
+  <line x1="500" y1="414" x2="760" y2="564" stroke="#8fa9c0" stroke-width="5" stroke-linecap="round"/>
+  <line x1="500" y1="400" x2="760" y2="550" stroke="#8fa9c0" stroke-width="5" stroke-linecap="round"/>
+  <text x="556" y="568" font-size="11" fill="#1f4e79">kızak rayları (skids)</text>
+
+  <!-- hook bar across front top -->
+  <line x1="388" y1="356" x2="498" y2="293" stroke="#24598b" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="443" cy="324" r="8" fill="#fff" stroke="#c9a227" stroke-width="2"/>
+  <text x="452" y="300" font-size="11" fill="#1f4e79">kanca çubuğu (hook)</text>
+
+  <!-- rear door note -->
+  <text x="620" y="498" font-size="11" fill="#44546a">arka kapak (ops.)</text>
+  <line x1="633" y1="502" x2="646" y2="512" stroke="#44546a" stroke-width="1" stroke-dasharray="3 3"/>
+
+  <!-- dimensions -->
+  <!-- length -->
+  <line x1="512" y1="466" x2="772" y2="616" stroke="#0b3d66" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="655" y="652" font-size="13" fill="#0b3d66" text-anchor="middle">6.000 mm (uzunluk)</text>
+  <!-- height -->
+  <line x1="372" y1="482" x2="372" y2="368" stroke="#0b3d66" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="363" y="428" font-size="13" fill="#0b3d66" transform="rotate(-90 363 428)" text-anchor="middle">2.200 mm</text>
+  <!-- width -->
+  <line x1="478" y1="278" x2="363" y2="343" stroke="#0b3d66" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="397" y="295" font-size="13" fill="#0b3d66" text-anchor="middle">2.500 mm (genişlik)</text>
+
+  <!-- volume callout -->
+  <text x="596" y="470" font-size="13" font-weight="700" fill="#0b3d66" text-anchor="middle">≈ 30 m³</text>
+
+  <!-- legend -->
+  <rect x="705" y="120" width="270" height="205" rx="8" fill="#ffffff" stroke="#c9d4e0"/>
+  <text x="722" y="148" font-size="14" font-weight="700" fill="#0b3d66">TEKNİK ÖZELLİKLER</text>
+  <text x="722" y="174" font-size="12" fill="#33415c">• Dış ölçüler: 6.000×2.500×2.200 mm</text>
+  <text x="722" y="194" font-size="12" fill="#33415c">• Hacim: ~30 m³ / yük ~8–12 ton</text>
+  <text x="722" y="214" font-size="12" fill="#33415c">• Şase: I/kutu profil, yüksek mukavemetli</text>
+  <text x="722" y="234" font-size="12" fill="#33415c">• Taban: 5–8 mm sac + güçlendirilmiş travers</text>
+  <text x="722" y="254" font-size="12" fill="#33415c">• Duvar: 3–5 mm sac + takviyeli kolonlar</text>
+  <text x="722" y="274" font-size="12" fill="#33415c">• Üst: açık (kapak opsiyonel)</text>
+  <text x="722" y="294" font-size="12" fill="#33415c">• Ön: kanca çubuğu · Alt: kızak rayları</text>
+  <text x="722" y="314" font-size="12" fill="#33415c">• Boya: kumlama + epoksi + poliüretan</text>
+</svg>
