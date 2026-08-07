@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>site-yangin-kontrol-sistemi-sunum-raporu</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    body {
+      font-family: "Segoe UI", "Calibri", Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1c2430;
+      max-width: 180mm;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 21pt;
+      color: #0d3b66;
+      border-bottom: 3px solid #0d3b66;
+      padding-bottom: 6px;
+      margin: 6px 0 4px 0;
+    }
+    h2 {
+      font-size: 15pt;
+      color: #0d3b66;
+      border-bottom: 1.5px solid #c3d5e8;
+      padding-bottom: 3px;
+      margin: 22px 0 8px 0;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 12.5pt;
+      color: #14508a;
+      margin: 16px 0 6px 0;
+      page-break-after: avoid;
+    }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0; padding-left: 22px; }
+    li { margin: 3px 0; }
+    strong { color: #0b3d3a; }
+    code {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 9.5pt;
+      background: #eef2f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #203040;
+    }
+    pre {
+      background: #f4f6f9;
+      border: 1px solid #d7dee7;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 9pt;
+      overflow-x: auto;
+    }
+    pre code { background: none; padding: 0; }
+    blockquote {
+      border-left: 4px solid #0d3b66;
+      background: #eef4fb;
+      margin: 8px 0;
+      padding: 6px 12px;
+      border-radius: 0 5px 5px 0;
+      color: #23456b;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0;
+      font-size: 10pt;
+    }
+    th {
+      background: #0d3b66;
+      color: #ffffff;
+      text-align: left;
+      padding: 6px 8px;
+      border: 1px solid #0d3b66;
+    }
+    td {
+      padding: 5px 8px;
+      border: 1px solid #c9d4df;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f4f7fb; }
+    hr {
+      border: none;
+      border-top: 1px solid #ccd6e0;
+      margin: 18px 0;
+    }
+    input[type="checkbox"] { margin-right: 5px; }
+    h2, h3, table, blockquote { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+<h1 id="site-suyu-ve-yangın-hattı-kontrol-sistemi">Site Suyu ve Yangın
+Hattı Kontrol Sistemi</h1>
+<h2 id="sunum-raporu-en-basit-dille">Sunum Raporu — En Basit Dille</h2>
+<hr />
+<h2 id="bu-sistem-ne-işe-yarar">1. Bu sistem ne işe yarar?</h2>
+<p>Bu sistem bir sitenin iki kritik işini <strong>otomatik</strong>
+yapar:</p>
+<ol type="1">
+<li><strong>Kullanma suyu (site suyu):</strong> Siteyi öncelikle
+<strong>şehir şebeke suyu</strong> besler. Şebeke basıncı yeterliyse
+(site basıncını istenen seviyeye çıkarabiliyorsa) <strong>her iki
+istasyondaki site motorları boştadır</strong>; basınç düşünce pompa
+otomatik devreye girer ve basıncı ideal aralıkta tutar.</li>
+<li><strong>Yangın hattı:</strong> Bir yangın olursa (hidrant açılırsa)
+basınç düşer, yangın pompaları otomatik devreye girer ve yangın hattını
+basınçlı tutar. Yangın tankları biterse otomatik doldurulur.</li>
+</ol>
+<p>Sistem iki ayrı cihazdan oluşur: <strong>UPSIDE</strong> (üst
+istasyon) ve <strong>DOWNSIDE</strong> (alt istasyon). İkisi kablosuz
+olarak birbiriyle haberleşir.</p>
+<blockquote>
+<p>Benzetme: Downside, suyu kuyudan çekip yukarı iten “kuyu başı”dır.
+Upside, tankların ve yangın hattının bulunduğu “depo yönetimi”dir. İkisi
+<strong>aynı boru hatlarını</strong> besler ve basınç kontrolünde
+<strong>birbirini tamamlar</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="kot-farkı-60-metre-bu-sistemin-anahtarı">2. Kot farkı (60 metre)
+— bu sistemin anahtarı</h2>
+<ul>
+<li>Upside ile Downside arasında <strong>yaklaşık 60 metre yükseklik
+(kot) farkı</strong> vardır. Downside altta, Upside üsttedir.</li>
+<li><strong>60 metre su sütunu ≈ 6 bar basınç</strong> demektir. Yani
+aynı hat üzerinde, su dolu bir borunun <strong>alt ucundaki sensör, üst
+ucundakinden ~6 bar daha yüksek</strong> okur.</li>
+<li>Bu yüzden limitler iki cihazda farklıdır ama <strong>aynı fiziksel
+durumu</strong> temsil eder:
+<ul>
+<li>Upside (üst): <strong>2.3–3.0 bar</strong></li>
+<li>Downside (alt): <strong>7–9 bar</strong> (≈ 1–3 bar + 6 bar kot
+payı)</li>
+</ul></li>
+<li>Her iki taraf da kendi sensörünü kendi limitleriyle değerlendirir;
+sonuç aynı hattı korumaktır.</li>
+</ul>
+<hr />
+<h2 id="donanım-haritası">3. Donanım haritası</h2>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 25%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Cihaz</th>
+<th>Görevi</th>
+<th>Bağlı olanlar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UPSIDE</strong> (Cihaz 1, üst)</td>
+<td>Tank yönetimi + hattı üstten basınçlı tutma</td>
+<td>5 ultrasonik tank sensörü, 2 basınç sensörü (site + yangın), 3
+sürücülü pompa (site + küçük yangın + büyük yangın), dolum valfi, RS485
+(Modbus), Nextion dokunmatik ekran, Arduino IoT Cloud</td>
+</tr>
+<tr>
+<td><strong>DOWNSIDE</strong> (Cihaz 2, alt)</td>
+<td>Kuyu + hattı alttan destekleme</td>
+<td>MCP23017 röle kartı (4 pompa çıkışı), 2 adet 4-20mA basınç sensörü
+(site hattı + belediye giriş suyu), <strong>site tankı 10 ton (şehir
+şebekesiyle dolar, alt sensör) + yangın tankı 5 ton (kuyuyla dolar,
+alt/üst sensör)</strong>, faz kontrolü, Nextion ekran, Arduino IoT
+Cloud</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="iki-cihaz-nasıl-konuşuyor-udp">4. İki cihaz nasıl konuşuyor?
+(UDP)</h2>
+<ul>
+<li>Her cihaz <strong>1 saniyede bir</strong> diğerine durum paketi
+gönderir (aynı ağda).</li>
+<li><strong>Upside → Downside:</strong> <strong>Yangın hattı
+basıncını</strong> gönderir. Çünkü yangın hattının <strong>tek basınç
+sensörü Upside’dadır</strong>. Downside, hidrant pompasını bu gelen
+değere göre çalıştırır.</li>
+<li><strong>Downside → Upside:</strong> “kendini yeniden başlat” komutu
+gönderir (uzaktan reset için).</li>
+<li><strong>Basınç bilgisi tek yönlüdür:</strong> Downside kendi basınç
+değerlerini Upside’a göndermez; site hattında zaten kendi sensörü
+vardır.</li>
+<li>Downside, Upside’dan 20 saniye boyunca veri alamazsa “uzak cihaz
+yok” kabul eder ve <strong>zamanlayıcı moda</strong> geçer (hidrant 2 dk
+aç / 2 dk kapat).</li>
+</ul>
+<blockquote>
+<p>Birbirini göremeyen iki telefon gibi: biri diğerinin ölçtüğü yangın
+basıncını görüp ona göre davranır, bağlantı koparsa kendi başına karar
+verir.</p>
+</blockquote>
+<hr />
+<h2 id="downside-alt-istasyon-ne-yapar">5. DOWNSIDE (Alt İstasyon) — Ne
+yapar?</h2>
+<h3 id="kuyu-pompası-yangın-tankını-5-ton-doldurur">5.1 Kuyu pompası —
+yangın tankını (5 ton) doldurur</h3>
+<p>Downside’da iki tank vardır: <strong>site suyu tankı 10 ton</strong>
+ve <strong>yangın tankı 5 ton</strong>.</p>
+<ul>
+<li>Kuyu pompası <strong>yangın tankını (5 ton)</strong> doldurur.</li>
+<li>Site tankını (10 ton) kuyu <strong>doldurmaz</strong> — onu
+<strong>şehir şebekesi (belediye suyu)</strong> doldurur.</li>
+<li>Kuyu, yangın tankının <strong>üst seviye sensörü
+ıslandığında</strong> durur — kod bu mantığı <code>!fireUst</code>
+koşuluyla yapar.</li>
+<li><strong>Güvenlik eşikleri:</strong> Yangın tankı alt seviyesi
+kurursa (<code>fireAlt</code> kuru) hidrant pompası çalışmaz; site tankı
+alt seviyesi kurursa (<code>siteAlt</code> kuru) site pompaları
+çalışmaz.</li>
+<li>Kuyuda su yoksa, faz yoksa veya kuyu başlatma
+(<code>kuyu_start</code>) kapalıysa pompa çalışmaz.</li>
+</ul>
+<h3 id="site-basıncı-şebeke-birincil-pompa-destek">5.2 Site basıncı —
+şebeke birincil, pompa destek</h3>
+<ul>
+<li>Siteyi <strong>şehir şebeke suyu</strong> besler. Şebeke aynı
+zamanda <strong>her iki istasyondaki site tanklarını da
+doldurur</strong> (Downside’daki 10 tonluk tank + Upside’daki Tank
+1).</li>
+<li><strong>Kritik mantık:</strong> Şebeke basıncı yeterliyse (site
+basıncını istenen seviyeye çıkarabiliyorsa) <strong>hem Upside hem
+Downside’daki site besleme motorları çalışmaya ihtiyaç duymaz</strong> —
+hepsi boştadır.</li>
+<li>Downside’ın <strong>kendi site sensörü</strong> (4-20mA) aynı site
+hattına bakar; limitleri <strong>alt 7.0 bar / üst 9.0 bar</strong>’dır
+(60 m kot ≈ 6 bar dahil).</li>
+<li>Basınç <strong>7.0 bar altına</strong> düşerse (şebeke yetişemiyor
+demektir) site pompası çalışır, <strong>9.0 bar</strong>a ulaşırsa
+durur.</li>
+<li><strong>Upside ile tamamlayıcı çalışma:</strong> Normalde site
+basıncını Upside’daki site pompası üstten tutar. Tüketim yüksek olur,
+Upside tek başına yetişemez ve basınç düşerse, Downside kendi alt
+sensöründe 7.0 bar altını görür ve <strong>site pompası otomatik devreye
+girerek hattı alttan destekler</strong>. Basınç toparlayınca (9.0 bar)
+yine otomatik durur.</li>
+<li><strong>Öncelik:</strong> Sürücü (inverter) pompası sağlamsa o
+çalışır; bozuksa <strong>yedek pompa</strong> devreye girer. (Birisi
+bozulsa diğeri bakar.)</li>
+<li>(Downside’ın diğer sensörü <code>line_bar</code>,
+<strong>belediyeden gelen şebeke suyunun basıncını</strong> ölçer;
+yalnızca ekranda gösterilir, kontrol bu değerle yapılmaz. Bu şebeke suyu
+site hattını besler ve site tanklarını doldurur.)</li>
+</ul>
+<h3 id="hidrant-pompası-suyu-yukarı-yangın-hattına-basar">5.3 Hidrant
+pompası — suyu yukarı (yangın hattına) basar</h3>
+<ul>
+<li><strong>“Yukarı su basmak” demek hidrant motorunun çalışması
+demektir.</strong> Hidrant çalışınca suyu yukarı, <strong>yangın
+hattına</strong> basar.</li>
+<li>Upside’dan UDP ile gelen <strong>yangın basıncı 2.0 bar
+altına</strong> düşerse hidrant pompası çalışır, <strong>2.5
+bar</strong> üstüne çıkarsa durur (Upside’daki yangın pompalarıyla aynı
+mantık, aynı değer).</li>
+<li><strong>Dolum bağlantısı:</strong> Eğer üst yangın tankları
+<strong>dolum aşamasına geçmişse</strong> (Upside’da
+<code>oto_dolum</code> aktif → dolum valfi açık), hidrantın yukarı
+bastığı su otomatik olarak <strong>yangın tanklarının dolumuna</strong>
+gider (tanklar dolar).</li>
+<li>Upside ile bağlantı koparsa <strong>zamanlayıcı moduna</strong>
+geçer: 2 dk çalış, 2 dk bekle (yangın hattını asla tamamen
+bırakmaz).</li>
+<li>Hidrant, yangın tankından beslenir: tank <strong>alt seviyenin
+altına</strong> inerse (<code>fireAlt</code> kuru) güvenlik gereği
+çalışmaz.</li>
+</ul>
+<h3 id="güvenlik-katmanı-mcp-röle-kartı">5.4 Güvenlik katmanı (MCP röle
+kartı)</h3>
+<ul>
+<li>Tüm çıkışlar her saniye <strong>geri okunur</strong> (istediğimiz =
+gerçek mi?).</li>
+<li>Çıkış takılırsa (FROZEN) önce kart <strong>otomatik
+onarılır</strong>; düzelmezse cihaz kendini yeniden başlatır ve alarm
+verir.</li>
+<li>Elektrik kesintisi sonrası <strong>tüm çıkışlar “hepsi
+kapalı”</strong> güvenli durumdan başlar.</li>
+</ul>
+<hr />
+<h2 id="upside-üst-istasyon-ne-yapar">6. UPSIDE (Üst İstasyon) — Ne
+yapar?</h2>
+<h3 id="site-pompası-sürücülü-kademeli-hız-hattı-üstten-tutar">6.1 Site
+pompası (sürücülü, kademeli hız) — hattı üstten tutar</h3>
+<ul>
+<li>Siteyi <strong>şehir şebeke suyu</strong> besler (hem hattı hem
+Upside’daki site tankını). Şebeke basıncı yeterliyse site pompası
+<strong>boştadır</strong>.</li>
+<li>Basınç düşerse kendi üst sensörüyle basıncı <strong>2.3–3.0
+bar</strong> aralığında tutar.</li>
+<li>Basınç düşerse frekansı <strong>35 → 50 Hz</strong> kademe kademe
+arttırır (0.5 Hz adım), yükselirse azaltır. <strong>Ani aç/kapa yok, su
+darbesi yok.</strong></li>
+<li>Kullanma suyu tankı %30’un altındaysa site pompası durur (hava
+basmaz).</li>
+<li>Bu pompa normalde hattı tutan “birincil” güçtür; yetersiz kalırsa
+Downside’ın site pompası alttan destek verir (bkz. 5.2).</li>
+</ul>
+<h3 id="yangın-pompaları-sürücülü-küçük-ve-büyük">6.2 Yangın pompaları
+(sürücülü) — küçük ve büyük</h3>
+<p>Upside’da <strong>iki yangın pompası</strong> vardır: - <strong>Küçük
+yangın pompası</strong> (sürücü 7, <code>fire_start</code>): açık olduğu
+sürece yangın hattını <strong>sürekli olarak 2.3–3.0 bar
+(fire_min/fire_max) aralığında tutmaya çalışır</strong>; hız 35–50 Hz
+kademeli. - <strong>Büyük yangın pompası</strong> (sürücü 8,
+<code>fire1_start</code>): butonu <strong>bulutta</strong> yer alır;
+açılması <strong>gerçek yangın</strong> anlamına gelir ve büyük pompa da
+devreye girer (25–50 Hz kademeli). - İkisi de aynı basınç sensörünü
+(<code>yangin_basinc</code>) ve aynı <code>fire_min/fire_max</code>
+değerlerini kullanır. - Ölçülen değer aynı anda UDP ile Downside’a
+gönderilir; Downside hidrant pompası da alttan destek verir. - Yangın
+tankları ortalaması <strong>%15’in altındaysa</strong> pompa tank
+korumasına girer (kuru çalışma yok).</p>
+<h3 id="tank-seviyeleri-otomatik-dolum-valfi">6.3 Tank seviyeleri +
+otomatik dolum valfi</h3>
+<ul>
+<li>5 tank ultrasonik ile ölçülür: <strong>Tank 1 = kullanma
+suyu</strong>, <strong>Tank 2-5 = yangın suyu</strong>.</li>
+<li><strong>Normal modda:</strong> Yangın tankları %95’in altına düşerse
+dolum valfi açılır, <strong>%99.5’e</strong> ulaşınca kapanır (sürekli
+dolu tutar).</li>
+<li><strong>Yangın modunda:</strong> Tanklar <strong>%15’in
+altına</strong> düşerse valf acil açılır, <strong>%60</strong> olunca
+kapanır.</li>
+<li>Dolum yapılırken yangın pompası uyutulur (aynı anda hem dolum hem
+çekme yok).</li>
+<li>Dolum valfi açıkken, Downside’daki <strong>hidrant pompası</strong>
+suyu yukarı basar; bu su yangın tanklarının dolumuna gider.</li>
+<li>Dolum başladığında/bittiğinde <strong>buluta “Otomatik dolum
+basladi” / “Otomatik dolum bitti” mesajı</strong> yazılır.</li>
+</ul>
+<h3 id="rs485-modbus-sürücü-yönetimi">6.4 RS485 / Modbus sürücü
+yönetimi</h3>
+<ul>
+<li>Pompaların frekansı, akımı ve hata durumu Modbus ile okunur.</li>
+<li>Sürücü hataya düşerse <strong>otomatik reset</strong> atılır ve
+pompa kontrollü yeniden başlatılır.</li>
+</ul>
+<hr />
+<h2 id="normal-günlük-çalışma-senaryo">7. Normal günlük çalışma
+(senaryo)</h2>
+<ol type="1">
+<li>Şebeke suyu siteyi besliyor; <strong>basınç yeterliyse site
+pompaları boşta</strong>.</li>
+<li>Tüketim artıyor, şebeke basıncı yetişemiyor → basınç düşüyor →
+<strong>Upside site pompası</strong> devreye giriyor, basıncı üstten
+tutuyor.</li>
+<li>Tüketim daha da artıyor, Upside tek başına yetişemiyor →
+<strong>Downside site pompası</strong> da otomatik devreye giriyor,
+alttan destek veriyor.</li>
+<li>Tüketim azalıyor → basınç limitlere ulaşınca pompalar sırayla
+kapanıyor, şebeke tekrar yeterli geliyor.</li>
+<li>Yangın tankı azalınca <strong>dolum valfi</strong> açılıyor;
+hidrantın yukarı bastığı su tanklara doluyor, tanklar dolunca valf
+kapanıyor (buluta mesaj gidiyor).</li>
+<li>Cihazlar her saniye birbirine “yangın basıncı = X bar” diyor.</li>
+<li>Her şey normal → ekranda ve bulutta durum izleniyor, kimse bir şey
+yapmıyor.</li>
+</ol>
+<hr />
+<h2 id="gerçek-yangin-aninda-ne-olur">8. GERÇEK YANGIN ANINDA NE
+OLUR?</h2>
+<h3 id="otomatik-olarak-kimse-dokunmadan">Otomatik olarak (kimse
+dokunmadan):</h3>
+<ol type="1">
+<li>Hidrant açılır → <strong>yangın hattı basıncı düşer</strong> →
+Upside’ın tek yangın sensörü bunu ölçer.</li>
+<li><strong>Küçük yangın pompası</strong> (<code>fire_start</code> açık)
+kademeli olarak tam güce çıkar; <strong>gerçek yangın için buluttan
+<code>fire1_start</code> açıldıysa büyük yangın pompası</strong> da
+devreye girer.</li>
+<li>Upside aynı değeri UDP ile Downside’a iletir → <strong>Downside
+hidrant pompası</strong> da otomatik devreye girer (2.0 bar altı) ve
+hattı alttan destekler.</li>
+<li>Yangın tankı biterse <strong>dolum valfi acil açılır</strong>
+(yangın modu, %15 eşiği); hidrantın bastığı su doğrudan tanklara
+dolar.</li>
+<li>Yangın söner, hidrant kapanır → basınç 2.5 bar üstüne çıkar →
+pompalar kendiliğinden durur.</li>
+</ol>
+<h3 id="operatörün-yapması-gerekenler-checklist">Operatörün yapması
+gerekenler (checklist):</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Küçük yangın pompası için
+<strong><code>fire_start</code> açık mı?</strong> (Sürekli basınç tutar;
+ekrandan/buluttan “Yangin pompa calistirildi” mesajı
+görülmeli.)</label></li>
+<li><label><input type="checkbox" /><strong>Gerçek yangında buluttan
+<code>fire1_start</code> aç</strong> → büyük yangın pompası da devreye
+girer.</label></li>
+<li><label><input type="checkbox" />Hidrant hattı için
+<strong><code>hidrant_start</code></strong> açık mı?</label></li>
+<li><label><input type="checkbox" />Yangın tankı seviyelerini kontrol et
+(ekranda %).</label></li>
+<li><label><input type="checkbox" />Yangın basıncı Upside ekranında
+2.3–3.0 bar civarında mı yükseliyor? (Bu değer Downside’a da UDP ile
+gidiyor.)</label></li>
+<li><label><input type="checkbox" />Dolum valfi açık mı? (Mesaj:
+“Otomatik dolum basladi”)</label></li>
+<li><label><input type="checkbox" />Faz ve kuyu suyu var mı? (Yoksa
+alarm gelir.)</label></li>
+<li><label><input type="checkbox" />Yangın söndükten sonra
+<strong><code>fire_start</code> ve <code>fire1_start</code>
+kapat</strong>, tankları normal modda doldur, basınç değerlerini
+doğrula.</label></li>
+</ul>
+<blockquote>
+<p>Sistem ne kadar akıllı olursa olsun, yangın anında <strong>basıncı
+ekrandan takip edin</strong>; düşmüyorsa hat dolu demektir. Sürücü
+hatası görünürse sistem zaten otomatik reset atar, tekrar deneyin.</p>
+</blockquote>
+<hr />
+<h2 id="kontrol-gücü-ve-özellikler-özeti">9. Kontrol gücü ve özellikler
+özeti</h2>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 35%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Özellik</th>
+<th>UPSIDE (üst)</th>
+<th>DOWNSIDE (alt)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Konum</td>
+<td>Tanklar + hattın üst ucu</td>
+<td>Kuyu + hattın alt ucu</td>
+</tr>
+<tr>
+<td>Site basınç sensörü</td>
+<td>Kendi üst sensörü (2.3–3.0 bar)</td>
+<td>Kendi alt sensörü (7–9 bar, kot dahil)</td>
+</tr>
+<tr>
+<td>Yangın basınç sensörü</td>
+<td><strong>Tek sensör burda</strong> → UDP ile paylaşır</td>
+<td>Sensörü yok; UDP’den alır</td>
+</tr>
+<tr>
+<td>Site pompası</td>
+<td>1 sürücülü (35–50 Hz, kademeli)</td>
+<td>2 röleli (inverter + yedek, aç/kapa)</td>
+</tr>
+<tr>
+<td>Site kaynağı</td>
+<td><strong>Şebeke birincil</strong>; basınç yetmezse pompa destek</td>
+<td><strong>Şebeke birincil</strong>; basınç yetmezse pompa destek</td>
+</tr>
+<tr>
+<td>Yangın desteği</td>
+<td>Küçük pompa (fire_start, sürekli basınç) + büyük pompa (fire1_start,
+gerçek yangın) + acil dolum</td>
+<td>1 hidrant pompası + zamanlayıcı yedek</td>
+</tr>
+<tr>
+<td>Tank izleme</td>
+<td>5 ultrasonik + tonaj hesaplama</td>
+<td>Site tankı 10 ton (şebekeyle dolar, alt sensör) + yangın tankı 5 ton
+(kuyuyla dolar, alt/üst sensör)</td>
+</tr>
+<tr>
+<td>Otomatik dolum</td>
+<td>Valf ile (mesaj + alarm)</td>
+<td>Kuyu ile yangın tankı (5 ton); hidrant ile üst yangın tankları (valf
+açıkken)</td>
+</tr>
+<tr>
+<td>Sürücü yönetimi</td>
+<td>RS485 Modbus + otomatik reset</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Çıkış güvenliği</td>
+<td>—</td>
+<td>Geri okuma + otomatik onarım + reset</td>
+</tr>
+<tr>
+<td>Ekran</td>
+<td>Nextion dokunmatik</td>
+<td>Nextion dokunmatik</td>
+</tr>
+<tr>
+<td>Bulut</td>
+<td>Arduino IoT Cloud</td>
+<td>Arduino IoT Cloud</td>
+</tr>
+<tr>
+<td>Cihazlar arası</td>
+<td>UDP 1 sn paket (yangın basıncı gönderir)</td>
+<td>UDP 1 sn paket (reset komutu gönderir)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="güvenlik-katmanları-hiyerarşi">10. Güvenlik katmanları
+(hiyerarşi)</h2>
+<ol type="1">
+<li><strong>Faz yoksa / kuyuda su yoksa → pompalar hiç
+çalışmaz.</strong></li>
+<li><strong>Tank koruması:</strong> Tank boşken pompa asla kuru çalışmaz
+(Upside: site %30 / yangın %15; Downside: site tankı alt seviyesi
+kuruyunca site pompaları, yangın tankı alt seviyesi kuruyunca hidrant
+durur).</li>
+<li><strong>MCP geri okuma:</strong> Röle takıldıysa 10 sn içinde tespit
++ otomatik onarım; onarılamazsa sistem reset + alarm.</li>
+<li><strong>UDP yoksa:</strong> Taraflar bağımsız karar verir (hidrant
+zamanlayıcı modu gibi).</li>
+<li><strong>Uzaktan reset:</strong> Downside, Upside’ı buluttan yeniden
+başlatabilir.</li>
+<li><strong>Güvenli açılış:</strong> Elektrik gelince tüm çıkışlar
+kapalı başlar, sonra kontrollü devreye alınır.</li>
+</ol>
+<hr />
+<h2 id="izleme-ve-mesajlar-bulut">11. İzleme ve mesajlar (bulut)</h2>
+<ul>
+<li><strong><code>isLive</code></strong> değişkeni 3 saniyede bir
+güncellenir → dashboard’da cihazın “çevrimiçi” olduğu görünür.</li>
+<li><strong><code>messages</code></strong> değişkeni (Upside) önemli
+olayları yazar:
+<ul>
+<li>“Otomatik dolum basladi” / “Otomatik dolum bitti”</li>
+<li>“Site/Yangin pompa calistirildi/durduruldu (ekran)”</li>
+<li>“Gecersiz site/yangin basinc degeri!” (yanlış değer girilirse)</li>
+<li>“Sifirlandi” (sürücü reset mesajları)</li>
+</ul></li>
+<li><strong>Uyarı:</strong> <code>isLive</code>’ın her 3 saniyede bir
+gönderilmesi bulut kotasını kullanır. Ücretli (Maker) planda bu
+güvenlidir (~864.000 kayıt/ay, limit 1 milyon/gün). <strong>Değer 3
+saniyede bırakıldı.</strong></li>
+</ul>
+<hr />
+<h2 id="önemli-teknik-notlar">12. Önemli teknik notlar</h2>
+<ul>
+<li><strong>UDP paketleri “paketlenmiş” (packed) DEĞİLDİR:</strong> Her
+iki cihaz aynı ESP32 derleyicisini kullandığı için hizalama aynıdır (8
+ve 12 bayt). <code>packed</code> yapılırsa paketler birbirini reddeder,
+haberleşme kesilir.</li>
+<li><strong>Basınç eşleşmesi:</strong> Downside 7–9 bar, Upside 2.3–3.0
+bar’dır — aynı hattın alt ve üst ucu. Kot (≈6 bar) eklenince fiziksel
+olarak aynı durumu anlatırlar.</li>
+<li><strong>Yangın hattının tek sensörü:</strong> Downside’ın hidrant
+kararı UDP’den gelen Upside değeriyle verilir; kendi
+<code>line_bar</code> sensörü (belediye giriş suyu basıncı) yalnızca
+ekrandadır.</li>
+<li><strong>Cloud gecikmesi:</strong> Bulut bağlantısı açılışta 3 saniye
+sonra başlar; <code>ArduinoCloud.update()</code> her döngüde çağrılır
+(mesajlar gecikmez).</li>
+<li><strong>Kod referansları:</strong>
+<ul>
+<li>Downside: <code>downside_son_durum_fixed.txt</code> (düzeltilmiş son
+sürüm)</li>
+<li>Upside: <code>upside_with_nex.txt</code> (ekranlı son sürüm)</li>
+</ul></li>
+</ul>
+<hr />
+<h2 id="önerilen-sunum-akışı-5-dk">13. Önerilen sunum akışı (5 dk)</h2>
+<ol type="1">
+<li>“Bu sistem ne yapar?” (bölüm 1)</li>
+<li><strong>Kot farkı: neden iki farklı basınç limiti?</strong> (bölüm
+2) — sunumun kilit noktası</li>
+<li>Canlı akış şeması: kuyu → tank → site/yangın hattı, iki pompanın
+aynı hatta ortak çalışması (bölüm 3-7)</li>
+<li>Yangın senaryosu: tek sensör, UDP paylaşımı, iki pompa desteği
+(bölüm 8)</li>
+<li>Güvenlik katmanları 6 maddede (bölüm 10)</li>
+<li>Soru-cevap: tank, basınç, mesajlar, bulut (bölüm 9-11)</li>
+</ol>
+</body>
+</html>
