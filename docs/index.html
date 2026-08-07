@@ -25,8 +25,8 @@
     --shadow: 0 10px 30px rgba(4, 30, 66, .10);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; }
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; overflow-x: hidden; }
   img { max-width: 100%; display: block; }
   a { color: var(--sky); text-decoration: none; }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
@@ -150,7 +150,8 @@
   .fld { display: flex; flex-direction: column; gap: 7px; }
   .fld.full { grid-column: 1 / -1; }
   .fld label { font-size: 13.5px; font-weight: 700; color: var(--navy); }
-  .fld input, .fld select, .fld textarea { border: 2px solid #d7e3ee; border-radius: 10px; padding: 12px 14px; font-size: 15px; font-family: inherit; color: var(--ink); background: #fbfdff; transition: border-color .15s; }
+  .fld input, .fld select, .fld textarea { border: 2px solid #d7e3ee; border-radius: 10px; padding: 12px 14px; font-size: 16px; font-family: inherit; color: var(--ink); background: #fbfdff; transition: border-color .15s; }
+  @media (min-width: 768.1px) { .fld input, .fld select, .fld textarea { font-size: 15px; } }
   .fld input:focus, .fld select:focus, .fld textarea:focus { outline: none; border-color: var(--sky); }
   .fld textarea { min-height: 110px; resize: vertical; }
   .fld .err { display: none; color: var(--red); font-size: 12.5px; font-weight: 600; }
@@ -251,6 +252,19 @@
     .demo-grid { grid-template-columns: 1fr; }
   }
 
+  @media (max-width: 768px) {
+    .hero h1 { font-size: clamp(28px, 5.8vw, 38px); }
+    .hero p.sub { font-size: clamp(16px, 4vw, 18px); }
+    .hero-badges span { font-size: 13px; }
+    h2 { font-size: clamp(22px, 5.6vw, 32px); }
+    .lead { font-size: 16px; }
+    .cards.c2 { grid-template-columns: 1fr 1fr; }
+    .cards.c3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .cards.c2 { grid-template-columns: 1fr; }
+    .strip-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 900px) {
     .nav-links { display: none; position: absolute; top: 66px; left: 0; right: 0; background: var(--navy); flex-direction: column; gap: 0; padding: 10px 0 18px; }
     .nav-links.open { display: flex; }
@@ -261,10 +275,6 @@
     .flow-item::after { display: none; }
     .strip-grid { grid-template-columns: 1fr 1fr; }
     section { padding: 56px 0; }
-  }
-  @media (max-width: 560px) {
-    .cards.c2 { grid-template-columns: 1fr; }
-    .strip-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
