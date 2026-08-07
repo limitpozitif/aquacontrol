@@ -137,3 +137,14 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
   `downside_web_entegre.txt` (web gömülü) ve `upside_web_entegre.txt`'den yapıyor,
   `web_gomulu\*.h` değil; upside web sunmaz. `web_panel_data\` değişiklikleri firmware
   bloğuna da gömülmek zorunda (embed_web.ps1 + git diff doğrulama).
+
+**V01 güncelleme (2026-08-07) — opencode çalışma notları netleştirildi**
+- Kök `AGENTS.md` → "FLASH KAYNAĞI" bölümüne **"Web panel değişikliğinde tam akış"** eklendi:
+  web_panel_data → embed_web.ps1 → web2header.ps1 → doğrula → V01 kopyası (MD5) → commit.
+- **Doğrulama tuzağı notu:** `git diff --no-index --stat` + `-match` ile doğrulama YANILTICI
+  (CRLF uyarısı nedeniyle farklı dosya "AYNI" görünebilir). Güvenilir: blokları `-join "\n"`
+  ile normalleştirip string karşılaştırması yap; tam dosya için hunk incele; idempotentlik için
+  2 kez çalıştırıp MD5; root vs V01 için MD5.
+- Kanoniklik şüphesinde `git log --oneline -- <dosya>`; örnek: ilk snapshot'ta gömülü
+  style.css ile web_panel_data/style.css `.status-leds` sırası farklıydı — gömme her zaman
+  web_panel_data'yı esas alır.
