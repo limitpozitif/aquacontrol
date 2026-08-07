@@ -123,3 +123,17 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
   `Web_Panel_Giris_Sistemi_Kilavuzu.pdf` (10 sayfa) — root + bu klasör.
 - Kural: her versiyonda `last_update` slaytı güncellenir (bkz. kök `AGENTS.md` → "SUNUM /
   ADMIN / HANE BİLGİLENDİRME").
+
+**V01 güncelleme (2026-08-07) — `downside_web_entegre.txt` web blokları web_panel_data ile senkron**
+- `yardimci_araclar\embed_web.ps1` oluşturuldu: `web_panel_data\` içeriğini
+  `downside_web_entegre.txt` içindeki `WEB_INDEX_HTML` / `WEB_LOGIN_HTML` / `WEB_STYLE_CSS` /
+  `WEB_APP_JS` bloklarına gömüyor; blok dışına dokunmuyor (upsert), dominan satır sonunu
+  koruyor. İdempotent (ardışık çalıştırmada dosya değişmiyor — MD5 doğrulandı).
+- Gömme sırasında orijinal firmware'deki gömülü `style.css` ile `web_panel_data/style.css`
+  arasında `.status-leds` satır sırası farkı bulundu ve firmware güncellendi (işlevsel fark yok,
+  yalnız sıralama). Artık 4 blok da `web_panel_data` ile birebir aynı (doğrulandı).
+- `downside_web_entegre.txt` root + bu klasörde senkron (MD5 aynı).
+- Kök `AGENTS.md`'ye **"🔥 FLASH KAYNAĞI"** bölümü eklendi: kullanıcı flash'ı
+  `downside_web_entegre.txt` (web gömülü) ve `upside_web_entegre.txt`'den yapıyor,
+  `web_gomulu\*.h` değil; upside web sunmaz. `web_panel_data\` değişiklikleri firmware
+  bloğuna da gömülmek zorunda (embed_web.ps1 + git diff doğrulama).
