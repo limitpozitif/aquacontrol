@@ -1,7 +1,0 @@
-t = open(r'C:\Users\limit\AppData\Local\Temp\opencode\pr2_dom.txt', encoding='utf-8').read()
-print('LEN', len(t))
-print('has hero:', 'class="hero"' in t or 'class="hero' in t)
-print('time filled:', '>--<' not in t.replace('id="time"', '').split('id="time"')[-1][:40])
-i = t.find('<body')
-print('BODY:', t[i:i + 300] if i >= 0 else 'no body tag')
-print('TAIL:', t[-300:])
