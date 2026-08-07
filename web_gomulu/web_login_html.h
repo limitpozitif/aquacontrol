@@ -1,7 +1,7 @@
-﻿// login.html (web_panel_data) -> gomulu (PROGMEM) web dosyasi
+// login.html (web_panel_data) -> gomulu (PROGMEM) web dosyasi
 #pragma once
 
-static const char WEB_LOGIN_HTML[] PROGMEM = R"CAMKENTP9("
+static const char WEB_LOGIN_HTML[] PROGMEM = R"CAMKENTP9(
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -234,4 +234,6 @@ static const char WEB_LOGIN_HTML[] PROGMEM = R"CAMKENTP9("
 </body>
 </html>
 
+
 )CAMKENTP9";
+

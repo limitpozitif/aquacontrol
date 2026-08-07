@@ -1,7 +1,7 @@
-﻿// app.js (web_panel_data) -> gomulu (PROGMEM) web dosyasi
+// app.js (web_panel_data) -> gomulu (PROGMEM) web dosyasi
 #pragma once
 
-static const char WEB_APP_JS[] PROGMEM = R"CAMKENTP9("
+static const char WEB_APP_JS[] PROGMEM = R"CAMKENTP9(
 /* =========================================================
    ÇAMKENT AQUA — Kontrol Paneli (UPSIDE + DOWNSIDE)
    CANLI SÜRÜM: demo veri yerine DOWNSIDE /data ucundan çeker.
@@ -117,12 +117,12 @@ const render = () => {
   setTxt("summaryPump", motorState(sPump.freq, sStart));
 
   /* upside tanks */
-  setFill("tk1Fill", sWater.cap > 0 ? (sWater.ton / sWater.cap) * 100 : 0);
-  setTxt("tk1Val", sWater.cap > 0 ? Math.round((sWater.ton / sWater.cap) * 100) + "%" : "--");
+  setFill("tk1Fill", sWater.cap > 0 ? Math.min(100, (sWater.ton / sWater.cap) * 100) : 0);
+  setTxt("tk1Val", sWater.cap > 0 ? Math.round(Math.min(100, (sWater.ton / sWater.cap) * 100)) + "%" : "--");
   setTxt("tk1Ton", sWater.ton.toFixed(1) + "t");
 
-  setFill("tkFireFill", fireCap > 0 ? (fireTotal / fireCap) * 100 : 0);
-  setTxt("tkFireVal", fireCap > 0 ? Math.round((fireTotal / fireCap) * 100) + "%" : "--");
+  setFill("tkFireFill", fireCap > 0 ? Math.min(100, (fireTotal / fireCap) * 100) : 0);
+  setTxt("tkFireVal", fireCap > 0 ? Math.round(Math.min(100, (fireTotal / fireCap) * 100)) + "%" : "--");
   setTxt("tkFireTon", fireTotal.toFixed(1) + "t");
 
   /* gauges */
@@ -304,4 +304,6 @@ setInterval(clock, 1000);
 fetchData();
 setInterval(fetchData, 2000);
 
+
 )CAMKENTP9";
+

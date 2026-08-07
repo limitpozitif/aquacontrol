@@ -1,7 +1,7 @@
-﻿// index.html (web_panel_data) -> gomulu (PROGMEM) web dosyasi
+// index.html (web_panel_data) -> gomulu (PROGMEM) web dosyasi
 #pragma once
 
-static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9("
+static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9(
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -212,4 +212,6 @@ static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9("
 </body>
 </html>
 
+
 )CAMKENTP9";
+

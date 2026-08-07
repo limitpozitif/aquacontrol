@@ -1,7 +1,7 @@
-﻿// style.css (web_panel_data) -> gomulu (PROGMEM) web dosyasi
+// style.css (web_panel_data) -> gomulu (PROGMEM) web dosyasi
 #pragma once
 
-static const char WEB_STYLE_CSS[] PROGMEM = R"CAMKENTP9("
+static const char WEB_STYLE_CSS[] PROGMEM = R"CAMKENTP9(
 :root{
   --bg0:#0a1120;
   --bg1:#0e1730;
@@ -36,11 +36,11 @@ body{font:14px/1.45 "Segoe UI",system-ui,Arial,sans-serif;color:var(--txt);min-h
 .clock span{display:block;font:20px/1 "Consolas",monospace;color:var(--cyan);letter-spacing:1px}
 .clock small{font-size:10px;letter-spacing:2px}
 .hero-sub{color:var(--dim);margin-top:10px;font-size:12.5px;letter-spacing:.4px}
+.status-leds{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .hero-users{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .hero-user{font-size:11px;letter-spacing:1px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.02);font-family:inherit}
 .hero-user strong{font-weight:700;color:var(--ok);font-family:inherit}
 .hero-user:first-child strong{color:var(--water)}
-.status-leds{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .led{font-size:10.5px;letter-spacing:1px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.02)}
 .led .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:blink 2.4s infinite}
 .led.bad{color:var(--bad);border-color:var(--bad)}
@@ -201,4 +201,6 @@ footer{text-align:center;color:var(--dim);font-size:10.5px;letter-spacing:1.4px;
   .status-leds{gap:6px}
 }
 
+
 )CAMKENTP9";
+
