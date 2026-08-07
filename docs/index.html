@@ -253,8 +253,9 @@
   }
 
   @media (max-width: 768px) {
-    section { padding: 44px 0; }
-    .hero { padding: 56px 0 36px; }
+    section { padding: 36px 0; }
+    .hero { padding: 44px 0 24px; }
+    .hero-img { display: none; }   /* büyük panel screenshotu gizlenir — hero çok uzun olur */
     .hero h1 { font-size: clamp(26px, 6vw, 36px); }
     .hero p.sub { font-size: clamp(15px, 4vw, 17px); }
     .hero-badges span { font-size: 12.5px; }
@@ -941,6 +942,27 @@
       f.addEventListener('input', function () { mark(f, false); });
     });
   })();
+</script>
+<script id="ak-diag">
+  window.addEventListener('load', function () {
+    if (location.search.indexOf('diag=1') === -1) return;
+    var w = window.innerWidth, h = window.innerHeight;
+    var b = document.body;
+    var r = {winW:w, winH:h, bodyScrollW:b.scrollWidth, bodyClientW:b.clientWidth, bodyOverflow:getComputedStyle(b).overflowX, bodyHeight:b.scrollHeight,
+             heroH:(function(){var x=document.querySelector('.hero');return x?x.getBoundingClientRect().height:0;})(),
+             heroImg:(function(){var x=document.querySelector('.hero-img');return x?getComputedStyle(x).display:'na';})(),
+             cardsC3:(function(){var x=document.querySelector('.cards.c3');return x?getComputedStyle(x).gridTemplateColumns:'na';})(),
+             tableWrapW:(function(){var x=document.querySelector('.table-wrap');return x?x.getBoundingClientRect().width:0;})(),
+             tableMinW:(function(){var x=document.querySelector('table');return x?x.getBoundingClientRect().width+' (minWas520)':0;})()};
+    // overflow scan: elements wider than viewport (root-level, skip body)
+    r.big=[];
+    var all=document.querySelectorAll('*');
+    for(var i=0;i<all.length;i++){var e=all[i];if(e===b||e===document.documentElement)continue;var bx=e.getBoundingClientRect();if(bx.width>w+1){r.big.push({tag:e.tagName,cls:e.className,sub:e.id,w:Math.round(bx.width)});if(r.big.length>15)break;}}
+    var pre=document.createElement('pre'); pre.id='akdiag';
+    pre.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;z-index:99999;padding:8px;font:12px monospace;white-space:pre-wrap;max-height:40vh;overflow:auto;';
+    pre.textContent='DIAG '+JSON.stringify(r);
+    document.body.appendChild(pre);
+  });
 </script>
 </body>
 </html>
