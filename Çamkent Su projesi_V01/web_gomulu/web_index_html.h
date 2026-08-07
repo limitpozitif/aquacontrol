@@ -21,7 +21,7 @@ static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9("
       <div class="logo"><span class="logo-badge">💧</span><span>ÇAMKENT <em>AQUA</em></span></div>
       <div class="clock"><span id="time">--</span><small>CANLI VERİ</small></div>
     </div>
-    <div class="hero-sub">Site Suyu &amp; Yangın Hattı Kontrol Sistemi &nbsp;·&nbsp; UPSIDE ⇄ DOWNSIDE &nbsp;·&nbsp; v10</div>
+    <div class="hero-sub">Site Suyu &amp; Yangın Hattı Kontrol Sistemi &nbsp;·&nbsp; UPSIDE ⇄ DOWNSIDE &nbsp;·&nbsp; V01</div>
     <div class="hero-users">
       <div class="hero-user"><span>👥 Toplam Kullanıcı</span><strong id="summaryUsers">--</strong></div>
       <div class="hero-user"><span>🟢 Aktif Kullanıcı</span><strong id="summaryActive">--</strong></div>
@@ -206,7 +206,7 @@ static const char WEB_INDEX_HTML[] PROGMEM = R"CAMKENTP9("
     <div class="alarm normal station-status" id="downAlarm"><span class="pulse"></span><span id="downAlarmText">Sistemler taranıyor…</span></div>
   </section>
 
-  <footer>ÇAMKENT AQUA HMI v3.0 · Kontrol Paneli · UPSIDE ⇄ DOWNSIDE</footer>
+  <footer>ÇAMKENT AQUA HMI V01 · Kontrol Paneli · UPSIDE ⇄ DOWNSIDE</footer>
 
 </div>
 </body>
