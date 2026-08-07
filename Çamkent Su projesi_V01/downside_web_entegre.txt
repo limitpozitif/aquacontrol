@@ -2880,10 +2880,22 @@ void kuyuControl() {
   static uint32_t lastReadback = 0;
   static bool recoveryActive = false;
   static uint32_t recoveryStart = 0;
-  // [EKLENDI 07/08] Madde 9: histerezis + max çalışma süresi koruması
+  // [DUZELTILDI] Kuyu: yangin tanki HEP DOLU tutulur.
+  // fireUst (ust samandira) kuruysa kuyu calisir, islaksa (tank dolu) durur.
+  // fireAlt'a bakilmaz; tank %100'den dusen su her seferinde tekrar doldurulur.
+  // Kontak ziplamasi icin debounce readInputs() icinde mevcut (300 ms).
+  // Guvenlik: fireUst arizali kalirsa 1 saat kesintisiz calismadan sonra pompa
+  // durdurulur + alarm; kilit fireUst gorulunce veya KUYU_RETRY_MS bekleyis
+  // sonrasi otomatik acilir (deadlock yok).
+  // ZAMANLAMA: 1 saatlik sayac kuyu_start ACIK olduktan sonra, pompa fiilen
+  // calismaya baslayinca (expected_kuyu false'a inince) baslar; pompa durdugu
+  // an sifirlanir. kuyu_start kapaliyken asagidaki safety dal sayaci 0'lar —
+  // sayac hicbir zaman kuyu starttan ONCE islemez.
   static uint32_t kuyuRunStart = 0;
   static bool kuyuRunLimitHit = false;
+  static uint32_t kuyuRunStop = 0;
   const unsigned long KUYU_MAX_RUN_MS = 3600000UL;   // 1 saat
+  const unsigned long KUYU_RETRY_MS = 600000UL;      // 10 dk bekleyis
 
   if (!hard_test) {
 
@@ -2891,34 +2903,44 @@ void kuyuControl() {
     if (!io.kuyu || !io.fazOK || !kuyu_start) {
       expected_kuyu = true;
       kuyuRunLimitHit = false;
+      kuyuRunStart = 0;
+      kuyuRunStop = 0;
       clearAlarm("Kuyu pompasi max calisma suresi asildi!");
       mismatchTimer = 0;
       recoveryActive = false;
     }
     else {
-      // [EKLENDI 07/08] Madde 9: Histerezis — alt şamandıra (fireAlt) kuruysa başlat, üst şamandıra
-      // (fireUst) ıslaksa durdur. İkisi arasında son durum korunur → kontak zıplamasında
-      // çırpınma olmaz. fireUst arızalıysa (açık kaldı) 1 saat kesintisiz çalışmadan
-      // sonra pompa zorla durdurulur + alarm verilir; üst şamandıra tekrar görülünce kilit kalkar.
+      // Kilit aktifken acilma kosullarini kontrol et
       if (kuyuRunLimitHit) {
-        expected_kuyu = true;
-        addAlarm("Kuyu pompasi max calisma suresi asildi!");
-      } else {
-        if (!io.fireAlt) {
-          // tank alt seviyenin altına düştü → doldurmaya başla
-          if (expected_kuyu) kuyuRunStart = millis();
-          expected_kuyu = false;
-        } else if (io.fireUst) {
-          // tank doldu → durdur; üst şamandıra sağlıklı demektir, kilidi sıfırla
-          expected_kuyu = true;
+        if (io.fireUst) {
+          // tank dolu → kilit kalksin
           kuyuRunLimitHit = false;
+          kuyuRunStart = 0;
+          kuyuRunStop = 0;
+          clearAlarm("Kuyu pompasi max calisma suresi asildi!");
+        } else if (millis() - kuyuRunStop >= KUYU_RETRY_MS) {
+          // bekleyis bitti → yeniden dene
+          kuyuRunLimitHit = false;
+          kuyuRunStart = millis();
           clearAlarm("Kuyu pompasi max calisma suresi asildi!");
         }
-        // else: iki şamandıra arası → son durum korunur
+      }
 
-        if (!expected_kuyu && (millis() - kuyuRunStart >= KUYU_MAX_RUN_MS)) {
-          kuyuRunLimitHit = true;
+      if (!kuyuRunLimitHit) {
+        if (!io.fireUst) {
+          // tank dolu degil → calistir
+          if (expected_kuyu) kuyuRunStart = millis();
+          expected_kuyu = false;
+          if (kuyuRunStart != 0 && (millis() - kuyuRunStart >= KUYU_MAX_RUN_MS)) {
+            kuyuRunLimitHit = true;
+            kuyuRunStop = millis();
+            expected_kuyu = true;
+            addAlarm("Kuyu pompasi max calisma suresi asildi!");
+          }
+        } else {
+          // tank dolu → durdur
           expected_kuyu = true;
+          kuyuRunStart = 0;
         }
       }
     }

@@ -138,6 +138,21 @@ Yapılan değişiklik **adminleri ya da hane sahiplerini ilgilendiriyorsa**
   `web_gomulu\*.h` değil; upside web sunmaz. `web_panel_data\` değişiklikleri firmware
   bloğuna da gömülmek zorunda (embed_web.ps1 + git diff doğrulama).
 
+**V01 güncelleme (2026-08-07) — Kuyu kontrolü düzeltildi: yangın tankı hep dolu tutulur**
+- Sorun: kuyu motoru, `fireUst=false` (tank dolu değil) iken çalışması gerekirken duruyordu;
+  downside yangın tankı hep dolu kalmıyordu.
+- Neden: 07/08'de eklenen histerezis mantığı (`fireAlt` kuru olmadan başlatmıyor, iki şamandıra
+  arasında son durumu koruyor) tankı yalnızca %100→%50 aralığında dolduruyordu. Ayrıca 1 saatlik
+  max çalışma kilidi `fireUst=true` olmadan asla açılamıyordu (deadlock: pompa kapalıyken tank
+  dolamadığı için `fireUst` hiç `true` olamıyordu).
+- Düzeltme (`downside_web_entegre.txt` → `kuyuControl()`):
+  - Kuyu artık **`fireUst` kuru olduğu sürece çalışır, tank dolu (fireUst ıslak) olunca durur**.
+    `fireAlt`'a bakılmaz → tank %100'den düşen su her seferinde tekrar doldurulur.
+  - Kontak zıplaması `readInputs()` içindeki 300 ms debounce ile zaten korunuyor.
+  - 1 saatlik max çalışma koruması KORUNDU ama kilit artık takılı kalmıyor: `fireUst` görülünce
+    anında, değilse 10 dk bekleyiş sonrası otomatik açılıp yeniden deniyor (deadlock yok).
+- `downside_web_entegre.txt` root + bu klasörde senkron (MD5: `E0232B5A66127FCA6839F1E1A4015A6D`).
+
 **V01 güncelleme (2026-08-07) — opencode çalışma notları netleştirildi**
 - Kök `AGENTS.md` → "FLASH KAYNAĞI" bölümüne **"Web panel değişikliğinde tam akış"** eklendi:
   web_panel_data → embed_web.ps1 → web2header.ps1 → doğrula → V01 kopyası (MD5) → commit.
