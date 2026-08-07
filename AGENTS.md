@@ -58,12 +58,36 @@ Kural: **`web_panel_data\` içinde yapılan her değişiklik, `downside_web_ente
 ilgili bloğa da gömülmek zorundadır**; aksi hâlde flash edilen cihazda eski web kalır.
 
 - Gömmek: `yardimci_araclar\embed_web.ps1` (web_panel_data → downside_web_entegre.txt;
-  blok dışındaki tüm baytlara dokunmaz).
+  blok dışındaki tüm baytlara dokunmaz; idempotent; dominan satır sonunu korur; **kök
+  yollarını sabit kullanır** → V01 için root'ta üret, sonra kopyala).
 - Doğrulamak: embed sonrası `git diff -- downside_web_entegre.txt` incele (yalnızca blok içi
   fark olmalı); bloklar birebir `web_panel_data` ile eşit olmalı.
 - `web_gomulu\*.h` ayrı başlık biçimidir (`web2header.ps1` üretir) — flash kaynağı DEĞİLDİR.
 - ⚠️ PS 5.1 tuzağı: `string.StartsWith([char]0xFEFF)` hatalı TRUE döner ve içeriği bozar;
   scriptlerde BOM kontrolü EKLEME (`ReadAllLines` BOM'u kendisi siler).
+- `yardimci_araclar\` scriptleri yalnızca V01 klasöründe yaşar; kök `yardimci_araclar` yok.
+
+**Web panel değişikliğinde tam akış (sırayla):**
+1. `web_panel_data\*` dosyasını düzenle — **kanonik kaynak burasıdır**.
+2. `embed_web.ps1` çalıştır (web_panel_data → root `downside_web_entegre.txt`).
+3. `web2header.ps1` çalıştır (web_panel_data → `web_gomulu\*.h`).
+4. Doğrula: `git diff -- downside_web_entegre.txt` (yalnızca blok içi fark); sonra
+   `downside_web_entegre.txt`'yi root → V01'e kopyala ve **MD5 eşitliğini** kontrol et.
+5. Commit (Türkçe, açıklayıcı).
+
+**⚠️ Doğrulama tuzağı:** `git diff --no-index --stat` çıktısını `-match "diff --git"` ile test
+etmek YANILTICI — farklı içerik "BIREBIR AYNI" görünebilir (stderr CRLF uyarısı + Out-String
+etkileşimi). Güvenilir yöntemler:
+- **Blok içeriği:** satırları `-join "\n"` ile normalize et, string eşitliğine bak (git kullanma).
+- **Tam dosya:** `git diff --no-index <orijinal> <üretilen>` → hunk'ları incele.
+- **İdempotentlik:** embed'i 2 kez çalıştır, dosya MD5'i değişmemeli.
+- **root vs V01:** `Get-FileHash -Algorithm MD5` eşit olmalı.
+
+**Kanoniklik şüphesinde:** hangi dosya daha güncel diye bak — `git log --oneline -- <dosya>`.
+İlk snapshot'ta (60a790f) firmware'in gömülü `style.css`'i ile `web_panel_data/style.css`
+`.status-leds` satır sırasında birbirinden farklıydı (işlevsel fark yok); gömme her zaman
+`web_panel_data`'yı esas alır. Uptimum: `upside_web_entegre.txt` içinde web yok
+(`<!DOCTYPE`, `CAMKENTP9`, `ver`, `sürüm` aranmaz) — upside veriyi UDP ile downside'a yollar.
 
 ## 🛠 ORTAM / ÜRETİM NOTLARI
 
