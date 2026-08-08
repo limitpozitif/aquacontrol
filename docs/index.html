@@ -253,65 +253,55 @@
   }
 
   @media (max-width: 768px) {
-    section { padding: 36px 0; }
-    .hero { padding: 44px 0 24px; }
-    .hero-img { display: none; }   /* büyük panel screenshotu gizlenir — hero çok uzun olur */
+    section { padding: 20px 0; }
+    .hero { padding: 24px 0 8px; }
+    .hero-img { display: none; }
     .hero h1 { font-size: clamp(26px, 6vw, 36px); }
     .hero p.sub { font-size: clamp(15px, 4vw, 17px); }
     .hero-badges span { font-size: 12.5px; }
     .hero-badges { gap: 8px; }
     h2 { font-size: clamp(21px, 5.8vw, 30px); }
     .lead { font-size: 15.5px; }
-    .card { padding: 20px; }
-    .card h3 { font-size: 18px; }
-    .callout, .callout.ok, .callout.fire { font-size: 13.5px; padding: 14px 16px; }
-    .strip { font-size: 14px; }
-    .strip-item { gap: 12px; }
-    .strip-item .stat-num { font-size: 28px; }
-    .strip-item .stat-suf { font-size: 28px; }
-    .strip-item b, .strip-item span { font-size: 13.5px; }
+    .card { padding: 16px; }
+    .card h3 { font-size: 17px; }
+    .callout, .callout.ok, .callout.fire { font-size: 13px; padding: 12px 14px; }
+    .strip { font-size: 13px; }
+    .strip-item { gap: 10px; }
+    .strip-item .stat-num { font-size: 24px; }
+    .strip-item .stat-suf { font-size: 24px; }
+    .strip-item b, .strip-item span { font-size: 12.5px; }
     .flow { grid-template-columns: 1fr; }
-    .flow-item { padding: 18px 16px; }
-    .flow-item .num { width: 36px; height: 36px; font-size: 16px; }
-    .steps li { padding: 14px 16px; font-size: 14px; }
+    .flow-item { padding: 14px 12px; }
+    .flow-item .num { width: 32px; height: 32px; font-size: 14px; }
+    .steps li { padding: 12px 14px; font-size: 13px; }
     .table-wrap { margin: 4px 0; }
-    table { font-size: 12.5px; min-width: 520px; }
-    th, td { padding: 10px 12px; }
+    table { font-size: 12px; min-width: 520px; }
+    th, td { padding: 8px 10px; }
     .cta .card-contact { max-width: 100%; }
     .contact-row { grid-template-columns: 1fr; }
-    .form-card { padding: 24px; }
-    .demo { border-radius: 16px; }
-    .demo-bar { padding: 12px 18px; }
-    .demo-grid { padding: 16px; }
-    .tank { padding: 12px; }
-    .tank .body { height: 88px; }
-    .tank .cap, .tank .pct { font-size: 12px; }
-    .tank .pct { top: 6px; left: 8px; }
-    .tank .ton { top: 6px; right: 8px; font-size: 11px; }
-    .pumps { grid-template-columns: 1fr 1fr; }
-    .pump { padding: 10px; gap: 10px; }
-    .pump .nm { font-size: 11.5px; }
-    .pump .st { font-size: 11px; }
-    .spin { width: 30px; height: 30px; min-width: 30px; font-size: 13px; }
-    .data-row { font-size: 12.5px; padding: 9px 12px; }
-    .data-row b { font-size: 14px; }
-    .demo controls { flex-direction: column; }
-    .demo-btn { min-width: 100%; }
-    .demo-note { font-size: 11.5px; }
-    footer .foot-grid { font-size: 13px; }
+    .form-card { padding: 20px; }
+    .demo { display: none; }
+    footer .foot-grid { font-size: 12px; }
+
+    /* Mobil akordeon: cm-sec bölümlerini kapatılabilir yap */
+    .cm-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 14px; margin: 8px 0; background: var(--sky); color: #fff; border-radius: 10px; font-size: 13px; font-weight: 700; }
+    .cm-toggle .cm-caret { margin-left: auto; font-size: 11px; transition: transform .2s; }
+    .cm-body { max-height: 0; overflow: hidden; opacity: 0; padding: 0 6px; transition: max-height .3s ease, opacity .3s ease; }
+    section.open .cm-body { max-height: 5000px; opacity: 1; padding: 12px 6px; }
+    .cm-toggle .cm-caret.open { transform: rotate(90deg); }
   }
   @media (max-width: 480px) {
-    section { padding: 32px 0; }
-    .hero { padding: 36px 0 20px; }
-    .hero h1 { font-size: 26px; }
-    h2 { font-size: 22px; }
-    .card { padding: 16px; }
+    section { padding: 14px 0; }
+    .hero { padding: 16px 0 6px; }
+    .hero h1 { font-size: 24px; }
+    h2 { font-size: 19px; }
+    .card { padding: 12px; }
     .wrap { padding: 0 12px; }
-    .kicker { font-size: 11px; padding: 6px 14px; }
-    .badge { font-size: 11px; padding: 3mm 6mm; }
+    .kicker { font-size: 10px; padding: 5px 12px; }
+    .badge { font-size: 10px; }
     .table-wrap { margin: 0 -4px; }
-    table { min-width: 100%; font-size: 12px; }
-    .form-card { padding: 20px 16px; }
+    table { min-width: 100%; font-size: 11px; }
+    .form-card { padding: 16px; }
   }
   @media (max-width: 900px) {
     .nav-links { display: none; position: absolute; top: 66px; left: 0; right: 0; background: var(--navy); flex-direction: column; gap: 0; padding: 10px 0 18px; }
@@ -339,6 +329,25 @@
   }
   @media (max-width: 360px) {
     .wrap { padding: 0 10px; }
+  }
+  @media (max-width: 430px) {
+    section { padding: 14px 0; }
+    .hero { padding: 16px 0 6px; }
+    h2 { font-size: 19px; }
+    .lead { font-size: 13.5px; margin-bottom: 14px; }
+    .card { padding: 12px; }
+    .callout, .callout.ok, .callout.fire { font-size: 12px; padding: 8px 10px; margin-top: 8px; }
+    .strip { padding: 10px 0; }
+    .strip-item .stat-num { font-size: 20px; }
+    .strip-item .stat-suf { font-size: 20px; }
+    .strip-item b, .strip-item span { font-size: 11.5px; }
+    .flow-item { padding: 10px; }
+    .steps li { padding: 10px; font-size: 12.5px; }
+    .cm-toggle { padding: 10px 12px; font-size: 12px; }
+  }
+  @media (min-width: 769px) {
+    .cm-toggle { display: none; }
+    .cm-body { max-height: none !important; opacity: 1 !important; padding: 0 !important; }
   }
 </style>
 </head>
@@ -974,6 +983,42 @@
     pre.textContent='DIAG '+JSON.stringify(r);
     document.body.appendChild(pre);
   });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var mm = window.matchMedia('(max-width: 768px)');
+  if (!mm.matches) return;
+  var secs = document.querySelectorAll('section');
+  for (var i = 0; i < secs.length; i++) {
+    var sec = secs[i];
+    if (sec.classList.contains('hero')) continue;
+    if (sec.classList.contains('cta')) continue;
+    var h2 = sec.querySelector('h2');
+    if (!h2) continue;
+    var title = h2.textContent.trim();
+    var btn = document.createElement('div');
+    btn.className = 'cm-toggle';
+    btn.innerHTML = '<span>' + title + '</span><span class="cm-caret">▶</span>';
+    sec.insertBefore(btn, sec.firstChild);
+    var wrap = sec.querySelector('.wrap');
+    if (wrap) {
+      wrap.classList.add('cm-body');
+    } else {
+      var body = document.createElement('div');
+      body.className = 'cm-body';
+      while (sec.children.length > 1) {
+        body.appendChild(sec.children[1]);
+      }
+      sec.appendChild(body);
+    }
+    (function (b, c) {
+      b.addEventListener('click', function () {
+        var open = c.classList.toggle('open');
+        b.querySelector('.cm-caret').classList.toggle('open', open);
+      });
+    })(btn, sec);
+  }
+});
 </script>
 </body>
 </html>
