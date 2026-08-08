@@ -247,6 +247,10 @@
   }
 
   footer { background: #031633; color: rgba(255,255,255,.65); padding: 34px 0; font-size: 14px; }
+  .footer-counter { text-align: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 16px; font-size: 13px; }
+  .counter-item { margin: 0 8px; }
+  .counter-sep { color: rgba(255,255,255,.3); margin: 0 4px; }
+  #active-count, #total-count { color: #4fc3f7; font-weight: bold; }
   .foot-grid { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   footer .logo { font-size: 17px; }
 
@@ -841,6 +845,11 @@
 </main>
 
 <footer role="contentinfo">
+  <div class="footer-counter">
+    <span class="counter-item">👁️ Aktif Ziyaretçi: <b id="active-count">1</b></span>
+    <span class="counter-sep">|</span>
+    <span class="counter-item">📊 Toplam Ziyaretçi: <b id="total-count">0</b></span>
+  </div>
   <div class="wrap foot-grid">
     <a class="logo" href="#top">AQUA <span>KONTROL</span></a>
     <span>© 2026 Limit Pozitif · Akıllı Su & Yangın Kontrol Sistemi</span>
@@ -1082,7 +1091,74 @@
     pre.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;z-index:99999;padding:8px;font:12px monospace;white-space:pre-wrap;max-height:40vh;overflow:auto;';
     pre.textContent='DIAG '+JSON.stringify(r);
     document.body.appendChild(pre);
+});
+
+// ── Ziyaretçi Sayaçları ──
+(function () {
+  var STORAGE_KEY_ACTIVE = 'aqua_active_tab';
+  var STORAGE_KEY_TOTAL = 'aqua_total_visits';
+
+  // Toplam ziyaretçi sayısını al veya başlat
+  var total = parseInt(localStorage.getItem(STORAGE_KEY_TOTAL) || '0', 10);
+  var totalEl = document.getElementById('total-count');
+  var activeEl = document.getElementById('active-count');
+
+  // İlk kez mi geliyor (sessionStorage'da yok)?
+  if (!sessionStorage.getItem(STORAGE_KEY_ACTIVE)) {
+    total++;
+    localStorage.setItem(STORAGE_KEY_TOTAL, total);
+    sessionStorage.setItem(STORAGE_KEY_ACTIVE, '1');
+  }
+
+  // Aktif sekme sayısını hesapla (localStorage'dan)
+  var active = parseInt(localStorage.getItem(STORAGE_KEY_ACTIVE) || '0', 10);
+  if (active < 1) active = 1;
+  activeEl.textContent = active;
+  totalEl.textContent = total;
+
+  // Sekme açıldığında aktif sayıyı artır
+  function activate() {
+    var n = parseInt(localStorage.getItem(STORAGE_KEY_ACTIVE) || '0', 10);
+    n++;
+    localStorage.setItem(STORAGE_KEY_ACTIVE, n);
+    localStorage.setItem('_aqua_ping', Date.now()); //storage event tetikle
+    activeEl.textContent = n;
+  }
+
+  // Sekme kapatıldığında azalt
+  function deactivate() {
+    var n = parseInt(localStorage.getItem(STORAGE_KEY_ACTIVE) || '1', 10);
+    n--;
+    if (n < 0) n = 0;
+    localStorage.setItem(STORAGE_KEY_ACTIVE, n);
+    localStorage.setItem('_aqua_ping', Date.now());
+  }
+
+  // Sayfa ilk yüklendiğinde
+  activate();
+
+  // Diğer sekmelerden gelen ping'leri dinle
+  window.addEventListener('storage', function (e) {
+    if (e.key === '_aqua_ping') {
+      var n = parseInt(localStorage.getItem(STORAGE_KEY_ACTIVE) || '1', 10);
+      activeEl.textContent = n;
+    }
   });
+
+  // Sekme kapatılırken / geçiş yaparken
+  window.addEventListener('beforeunload', function () {
+    deactivate();
+  });
+
+  // Mobil'de arka plana geçince de say
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      deactivate();
+    } else {
+      activate();
+    }
+  });
+})();
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
