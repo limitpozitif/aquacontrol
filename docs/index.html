@@ -25,11 +25,11 @@
     --shadow: 0 10px 30px rgba(4, 30, 66, .10);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; overflow-x: hidden; }
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; overflow-x: hidden; width: 100%; }
   img { max-width: 100%; display: block; }
   a { color: var(--sky); text-decoration: none; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; overflow: hidden; }
   section { padding: 72px 0; }
   h2 { font-size: clamp(26px, 3.4vw, 40px); color: var(--blue); margin-bottom: 14px; }
   h2 .emo { margin-right: 8px; }
