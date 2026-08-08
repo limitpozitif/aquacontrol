@@ -871,8 +871,8 @@
       var fcons = S.fireMode ? 2.4 : 0.04;
       var ffill = (S.kuyuPump && S.fire < 98) ? 1.5 : 0;
       if (S.kuyuPump) { S.site = Math.min(100, S.site + 0.55); }
-      S.site = clamp(S.site - cons + fill, 4, 100);
-      S.fire = clamp(S.fire - fcons + ffill, 5, 100);
+      S.site = clamp(S.site - cons + fill, 0, 100);
+      S.fire = clamp(S.fire - fcons + ffill, 0, 100);
 
       S.dSebeke = clamp(S.dSebeke + (rand(-1,1) * 0.05), 4.5, 5.1);
       S.dSite = S.sitePump ? lerp(S.dSite, 3.4, j) : lerp(S.dSite, 2.1, j * 0.6);
@@ -900,6 +900,13 @@
       dFire.className = S.fireMode ? 'warn' : (S.dFire < 2.2 ? 'warn' : 'ok');
 
       alarm.classList.toggle('show', S.fireMode);
+      if (S.fireMode && S.fire < 10) {
+        alarm.textContent = '⚠️ YANGIN REZERVİ KRİTİK — Su tankı boşalıyor! acil dolum valfi açık';
+        alarm.style.background = 'linear-gradient(90deg, #b71c1c, #ff5722)';
+      } else if (S.fireMode) {
+        alarm.textContent = '🔥 YANGIN MODU AKTİF — Yangın pompası ve joker pompa devrede · Tanklar acil dolumda';
+        alarm.style.background = '';
+      }
     }
 
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
