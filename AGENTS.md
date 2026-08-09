@@ -31,16 +31,45 @@ bir değişiklik yaptırdığında `last_update` slaytına da eklemeyi unutma.
 
 ## 🏷 SÜRÜM ETİKETİ SENKRONİZASYONU (web = aktif versiyon)
 
+⚠️ **KURAL:** Yeni versiyon yapıldığında versiyon numarası (Vxx) **TÜM gereken dosyalara**
+aynı anda işlenir. Hiçbir dosyada eski numara bırakılmaz. Eksik işleme = flaşlı cihazda
+eski sürüm görünür.
+
 Web panelde görünen sürüm etiketi **her zaman aktif proje versiyonunu (Vxx)** gösterir.
 Aktif versiyon değiştiğinde (yeni `Çamkent Su projesi_Vxx`) şu hepsi **birlikte** güncellenir:
 
-1. `web_panel_data/index.html` → hero-sub (`·&nbsp; Vxx`) + footer (`ÇAMKENT AQUA HMI Vxx`)
-2. `web_gomulu/web_index_html.h` → aynı iki satır (gömülü firmware)
-3. Panel görselleri: `web_panel_normal.png`, `web_panel_fire.png`, `panel_upper.png`, `panel_lower.png`
+1. `downside_web_entegre.txt` → firmware `/data` tarafı: `j["ver"]="Vxx"` **ve** gömülü
+   index.html bloğu: hero-sub (`·&nbsp; Vxx`) + footer (`ÇAMKENT AQUA HMI Vxx`) — flash kaynağı
+2. `web_panel_data/index.html` → hero-sub + footer + `v=Vxx` (3 satır) — kanonik kaynak
+3. `web_gomulu/web_index_html.h` → aynı iki satır + `v=Vxx` (gömülü firmware başlığı)
+4. Panel görselleri: `web_panel_normal.png`, `web_panel_fire.png`, `panel_upper.png`, `panel_lower.png`
    → webmock ile Chrome `--screenshot` (budget'sız) + `--window-size=1280,1700`; kırpma: üst 0–848, alt 858–1480
-4. Sunum/kılavuz PDF'leri → `--print-to-pdf` ile yeniden üret (önce Temp, sonra Remove-Item + Move-Item)
+5. Sunum/kılavuz PDF'leri → `--print-to-pdf` ile yeniden üret (önce Temp, sonra Remove-Item + Move-Item)
 
 Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, günlüğe işle, commit'le.
+`upside_web_entegre.txt` web sunmadığı için sürüm etiketi taşımaz (dokunma).
+
+**⚠️ AQUAKONTROL.COM İSTİSNASI:** `docs\` (canlı tanıtım sitesi, Vercel yayınlıyor) **hariçtir** —
+sürüm etiketi taşımaz, senkronizasyon/versiyon kuralları ona uygulanmaz ve GitHub'da **halka açık**
+kalır (public repo). Firmware/web panel source'ları ise GitHub'da **asla** olmaz; yalnızca yerelde
+(`firmware_versiyon\` repo'su) tutulur.
+
+**⚠️ İKİ AYRI PROJE KAVRAMI:** Bu çalışma alanında iki farklı proje var, karıştırma:
+1. **Ticari web sayfası (aquakontrol.com)** → `docs\` klasörü, Vercel yayınlıyor, GitHub'da **açık**.
+   Sürüm etiketi taşımaz, ESP32 kuralları ona uygulanmaz. Yalnızca bu proje GitHub'a gider.
+2. **ESP32 web paneli** → `web_panel_data\` + `web_gomulu\` + firmware (`downside_web_entegre.txt`,
+   `upside_web_entegre.txt`). Bunlar ESP32'lerin yayınladığı web/paneldir; sürüm etiketi (Vxx) **burada**
+   geçerlidir ve **GitHub'a asla gitmez** — yalnızca yerelde (`firmware_versiyon\`) tutulur.
+
+GitHub repo'su sadece ticari web sayfası içerir: `docs\`, `AGENTS.md`, `.gitignore`. Diğer tüm
+kaynak/teknik dosyalar `.gitignore` ile korunur ve yerelde kalır.
+
+**Yeni versiyon sonrası doğrulama kontrol listesi** (tümü `Vxx` ile eşleşmeli):
+- `downside_web_entegre.txt`: `j["ver"]="Vxx"` + gömülü hero-sub/footer
+- `web_panel_data/index.html`: hero-sub + footer + `v=Vxx`
+- `web_gomulu/web_index_html.h`: aynı satırlar
+- `firmware_versiyon/` arşivindeki kopyalar (root ile MD5 eşit olmalı)
+- Sunum/kılavuz kapakları `Vxx` + `last_update` slaytı güncel
 
 ## 🔥 FLASH KAYNAĞI (kritik — kullanıcı bu dosyaları flash ediyor)
 
