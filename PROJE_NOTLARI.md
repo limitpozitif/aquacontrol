@@ -46,7 +46,12 @@
 - Senkron: root ↔ `firmware_versiyon\` (downside_web_entegre.txt, web_panel_data, web_gomulu) MD5 eşit.
 - Panel görselleri yeniden üretildi (mock server + Chrome --screenshot 1280x1700): `web_panel_normal.png`, `web_panel_fire.png`, `panel_upper.png`, `panel_lower.png`.
 - `Web_Panel_Giris_Sistemi_Kilavuzu.html` — k2 (Neler Var) 7. kart + k5 (Başlık çubuğu) buton bilgisi + k10 (Yangın ekranları) not. CSS sıkılaştırma (img max-height, grid4/field gap, card padding); tüm 10 slayt 794px (diag doğrulandı). PDF yeniden üretildi (Temp→Remove→Move).
-- `yangin-guvenligi-sunum.html` `last_update` slayatında (slayat 2) buton maddesi — (kılavuza işlendi).
+  - `yangin-guvenligi-sunum.html` `last_update` slayatında (slayat 2) buton maddesi — (kılavuza işlendi).
+
+### 11.08.2026 — Kılavuz şifre oturumu notu düzeltildi (login oturumu)
+- `Web_Panel_Giris_Sistemi_Kilavuzu` k8 "5-hatalı kilit" kartı kaldırıldı; "Şifre anlık gelir, hatalı giriş yoktur" yapıldı.
+- k4 "Dikkat: 5 kez yanlış = kilit" notu kaldırıldı; yerine şifre anlık oluşturulur/otomatik yazılır ipucu kondu (login.html fetch `/login` hatalı-giriş sayacı yoktur).
+- PDF yeniden üretildi; diag 10/10 = 794 OK, metin kontrolü (`kilit` yok, `hatalı giriş yok` var).
 
 ### 11.08.2026 — Kılavuz şifre kartı düzeltildi (login oturumu)
 - `Web_Panel_Giris_Sistemi_Kilavuzu` k8 "5 yanlış = kilit" kartı kaldırıldı; şifre otomatik alanı
