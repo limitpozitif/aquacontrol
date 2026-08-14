@@ -2,6 +2,13 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — "System Started" mesajı her boot'ta görünmez oluyordu (boot sayacı eklendi)
+- **Kök neden:** Arduino Cloud, `messages` String'ine atanan değer bir öncekiyle **aynıysa değişiklik saymaz** ve Messenger widget'ına göndermez. `"System Started"` sabit string olduğundan ilk boot'ta kaydedildikten sonra sonraki boot'larda sessizce kayboluyordu (diğer mesajlar farklı olduklarından geliyor).
+- **Düzeltmeler:**
+  - Upside (`upside_web_entegre.txt`): `systemStartedMsg()` eklendi — NVS'teki `bootSayac` sayacı her boot'ta artırılır, mesaj `System Started (n)` biçiminde push edilir; `:2103` `pushMessage("System Started")` → `systemStartedMsg()`.
+  - Downside (`firmware_versiyon\downside_web_entegre.txt`): aynı `systemStartedMsg()` eklendi, `pushMessage("System Started")` çağrısı onunla değiştirildi.
+- Doğrulama: upside brace 298/298; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`84A13758...`); downside fv ↔ V01 MD5 eşit (`DD443E3F...`).
+
 ### 14.08.2026 — Upside mesaj kaybının asıl kök nedeni çözüldü (cloud bağlantı kilidi)
 - **Kök neden:** `messages` tek bir Arduino Cloud String. Cloud bağlı değilken (boot'un ilk 5 sn'si dahil) ring'den `messages`'a atanan değerler üst üste biniyor ve cloud'a yalnızca **sonuncusu** ulaşıyordu — üç reset mesajından yalnızca inv 8'in görünmesi bundandı. Ring tarafındaki overwrite zaten kaldırılmıştı; kayıp cloud gönderimindeydi.
 - **Düzeltmeler (`upside_web_entegre.txt`):**
