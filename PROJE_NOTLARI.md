@@ -2,6 +2,10 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Downside geri alındı (boot sayacı kaldırıldı)
+- Kullanıcı isteği: downside ile uğraşılmıyor. `firmware_versiyon\downside_web_entegre.txt` içindeki `systemStartedMsg()` (boot sayacı) eklentisi geri alındı, `pushMessage("System Started")` orijinal haline döndürüldü; V01 kopyasıyla MD5 eşit (`7F1D4DA8...`).
+- Upside'daki boot sayacı (System Started (n)) duruyor.
+
 ### 14.08.2026 — "System Started" mesajı her boot'ta görünmez oluyordu (boot sayacı eklendi)
 - **Kök neden:** Arduino Cloud, `messages` String'ine atanan değer bir öncekiyle **aynıysa değişiklik saymaz** ve Messenger widget'ına göndermez. `"System Started"` sabit string olduğundan ilk boot'ta kaydedildikten sonra sonraki boot'larda sessizce kayboluyordu (diğer mesajlar farklı olduklarından geliyor).
 - **Düzeltmeler:**
