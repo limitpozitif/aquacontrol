@@ -2,6 +2,14 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Downside'a statik IP eklendi (192.168.1.245)
+- Downside web paneli artık DHCP yerine **sabit `192.168.1.245`** adresini kullanır — modem/NAT kuralları değişse de ESP aynı IP'de kalır, modeme yeniden yönlendirme yapmak gerekmez.
+- `setup()` başına `WiFi.config()` eklendi: IP `192.168.1.245`, gateway `192.168.1.1`, subnet `255.255.255.0`, DNS `192.168.1.1` (modem/gateway). `ArduinoCloud.begin()` öncesi çağrıldığı için statik yapılandırma uygulanır.
+- Kart: FireBeetle ESP32 V4.0 (ESP32-WROOM-32E) — `WiFi.config()` API'si ESP32 core'da tüm kartlarda aynıdır.
+- ⚠️ Modemde `.245` IP'si **DHCP havuzundan çıkarılmalı** — aynı IP başka bir cihaza atanırsa IP çakışması olur.
+- Sunum/kılavuz güncellenmedi: panel adresi (`http://85.104.57.50:8080`) değişmiyor, kullanıcıyı etkileyen görünür davranış değişikliği yok.
+- Senkron: `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`814BE1F9...`).
+
 ### 14.08.2026 — System Started bağlantı handshake'ine takılıyordu (3 sn bekleme eklendi)
 - **Kök neden:** Mesaj nereden push edilirse edilsin (5 sn boot gecikmesi, boot sayacı, `setup()`), `updateCloudMessage` bağlanır bağlanmaz ring'i tüketiyordu. ESP32 cloud'a bağlandığı anda sunucu tüm property değerlerini geri gönderir (ilk senkron/handshake); bu pencerede `messages`'a atanan ilk değer sunucunun eski değeriyle üzerine yazılıyordu. Bu yüzden System Started hiç görünmüyor ama dakikalar sonra gelen `RESET ...` mesajları görünüyordu.
 - **Düzeltme (`upside_web_entegre.txt`):** `updateCloudMessage`'a `connectedSince` eklendi — `ArduinoCloud.connected()` ilk kez true olduktan **3 saniye sonrasına** kadar ring tüketilmez; mesajlar ring'de birikir, handshake bittikten sonra temiz pencerede sırayla gönderilir. (Kullanıcı testi: boot sayacı ve `setup()` push'u dahil hiçbir yöntem çalışmıyordu → bu mekanizma kanıtlandı.)
