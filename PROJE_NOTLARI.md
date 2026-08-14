@@ -2,6 +2,12 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside bayat uyarılarına TEMIZ (kurtarma) mesajı eklendi
+- `sensorSaglikKontrol()`: site/yangın sensörü bayat uyarısı artık **bir kez** push ediliyor (aktif mesaj `siteAktifMsg`/`fireAktifMsg`'de hatırlanıyor); sensör düzelince ring'e bekleyen hata mesajı kalmadığından **`TEMIZ: ...`** push ediliyor (downside'daki clearAlarm davranışının upside karşılığı).
+- `fireAlarmOn` dalında 40Hz blind modu mesajı da düzelince TEMIZ ile kapatılıyor.
+- **Ring dolmaz:** `updateCloudMessage` gönderdikçe ring'i boşaltıyor (count=0); TEMIZ de gönderilince kalkar. Tekrar eden bayat uyarıları da dedupe ile zaten 1 kez giriyor.
+- Doğrulama: brace 297/297; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`BD816563...`).
+
 ### 14.08.2026 — Upside mesaj ring'inde overwrite kaldırıldı (hiçbir mesaj ezilmez)
 - `pushMessage`: ring doluysa yeni mesaj **eklenmiyor** (reddedilir) — önceki davranışta `head` dönüp **en eski bekleyen mesajın üzerine yazıyordu** (`count` 20'de sabit kalıyordu). Artık hiçbir bekleyen mesaj üzerine yazılamaz; aynı mesaj ring'de zaten varsa da eklenmez.
 - Böylece "üç reset mesajından yalnızca inv 8 görünüyor" senaryosu kalıcı olarak çözüldü: 6/7 gönderilmeden ezilemez.
