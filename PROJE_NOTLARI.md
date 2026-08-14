@@ -2,6 +2,10 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside `MSG_BUF_SIZE` 8 → 20 (kullanıcı tarafından)
+- Kullanıcı upside firmware'inde `#define MSG_BUF_SIZE 20` yaptı (downside ile uyumlu; downside zaten 20).
+- Senkron: root ↔ `firmware_versiyon` ↔ `firmware_versiyon/Çamkent Su projesi_V01` upside kopyaları MD5 eşit (`34FE448A...`).
+
 ### 14.08.2026 — Upside tank okuma 65535 koruması (EMA filtresi)
 - Nano'lardan gelebilecek `level == 65535` (veya `> 4500`) değeri upside'ın EMA filtresine karışmasın diye koruma eklendi (`upside_web_entegre.txt`, PHASE_TANK cevap bloğu).
 - Geçersiz okumada `tankLevelSm` filtresine **dokunulmuyor**, yalnızca `tankLevel = 65535` işaretleniyor; mevcut "okunamayan tankları ortalama ile doldur" mekanizması (adet>0) tamamlıyor.
