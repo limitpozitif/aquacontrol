@@ -84,3 +84,8 @@
 - **Değişken adı:** kullanıcı onayıyla property adı **`role_hatasi` (küçük harf)** — firmware bu adı kullanıyor.
 - **fire1Blind guard** artık mevcut `fire1Blind` değişkeniyle yazıldı (root'ta zaten tanımlı, `fire1_start && fire1_local && (!fireSensorOK || !ads1115Ok)`).
 - Root ↔ `firmware_versiyon` ↔ V01 yeniden senkronlandı, **MD5 eşit (FFE...)**.
+
+### 14.08.2026 — `dolumControl` fire1Blind scope hatası düzeltildi
+- Derleme hatası: `fire1Blind` yalnızca `fire1Control()` içinde yerel değişken (satır 1432); `dolumControl()`'de tanımsızdı → `'fire1Blind' was not declared in this scope`.
+- Düzeltme: guard inline ifadeye çevrildi: `if (fire1_start && fire1_local && (!fireSensorOK || !ads1115Ok))` — `fire1Control()`'deki tanımla birebir aynı mantık.
+- Root ↔ `firmware_versiyon` ↔ V01 senkron, MD5 eşit (497...).
