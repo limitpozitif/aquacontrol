@@ -89,3 +89,11 @@
 - Derleme hatası: `fire1Blind` yalnızca `fire1Control()` içinde yerel değişken (satır 1432); `dolumControl()`'de tanımsızdı → `'fire1Blind' was not declared in this scope`.
 - Düzeltme: guard inline ifadeye çevrildi: `if (fire1_start && fire1_local && (!fireSensorOK || !ads1115Ok))` — `fire1Control()`'deki tanımla birebir aynı mantık.
 - Root ↔ `firmware_versiyon` ↔ V01 senkron, MD5 eşit (497...).
+
+### 14.08.2026 — Tank seviye okuma stabilitesi iyileştirildi (`tank_seviye_okuma.txt` üst aktif blok)
+- Kapsam: **yalnızca dosyanın üstündeki aktif blok** — ORİJİNAL bölüme dokunulmadı.
+- `ORNEK_SAYISI` 3 → **5** (daha sağlam median).
+- **Sıçrama koruması eklendi:** yeni değer son iyi değerden `SIPRAMA_ESIK_MM` (300mm) fazla saparsa şüpheli sayılır, hemen uygulanmaz; sonraki ölçüm aynı bölgede kalırsa gerçek değişim kabul, eski seviyeye dönerse sıçrama yok sayılır.
+- İlk geçerli okuma doğrudan kabul edilir (kalibrasyon).
+- Mevcut lastGood/65535 (3 ardışık hata) ve watchdog mantığı korundu.
+- `tank_seviye_okuma.txt` `.gitignore`'a eklendi (yerel kaynak dosyası, GitHub'a gitmez).

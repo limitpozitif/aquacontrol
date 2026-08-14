@@ -3,6 +3,7 @@ upside_web_entegre.txt
 upside_hmi.HMI
 upside_hmi_analog.HMI
 web_veri_semasi.txt
+tank_seviye_okuma.txt
 firmware_versiyon/
 web_panel_data/
 web_gomulu/
