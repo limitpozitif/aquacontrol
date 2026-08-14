@@ -65,3 +65,14 @@
 - Kapsam: Yalnızca upside firmware (`upside_web_entegre.txt`, flash kaynağı). Web panelde görünen sürüm etiketi değişmedi — upside web sunmuyor, sürüm etiketi taşımıyor; V01 geçerli kalıyor.
 - Sunum/kılavuz güncellenmedi (kullanıcı kararı: admin/hane sahiplerini etkileyen görünür davranış değişikliği yok).
 - Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` (MD5 eşit).
+
+### 14.08.2026 — Upside: otomatik dolum valfi kurtarma (`dolumRescue`) + `role_hatasi` (V01)
+- Sorun: Rölay kontağı üretim hatası nedeniyle valf açılması gerektiğinde temasa gelmiyor; valf açılmıyor, yangın basıncı 1.0 bar üzerinde kalıyor.
+- Teşhis: `oto_dolum` aktifken yangın basıncı **5 sn** içinde **1.0 bar** altına inmezse valf açılmamıştır (koşullar: sensör sağlıklı `fireSensorOK` + tank < %99).
+- Kurtarma: RELAY1 **12 kez** tıklatılır (her loop turunda 1 pulse → `ArduinoCloud.update()` loop üstünde olduğu için bağlantı canlı kalır).
+- **2 deneme** sonrası hâlâ düşmezse → **`role_hatasi = true`** (cloud alert). Latch: kullanıcı müdahale edene kadar tekrar denenmez.
+- **`role_hatasi`**: yeni cloud bool — Arduino Cloud'da eklenip alert'e bağlanacak. Sistem resetlenince `false` olur (setup), sonraki dolumda yeniden değerlendirilir.
+- **messages bildirimleri** (pushMessage): "Dolum valfi kurtarma basladi" / "Dolum valfi kurtarildi" / "Dolum valfi acilmadi!".
+- **fire1Blind guard:** sensör ölü + ekrandan zorla `fire1_start` iken (pompa 40 Hz basarken) dolum başlatılmaz, aktifse durdurulur — kısır döngü önlenir.
+- Dosya: `upside_web_entegre.txt` (flash kaynağı). Sürüm etiketi değişmedi (V01). Sunum/kılavuz güncellenmedi.
+- Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` (MD5 eşit).
