@@ -7,6 +7,7 @@
 - **Düzeltmeler (`upside_web_entegre.txt`):**
   - `updateCloudMessage()`: `if (!ArduinoCloud.connected()) return;` eklendi — bağlı değilken ring tüketilmez, mesajlar ring'de birikir; bağlanınca 500ms aralıkla sırayla gönderilir (downside'daki `ArduinoCloud.connected()` deseni).
   - `:2103` `messages = "System Started"` doğrudan ataması kaldırıldı → `pushMessage("System Started")` (bekleyen mesajları ezmez, ring'den sırayla gider).
+- **✅ Saha doğrulaması (kullanıcı):** mesajların hepsi geldi — sorun çözüldü.
 - Doğrulama: brace 297/297; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`C8DE91BD...`).
 
 ### 14.08.2026 — Upside bayat uyarılarına TEMIZ (kurtarma) mesajı eklendi
