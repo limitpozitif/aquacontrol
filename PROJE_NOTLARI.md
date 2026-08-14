@@ -2,6 +2,14 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside: dolum başlangıç/bitiş mesajı reboot'ta kaybolmasın (boot raporu)
+- **Sorun:** `pushMessage` ring'i RAM'de; reboot/flash olursa cloud'a iletilmemiş "Otomatik dolum basladi" mesajı kayboluyor (kullanıcı doğruladı).
+- **Düzeltme:** `dolumRaporlandi` bayrağı eklendi. Dolum valfi bloğu artık `dolum != oto_dolum || (!dolumRaporlandi && oto_dolum)` koşulunda çalışır — boot'ta valf aktifse (oto_dolum=true) durum mesajı bir kez yeniden gönderilir; normalde yalnızca durum değişiminde gider.
+- Senkron: `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` MD5 eşit (`D2FA8AC0...`), brace 299/299.
+
+### 14.08.2026 — Upside: tank yüzde karşılaştırmaları 1 ondalığa yuvarlandı
+- `tank1_yuzde` ve `fire_yuzde` karşılaştırma/atama değerleri `round(x * 10) / 10` ile 1 ondalığa yuvarlanıyor — 4 tank ortalaması (örn. 45.25) artık 1 ondalıkla (45.3/45.2) karşılaştırılır, float hassasiyeti yüzünden gereksiz değişiklik tetiklenmez.
+
 ### 14.08.2026 — Downside Rst_sys kilitli kalma sorunu çözüldü (cloud'a false iletimi)
 - **Belirti:** Cloud'da `Rst_sys` sürekli `true` görünüyor, ESP32 reset döngüsüne giriyor (I2C/FROZEN alarmı yok).
 - **Kök neden:** `onRstSysChange()` cloud'dan `true` alınca `hardreset` kuruyor ama firmware `ESP.restart()` öncesi `Rst_sys=false` değerini **cloud'a iletmiyordu**. Cloud'da `true` kilitli kalınca ESP her yeniden bağlandığında handshake o değeri geri yolluyor → sonsuz reset döngüsü.
