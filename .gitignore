@@ -46,3 +46,9 @@ serve.bat
 
 # aquakontrol-web (AKDIAG'lı eski kopya + scriptler)
 aquakontrol-web/
+
+# Yerel / teknik dosyalar (GitHub'a asla gitmez)
+altyapi-koordinasyon/
+check_system.py
+firmware_v01_hashes.csv
+Çamkent Su projesi_V01_silinecek/
