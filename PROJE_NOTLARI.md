@@ -2,6 +2,13 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside tank okuma 65535 koruması (EMA filtresi)
+- Nano'lardan gelebilecek `level == 65535` (veya `> 4500`) değeri upside'ın EMA filtresine karışmasın diye koruma eklendi (`upside_web_entegre.txt`, PHASE_TANK cevap bloğu).
+- Geçersiz okumada `tankLevelSm` filtresine **dokunulmuyor**, yalnızca `tankLevel = 65535` işaretleniyor; mevcut "okunamayan tankları ortalama ile doldur" mekanizması (adet>0) tamamlıyor.
+- Nedeni: hem ORİJİNAL hem yeni üst blok Nano firmware'inde ara sıra 65535 düşebiliyor; 65535 filtraya girerse `tankYuzde`/`tankTonaj` saçma değer üretip sonraki döngüleri de bozuyordu.
+- Downside tank verisini işlemediği için (UDP/tank yok) değişiklik yalnızca upside'ta.
+- Senkron: root ↔ `firmware_versiyon` ↔ `firmware_versiyon/Çamkent Su projesi_V01` MD5 eşit (`941E2B64...`).
+
 ### 11.08.2026 — Downside status/alarm mesajları iyileştirildi (commit `ebfe091`, firmware_versiyon)
 - Geçici MCP sapması düzelince "in site/kuyu/hidr control" alarmı artık temizleniyor (önceden ekranda kalıcı kalırdı).
 - `mcpSetup()` başarılı olursa "MCP Baglanti Hatasi" alarmı temizleniyor (recovery sonrası eski alarm kalmıyor).
