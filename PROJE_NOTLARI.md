@@ -2,6 +2,13 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside mesaj kaybının asıl kök nedeni çözüldü (cloud bağlantı kilidi)
+- **Kök neden:** `messages` tek bir Arduino Cloud String. Cloud bağlı değilken (boot'un ilk 5 sn'si dahil) ring'den `messages`'a atanan değerler üst üste biniyor ve cloud'a yalnızca **sonuncusu** ulaşıyordu — üç reset mesajından yalnızca inv 8'in görünmesi bundandı. Ring tarafındaki overwrite zaten kaldırılmıştı; kayıp cloud gönderimindeydi.
+- **Düzeltmeler (`upside_web_entegre.txt`):**
+  - `updateCloudMessage()`: `if (!ArduinoCloud.connected()) return;` eklendi — bağlı değilken ring tüketilmez, mesajlar ring'de birikir; bağlanınca 500ms aralıkla sırayla gönderilir (downside'daki `ArduinoCloud.connected()` deseni).
+  - `:2103` `messages = "System Started"` doğrudan ataması kaldırıldı → `pushMessage("System Started")` (bekleyen mesajları ezmez, ring'den sırayla gider).
+- Doğrulama: brace 297/297; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`C8DE91BD...`).
+
 ### 14.08.2026 — Upside bayat uyarılarına TEMIZ (kurtarma) mesajı eklendi
 - `sensorSaglikKontrol()`: site/yangın sensörü bayat uyarısı artık **bir kez** push ediliyor (aktif mesaj `siteAktifMsg`/`fireAktifMsg`'de hatırlanıyor); sensör düzelince ring'e bekleyen hata mesajı kalmadığından **`TEMIZ: ...`** push ediliyor (downside'daki clearAlarm davranışının upside karşılığı).
 - `fireAlarmOn` dalında 40Hz blind modu mesajı da düzelince TEMIZ ile kapatılıyor.
