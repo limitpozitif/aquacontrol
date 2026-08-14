@@ -57,3 +57,11 @@
 - `Web_Panel_Giris_Sistemi_Kilavuzu` k8 "5 yanlış = kilit" kartı kaldırıldı; şifre otomatik alanı
   tanımına göre "Şifre anlık gelir, hatalı giriş yoktur" kartı yapıldı (login.html fetch `/login`
   sadece doğrular; hatalı giriş sayacı firmware'de yoktur).
+
+### 14.08.2026 — Upside firmware: `stop_sys` durumunda RELAY1 kurtarma tetiklemesi + boot gecikmesi
+- `loop()` içindeki `if(stop_sys)` bloğuna geçici relay kurtarma eklendi: `digitalWrite(RELAY1,HIGH)` → `delay(200)` → `LOW` → `delay(200)` → `return`.
+- Neden: role kartındaki röleler üretim hatası nedeniyle bazen açıldığı halde kontağı temas etmiyor; bu çift tetikleme kontak temassızlığını gidermek için.
+- Boot gecikmesi 15 sn → 5 sn (`bootDelayDone` eşiği `millis() >= 15000` → `5000`), sistem daha hızlı ayağa kalkıyor.
+- Kapsam: Yalnızca upside firmware (`upside_web_entegre.txt`, flash kaynağı). Web panelde görünen sürüm etiketi değişmedi — upside web sunmuyor, sürüm etiketi taşımıyor; V01 geçerli kalıyor.
+- Sunum/kılavuz güncellenmedi (kullanıcı kararı: admin/hane sahiplerini etkileyen görünür davranış değişikliği yok).
+- Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` (MD5 eşit).
