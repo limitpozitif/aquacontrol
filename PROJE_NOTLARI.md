@@ -2,6 +2,14 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside mesaj ring ezilmesi düzeltildi (reset mesajları kayboluyordu)
+- **Kök neden:** Boot'ta 3 inverter de (`resetted=false` → site/fire/fire1 control) sırayla resetleniyor; her biri "RESET COMPLETE SLAVE x" push ediyor. `updateCloudMessage` 1 sn'de yalnızca 1 mesaj gönderirken, tekrarlayan `UYARI: Sensor bayat!` mesajları 500ms dedupe ile ring'i tıka basa dolduruyordu → 6 ve 7'nin reset mesajları gönderilmeden eziliyor, yalnızca son eklenen inv 8 görünüyordu.
+- **Düzeltmeler (`upside_web_entegre.txt`):**
+  - `pushMessage`: dedupe yalnızca son mesaja değil **ring'in tamamına** bakıyor — aynı mesaj zaten ring'deyse eklenmiyor (bayat uyarıları ring'i tıkamaz).
+  - `updateCloudMessage`: 1 sn → **500 ms** aralık (ring 2× hızlı boşalıyor).
+  - `RESET FAIL`, `RESET CORRUPT RESP`, `RESET TIMEOUT` durumlarına da `pushMessage` eklendi (önceden yalnızca `rstmsg` string'ine atanıyor, hiç gönderilmiyordu).
+- Doğrulama: brace 295/295 dengeli; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`45EDE482...`).
+
 ### 14.08.2026 — Upside `MSG_BUF_SIZE` 8 → 20 (kullanıcı tarafından)
 - Kullanıcı upside firmware'inde `#define MSG_BUF_SIZE 20` yaptı (downside ile uyumlu; downside zaten 20).
 - Senkron: root ↔ `firmware_versiyon` ↔ `firmware_versiyon/Çamkent Su projesi_V01` upside kopyaları MD5 eşit (`34FE448A...`).
