@@ -2,6 +2,11 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Upside mesaj ring'inde overwrite kaldırıldı (hiçbir mesaj ezilmez)
+- `pushMessage`: ring doluysa yeni mesaj **eklenmiyor** (reddedilir) — önceki davranışta `head` dönüp **en eski bekleyen mesajın üzerine yazıyordu** (`count` 20'de sabit kalıyordu). Artık hiçbir bekleyen mesaj üzerine yazılamaz; aynı mesaj ring'de zaten varsa da eklenmez.
+- Böylece "üç reset mesajından yalnızca inv 8 görünüyor" senaryosu kalıcı olarak çözüldü: 6/7 gönderilmeden ezilemez.
+- Doğrulama: brace 295/295; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`68FA0C7A...`).
+
 ### 14.08.2026 — Upside mesaj ring ezilmesi düzeltildi (reset mesajları kayboluyordu)
 - **Kök neden:** Boot'ta 3 inverter de (`resetted=false` → site/fire/fire1 control) sırayla resetleniyor; her biri "RESET COMPLETE SLAVE x" push ediyor. `updateCloudMessage` 1 sn'de yalnızca 1 mesaj gönderirken, tekrarlayan `UYARI: Sensor bayat!` mesajları 500ms dedupe ile ring'i tıka basa dolduruyordu → 6 ve 7'nin reset mesajları gönderilmeden eziliyor, yalnızca son eklenen inv 8 görünüyordu.
 - **Düzeltmeler (`upside_web_entegre.txt`):**
