@@ -76,3 +76,11 @@
 - **fire1Blind guard:** sensör ölü + ekrandan zorla `fire1_start` iken (pompa 40 Hz basarken) dolum başlatılmaz, aktifse durdurulur — kısır döngü önlenir.
 - Dosya: `upside_web_entegre.txt` (flash kaynağı). Sürüm etiketi değişmedi (V01). Sunum/kılavuz güncellenmedi.
 - Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` (MD5 eşit).
+
+### 14.08.2026 — `dolumRescue` derleme hatası düzeltildi (bayat kopya callback'leri içermiyordu)
+- **Hata (linker):** `undefined reference to onFireFrqSetChange() / onSiteFrqSetChange() / onRoleHatasiChange()` — Arduino Cloud Thing'inde tanımlı READ_WRITE property'lerin callback fonksiyonları firmware'de eksikti.
+- **Kök neden:** Düzenlemeler `firmware_versiyon\` repo kopyası üzerinden yapılmıştı; o kopya **bayattı** ve Thing'in gerektirdiği 3 callback'i içermiyordu. Kullanıcının gerçek (derlenen) firmware'i **root** dosyasıydı.
+- **Düzeltme:** `dolumRescue` özelliği **root'taki gerçek firmware'e** yeniden uygulandı — callback'ler (`onFireFrqSetChange`, `onSiteFrqSetChange`, `onRoleHatasiChange`) korunarak. Ayrıca bayat kopyanın başındaki API key satırları da temizlendi.
+- **Değişken adı:** kullanıcı onayıyla property adı **`role_hatasi` (küçük harf)** — firmware bu adı kullanıyor.
+- **fire1Blind guard** artık mevcut `fire1Blind` değişkeniyle yazıldı (root'ta zaten tanımlı, `fire1_start && fire1_local && (!fireSensorOK || !ads1115Ok)`).
+- Root ↔ `firmware_versiyon` ↔ V01 yeniden senkronlandı, **MD5 eşit (FFE...)**.
