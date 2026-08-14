@@ -2,6 +2,13 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — Downside Rst_sys kilitli kalma sorunu çözüldü (cloud'a false iletimi)
+- **Belirti:** Cloud'da `Rst_sys` sürekli `true` görünüyor, ESP32 reset döngüsüne giriyor (I2C/FROZEN alarmı yok).
+- **Kök neden:** `onRstSysChange()` cloud'dan `true` alınca `hardreset` kuruyor ama firmware `ESP.restart()` öncesi `Rst_sys=false` değerini **cloud'a iletmiyordu**. Cloud'da `true` kilitli kalınca ESP her yeniden bağlandığında handshake o değeri geri yolluyor → sonsuz reset döngüsü.
+- **Düzeltme:** Loop reset bloğunda `Rst_sys = false;` hemen ardına `ArduinoCloud.update();` eklendi — restart öncesi false değeri cloud'a iletilir, cloud'daki kilitli true temizlenir, döngü kırılır.
+- **Acil çözüm:** Cloud dashboard'da `Rst_sys` OFF yapılana kadar döngü sürer (flash sonrası da dashboard'daki eski true tekrar tetikleyebilir — firmware düzeltmesi ilk reset'te kendini temizler).
+- Senkron: `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`ACAE5B3E...`), brace 780/780.
+
 ### 14.08.2026 — Downside'a statik IP eklendi (192.168.1.245)
 - Downside web paneli artık DHCP yerine **sabit `192.168.1.245`** adresini kullanır — modem/NAT kuralları değişse de ESP aynı IP'de kalır, modeme yeniden yönlendirme yapmak gerekmez.
 - `setup()` başına `WiFi.config()` eklendi: IP `192.168.1.245`, gateway `192.168.1.1`, subnet `255.255.255.0`, DNS `192.168.1.1` (modem/gateway). `ArduinoCloud.begin()` öncesi çağrıldığı için statik yapılandırma uygulanır.
