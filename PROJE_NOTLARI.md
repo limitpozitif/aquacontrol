@@ -2,6 +2,11 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 14.08.2026 — System Started bağlantı handshake'ine takılıyordu (3 sn bekleme eklendi)
+- **Kök neden:** Mesaj nereden push edilirse edilsin (5 sn boot gecikmesi, boot sayacı, `setup()`), `updateCloudMessage` bağlanır bağlanmaz ring'i tüketiyordu. ESP32 cloud'a bağlandığı anda sunucu tüm property değerlerini geri gönderir (ilk senkron/handshake); bu pencerede `messages`'a atanan ilk değer sunucunun eski değeriyle üzerine yazılıyordu. Bu yüzden System Started hiç görünmüyor ama dakikalar sonra gelen `RESET ...` mesajları görünüyordu.
+- **Düzeltme (`upside_web_entegre.txt`):** `updateCloudMessage`'a `connectedSince` eklendi — `ArduinoCloud.connected()` ilk kez true olduktan **3 saniye sonrasına** kadar ring tüketilmez; mesajlar ring'de birikir, handshake bittikten sonra temiz pencerede sırayla gönderilir. (Kullanıcı testi: boot sayacı ve `setup()` push'u dahil hiçbir yöntem çalışmıyordu → bu mekanizma kanıtlandı.)
+- Doğrulama: brace 299/299; root ↔ `firmware_versiyon` ↔ V01 MD5 eşit (`A32FD29A...`).
+
 ### 14.08.2026 — Downside geri alındı (boot sayacı kaldırıldı)
 - Kullanıcı isteği: downside ile uğraşılmıyor. `firmware_versiyon\downside_web_entegre.txt` içindeki `systemStartedMsg()` (boot sayacı) eklentisi geri alındı, `pushMessage("System Started")` orijinal haline döndürüldü; V01 kopyasıyla MD5 eşit (`7F1D4DA8...`).
 - Upside'daki boot sayacı (System Started (n)) duruyor.
