@@ -2,6 +2,12 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 16.08.2026 — Downside: IP çakışması tanı dedektörü (ARP) eklendi
+- **Amaç:** Sahada web paneli (`http://85.104.57.50:8080`) aralıklı yanıt vermiyor; ana şüphe statik `192.168.1.245` adresinin bir kamera/Xmeye cihazıyla çakışması. Cloud'a yeni değişken eklenemez (`thingProperties.h` generated) → rapor mevcut `messages` (Messenger) property'si üzerinden gider.
+- **Düzeltme:** `ipCakismaKontrol()` eklendi — boot'ta WiFi bağlandıktan sonra bir kez kendi IP'si için ARP sorgusu atar (`etharp_request` + `etharp_find_addr`, gmag11 yöntemi); dönen MAC kendi MAC'imiz değilse `pushMessage("IP CAKISMASI! <MAC> rakip")` gönderilir.
+- **Tanı amaçlıdır;** çözüm bulununca kaldırılacak (çakışma doğrulanırsa: modem DHCP rezervasyonu veya statik IP havuz dışına alınır).
+- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`CA7A2639...`), brace 783/783.
+
 ### 14.08.2026 — Upside: dolum başlangıç/bitiş mesajı reboot'ta kaybolmasın (boot raporu)
 - **Sorun:** `pushMessage` ring'i RAM'de; reboot/flash olursa cloud'a iletilmemiş "Otomatik dolum basladi" mesajı kayboluyor (kullanıcı doğruladı).
 - **Düzeltme:** `dolumRaporlandi` bayrağı eklendi. Dolum valfi bloğu artık `dolum != oto_dolum || (!dolumRaporlandi && oto_dolum)` koşulunda çalışır — boot'ta valf aktifse (oto_dolum=true) durum mesajı bir kez yeniden gönderilir; normalde yalnızca durum değişiminde gider.
