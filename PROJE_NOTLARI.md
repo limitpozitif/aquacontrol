@@ -6,6 +6,7 @@
 - Statik `192.168.1.245` (14.08, commit `1553cf4`) kaldırıldı; ESP IP'yi modem DHCP'sinden alıyor. `WiFi.setSleep(false)` duruyor.
 - **Neden:** Panel 14.08'den beri ölü; statik IP geçişi DHCP lease/ARP bağını kopardı (modemin `.245` eşleşmesi süresi doldu). Modemde `.245` DHCP rezervasyonu hâlâ duruyorsa ESP aynı adresi alır ve 8080 NAT kuralı çalışmaya devam eder.
 - **Test sonucu:** Panel açılırsa statik IP suçlu (kalıcı çözüm: modem DHCP rezervasyonu `.245` → ESP MAC). Açılmazsa bugünkü hâle dönülür — geri dönüş etiketi: `son-durum-statik-ip-16-08`.
+- **✅ Test sonucu (kullanıcı):** ESP DHCP'ten `192.168.1.243` aldı → modem `.245`'i ESP'ye vermiyor, `.245` bağı modemde kaybolmuş (kamera `.17`, rezervasyon yok). **Sorun modem tarafında doğrulandı.** Çözüm: modemde DHCP rezervasyonu `.245` → ESP MAC (MAC modem istemci listesinden veya kalp atışı `ben=` alanından), NAT 8080→`.245` kuralı duruyor. Flash gerekmez.
 - Kalp atışı MAC/BSSID/RSSI eklenmesi (`e003125`) DHCP'ye dönünce de geçerli — flash sonrası logda ESP'nin aldığı IP + MAC + AP görünür.
 - Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`1D3DD083...`), brace 790/790.
 
