@@ -8,7 +8,8 @@
 - **Tanı amaçlıdır;** çözüm bulununca kaldırılacak (çakışma doğrulanırsa: modem DHCP rezervasyonu veya statik IP havuz dışına alınır).
 - **Derleme düzeltmesi:** `esp_netif_get_netif_impl` ESP32 core 2.0.17 header'ında tanımlı değildi; lwIP `netif_find("en0")` + `netif_list`/`netif_is_up` fallback'ine geçildi (gmag11 gist yöntemi).
 - **Periyodik kontrol:** Tek seferlik çalışma boot anında periyodik ARP duyurusuyla IP kapabilen cihazı (kamera) yakalayamadı — kontrol 60 sn'de bir tekrarlanacak şekilde güncellendi. Çakışma bulununca bir kez raporlanır, temizlenince yeniden raporlamaya hazır olur.
-- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`5DE8C19B...`), brace 788/788.
+- **Teşhis kalp atışı:** "Çakışma mesajı çıkmadı" sonucu belirsizdi (kontrol çalışmıyor olabilir) — kontrol artık sonucu DEĞİŞTİĞİNDE Messenger'a basıyor: `ARP: ... kendi MAC (temiz)` / `IP CAKISMASI! ...` / `cozumlenemedi`. İlk kontrol her zaman basar → kontrolün çalıştığını ve ARP tablosunu görürüz. (Saha: port 80 kamera açık 347ms, port 8080 panel ölü → sorun `.245`'e gelen yol, modem ARP/NAT şüphesi.)
+- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`1BF56117...`), brace 790/790.
 
 ### 14.08.2026 — Upside: dolum başlangıç/bitiş mesajı reboot'ta kaybolmasın (boot raporu)
 - **Sorun:** `pushMessage` ring'i RAM'de; reboot/flash olursa cloud'a iletilmemiş "Otomatik dolum basladi" mesajı kayboluyor (kullanıcı doğruladı).
