@@ -6,7 +6,8 @@
 - **Amaç:** Sahada web paneli (`http://85.104.57.50:8080`) aralıklı yanıt vermiyor; ana şüphe statik `192.168.1.245` adresinin bir kamera/Xmeye cihazıyla çakışması. Cloud'a yeni değişken eklenemez (`thingProperties.h` generated) → rapor mevcut `messages` (Messenger) property'si üzerinden gider.
 - **Düzeltme:** `ipCakismaKontrol()` eklendi — boot'ta WiFi bağlandıktan sonra bir kez kendi IP'si için ARP sorgusu atar (`etharp_request` + `etharp_find_addr`, gmag11 yöntemi); dönen MAC kendi MAC'imiz değilse `pushMessage("IP CAKISMASI! <MAC> rakip")` gönderilir.
 - **Tanı amaçlıdır;** çözüm bulununca kaldırılacak (çakışma doğrulanırsa: modem DHCP rezervasyonu veya statik IP havuz dışına alınır).
-- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`CA7A2639...`), brace 783/783.
+- **Derleme düzeltmesi:** `esp_netif_get_netif_impl` ESP32 core 2.0.17 header'ında tanımlı değildi; lwIP `netif_find("en0")` + `netif_list`/`netif_is_up` fallback'ine geçildi (gmag11 gist yöntemi).
+- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`1FA1FC78...`), brace 785/785.
 
 ### 14.08.2026 — Upside: dolum başlangıç/bitiş mesajı reboot'ta kaybolmasın (boot raporu)
 - **Sorun:** `pushMessage` ring'i RAM'de; reboot/flash olursa cloud'a iletilmemiş "Otomatik dolum basladi" mesajı kayboluyor (kullanıcı doğruladı).
