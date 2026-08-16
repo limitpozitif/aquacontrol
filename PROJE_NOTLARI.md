@@ -2,6 +2,13 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 16.08.2026 — Downside: statik IP geri alındı (DHCP'ye dönüş) — tanı testi
+- Statik `192.168.1.245` (14.08, commit `1553cf4`) kaldırıldı; ESP IP'yi modem DHCP'sinden alıyor. `WiFi.setSleep(false)` duruyor.
+- **Neden:** Panel 14.08'den beri ölü; statik IP geçişi DHCP lease/ARP bağını kopardı (modemin `.245` eşleşmesi süresi doldu). Modemde `.245` DHCP rezervasyonu hâlâ duruyorsa ESP aynı adresi alır ve 8080 NAT kuralı çalışmaya devam eder.
+- **Test sonucu:** Panel açılırsa statik IP suçlu (kalıcı çözüm: modem DHCP rezervasyonu `.245` → ESP MAC). Açılmazsa bugünkü hâle dönülür — geri dönüş etiketi: `son-durum-statik-ip-16-08`.
+- Kalp atışı MAC/BSSID/RSSI eklenmesi (`e003125`) DHCP'ye dönünce de geçerli — flash sonrası logda ESP'nin aldığı IP + MAC + AP görünür.
+- Senkron: root ↔ `firmware_versiyon\downside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\downside_web_entegre.txt` MD5 eşit (`1D3DD083...`), brace 790/790.
+
 ### 16.08.2026 — Downside: IP çakışması tanı dedektörü (ARP) eklendi
 - **Amaç:** Sahada web paneli (`http://85.104.57.50:8080`) aralıklı yanıt vermiyor; ana şüphe statik `192.168.1.245` adresinin bir kamera/Xmeye cihazıyla çakışması. Cloud'a yeni değişken eklenemez (`thingProperties.h` generated) → rapor mevcut `messages` (Messenger) property'si üzerinden gider.
 - **Düzeltme:** `ipCakismaKontrol()` eklendi — boot'ta WiFi bağlandıktan sonra bir kez kendi IP'si için ARP sorgusu atar (`etharp_request` + `etharp_find_addr`, gmag11 yöntemi); dönen MAC kendi MAC'imiz değilse `pushMessage("IP CAKISMASI! <MAC> rakip")` gönderilir.
