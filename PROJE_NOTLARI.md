@@ -2,6 +2,14 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 17.08.2026 — Downside: WEB_PORT 8080→8888 (Zyxel NAT bug çözümü) + statik IP .167 + kılavuz güncellendi
+- **Neden:** Zyxel VMG3312-T20A modemde manuel port forwarding kuralı aynı porttaki iç erişimi engelliyor (bilinen bug). 4 farklı port (80, 8081, 8888, 9090) içeriden çalışırken port 8080 çalışmıyordu. Kural inactive yapılınca 8080 çalışmaya başladı → modem NAT mühendisliği hatası doğrulandı.
+- **Çözüm:** `WEB_PORT` 8080→8888 + firmware'de `WiFi.config(192.168.1.167, ...)` statik IP eklendi. Modemde `esp: TCP 8888→192.168.1.167:8888` port forwarding kuralı ayarlandı. **Modemde static DHCP rezervasyonu YAPILMAYACAK** — daha önce 8080 için yapılan modem değişiklikleri herşeyi bozdu. Statik IP firmware tarafında, modemde değişiklik yok.
+- Panel içeriden test edildi (`192.168.1.167:8888` çalışıyor), dışarıdan test henüz yapılmadı.
+- `WiFi.setSleep(false)` ve `ipCakismaKontrol()` kaldırılması (16.08) korunuyor — test edildi ve sorunsuz.
+- Kılavuz HTML + PDF güncellendi (`8080→8888`). Sunum dosyalarında port referansı yok.
+- MD5: `3A546663...`, root ↔ firmware_versiyon ↔ V01 eşit (3'lü doğrulama).
+
 ### 16.08.2026 — Downside: statik IP geri alındı (DHCP'ye dönüş) — tanı testi
 - Statik `192.168.1.245` (14.08, commit `1553cf4`) kaldırıldı; ESP IP'yi modem DHCP'sinden alıyor. `WiFi.setSleep(false)` duruyor.
 - **Neden:** Panel 14.08'den beri ölü; statik IP geçişi DHCP lease/ARP bağını kopardı (modemin `.245` eşleşmesi süresi doldu). Modemde `.245` DHCP rezervasyonu hâlâ duruyorsa ESP aynı adresi alır ve 8080 NAT kuralı çalışmaya devam eder.
