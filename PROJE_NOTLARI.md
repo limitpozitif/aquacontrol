@@ -2,6 +2,12 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü
+- **Sorun:** `dolumRescue()` state 2'deki `delay(200)` × 2 × 12 pulse = **4.8 sn** loop blok. 2 deneme hakkıyla toplam ~10 sn Neal + Nextion + cloud_update duruyor.
+- **Çözüm:** `delay()` yerine `millis()` tabanlı alt durum makinesi (`kurtarmaSub`: 0=HIGH başlat, 1=200ms bekle, 2=LOW 200ms bekle). Loop kilitlenmez, pompa/Nextion/cloud çalışmaya devam eder.
+- Yeni değişkenler: `kurtarmaSub` (uint8_t), `kurtarmaPulseZaman` (unsigned long).
+- MD5: `6FC13C6E...`, root ↔ firmware_versiyon ↔ V01 eşit.
+
 ### 17.08.2026 — Downside: WEB_PORT 8080→8888 (Zyxel NAT bug çözümü) + statik IP .167 + kılavuz güncellendi
 - **Neden:** Zyxel VMG3312-T20A modemde manuel port forwarding kuralı aynı porttaki iç erişimi engelliyor (bilinen bug). 4 farklı port (80, 8081, 8888, 9090) içeriden çalışırken port 8080 çalışmıyordu. Kural inactive yapılınca 8080 çalışmaya başladı → modem NAT mühendisliği hatası doğrulandı.
 - **Çözüm:** `WEB_PORT` 8080→8888 + firmware'de `WiFi.config(192.168.1.167, ...)` statik IP eklendi. Modemde `esp: TCP 8888→192.168.1.167:8888` port forwarding kuralı ayarlandı. **Modemde static DHCP rezervasyonu YAPILMAYACAK** — daha önce 8080 için yapılan modem değişiklikleri herşeyi bozdu. Statik IP firmware tarafında, modemde değişiklik yok.
