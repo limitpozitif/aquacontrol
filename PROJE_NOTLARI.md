@@ -2,11 +2,11 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
-### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü
-- **Sorun:** `dolumRescue()` state 2'deki `delay(200)` × 2 × 12 pulse = **4.8 sn** loop blok. 2 deneme hakkıyla toplam ~10 sn Neal + Nextion + cloud_update duruyor.
-- **Çözüm:** `delay()` yerine `millis()` tabanlı alt durum makinesi (`kurtarmaSub`: 0=HIGH başlat, 1=200ms bekle, 2=LOW 200ms bekle). Loop kilitlenmez, pompa/Nextion/cloud çalışmaya devam eder.
-- Yeni değişkenler: `kurtarmaSub` (uint8_t), `kurtarmaPulseZaman` (unsigned long).
-- MD5: `6FC13C6E...`, root ↔ firmware_versiyon ↔ V01 eşit.
+### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü + cloud veri filtresi
+- **dolumRescue delay→millis():** `delay(200)` × 2 × 12 pulse = **4.8 sn** loop blok. `millis()` tabanlı alt durum makinesi ile loop kilitlenmesi kaldırıldı (~2.5 sn, blok yok).
+- **Cloud veri trafiği filtresi:** Akım ve frekans değişkenlerine eşik eklendi (`CLOUD_CURR_ESIK=0.05A`, `CLOUD_FREQ_ESIK=0.05Hz`). Küçük dalgalanmalar cloud'a gönderilmiyor → Maker planı 10 MB/ay limitineprise. Tank yüzdeleri zaten `round(...*10)/10` ile yuvarlanmış, hatalar (bool) nadiren değişiyor — onlara dokunulmadı.
+- Yeni değişkenler: `kurtarmaSub`, `kurtarmaPulseZaman`, `CLOUD_CURR_ESIK`, `CLOUD_FREQ_ESIK`.
+- MD5: `2B5BF01B...`, root ↔ firmware_versiyon ↔ V01 eşit.
 
 ### 17.08.2026 — Downside: WEB_PORT 8080→8888 (Zyxel NAT bug çözümü) + statik IP .167 + kılavuz güncellendi
 - **Neden:** Zyxel VMG3312-T20A modemde manuel port forwarding kuralı aynı porttaki iç erişimi engelliyor (bilinen bug). 4 farklı port (80, 8081, 8888, 9090) içeriden çalışırken port 8080 çalışmıyordu. Kural inactive yapılınca 8080 çalışmaya başladı → modem NAT mühendisliği hatası doğrulandı.
