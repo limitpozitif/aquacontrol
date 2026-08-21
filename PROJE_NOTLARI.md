@@ -2,6 +2,12 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 21.08.2026 — Upside: updateDisplay stack taşması düzeltildi + dolumRescue hayalet-latch teşhisi (RoleHatasi READ_ONLY)
+- **Stack taşması (düzeltildi):** `updateDisplay()` içindeki mesaj karşılaştırma tamponu `prevMsg[32]` idi; `lastMsg` ise 128 char taşıyabiliyor (`MSG_MAX_LEN=128`). Kopya sınır kontrolsüz `strcpy(prevMsg, lastMsg)` ile yapılıyordu — `"Yangin (fire1) pompasi calistirildi (ekran)"` gibi 32+ karakterli her mesajda ~12 byte stack üzerine yazılıyordu (sessiz hasar/rastgele davranış riski). Düzeltme: `strncmp` karşılaştırma + `strncpy(..., sizeof(prevMsg)-1)` + NULL sonlandırma.
+- **dolumRescue hiç çalışmıyordu — kök neden:** Bulutta `RoleHatasi` READ_WRITE olduğu için bağlantı handshake'inde sunucu sakladığı eski `true` değerini cihaza geri yazıyordu. `setup()`'ta temizlenen latch böylece her boot'ta hayalet olarak geri geliyordu ve satır `if (role_hatasi) return;` tüm kurtarma teşhisini sessizce blokluyordu. Semptomlar: telefon trigger'ı geliyordu ama bulutta mesaj görünmüyordu, valf takılıyken alarm/tıklama yoktu, reset sonrası hemen role_hatasi oluşuyordu. **Çözüm: RoleHatasi Arduino IoT Cloud Thing'de READ_ONLY yapıldı** (cihaz→bulut tek yön; sync-back bitti). Düzeltme sonrası kurtarma mesajları gelmeye başladı — doğrulandı.
+- **Bilinen kalıcı riskler (şimdilik dokunulmadı):** tekrarlayan aynı alarm metni cloud'da yayınlamayabilir (`messages` hâlâ READ_WRITE + aynı-değer bastırması); `broadcastIP` IP değişince güncellenmiyor (loop'ta sadece ilk bağlantıda set ediliyor); `udpReceive` sürekli `reset_upside=true` gelirse restart döngüsü riski; dolumRescue mutlak 1.0 bar eşiği / tek-loop `oto_dolum` sıfırlaması / sensör bayatken sessiz atlama.
+- Not: Bu txt tek başına derlenmez — bulut tarafındaki READ_ONLY dahil üretim için `thingProperties.h`'nin de firmware arşivinde saklanması gerekir.
+
 ### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü + cloud veri filtresi
 - **dolumRescue delay→millis():** `delay(200)` × 2 × 12 pulse = **4.8 sn** loop blok. `millis()` tabanlı alt durum makinesi ile loop kilitlenmesi kaldırıldı (~2.5 sn, blok yok).
 - **Cloud veri trafiği filtresi:** Akım ve frekans değişkenlerine eşik eklendi (`CLOUD_CURR_ESIK=0.05A`, `CLOUD_FREQ_ESIK=0.05Hz`). Küçük dalgalanmalar cloud'a gönderilmiyor → Maker planı 10 MB/ay limitineprise. Tank yüzdeleri zaten `round(...*10)/10` ile yuvarlanmış, hatalar (bool) nadiren değişiyor — onlara dokunulmadı.
