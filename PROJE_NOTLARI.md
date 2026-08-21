@@ -11,6 +11,7 @@
 - **broadcastIP maddesi değerlendirildi ve geçildi:** IP değişikliği aynı subnet'te (sahada sabit `192.168.1.x`) olduğunda broadcast adresi değişmediğinden sorun oluşturmaz; yalnızca modem değişimi/subnet değişiminde etkisiz hale gelir (belirti: panel verisi sessizce donar). Sahada risk yok kabul edildi — dokunulmadı.
 - Not: Bu txt tek başına derlenmez — bulut tarafındaki READ_ONLY dahil üretim için `thingProperties.h`'nin de firmware arşivinde saklanması gerekir.
 - Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` MD5 eşit (`ED418ED7...`).
+- Güvenli yedek: 21.08.2026 22:54 itibarıyla upside + downside son durumları `firmware_versiyon\SAFE_BACKUP\*_GUVENLI_2026-08-21_2254.txt` altına alındı (MD5 doğrulamalı; upside `ED418ED7...`, downside `169A776E...`).
 
 ### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü + cloud veri filtresi
 - **dolumRescue delay→millis():** `delay(200)` × 2 × 12 pulse = **4.8 sn** loop blok. `millis()` tabanlı alt durum makinesi ile loop kilitlenmesi kaldırıldı (~2.5 sn, blok yok).
