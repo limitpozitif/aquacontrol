@@ -2,6 +2,61 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 25.08.2026 — Finansal rapor toplam kWh özetleri + diğer iyileştirmeler
+
+#### CRITICAL düzeltmeler:
+1. **Buyuk_yangin pump konfigürasyonu düzeltildi:** 
+   - `cur_col` ve `volt_col` **yanlış** değerleri kullanıyordu (`fire_cur` / `fire_volt` yerine `fire_big_cur` / `fire_big_volt`).
+   - `config.py` güncellendi: `"cur_col": "fire_big_cur"`, `"volt_col": "fire_big_volt"`.
+
+2. **fire_big_volt DB kolonu eklendi:**
+   - `db.py`'ye `fire_big_volt INTEGER` kolonu eklendi.
+   - `collector.py`'ye `f.get("big", {}).get("volt")` eklendi — firmware'den gelen gerilim değeri kaydetmesi sağlandı.
+
+3. **VFD enerji hesabı düzeltildi:**
+   - **Sorun:** VFD pompalar için `tuketim_kwh` = `kW * calisma_saat` (aktif olmayan süre de dahil).
+   - **Düzeltme:** Artık `vfd_active_saat = (rows where on AND freq>0) * POLL_INTERVAL / 3600`; `tuketim_kwh = kW * vfd_active_saat`.
+   - Standby süresi harcanan kWh'dan çıkarıldı.
+   - `get_pump_stats`'ta `gercek_tuketim_kwh` artık ana `tuketim_kwh`'ı değiştiriyor.
+
+#### PDF/ISTATISTIK iyileştirmeleri:
+4. **PDF raporunda 3-state pump durumu doğru gösteriliyor:**
+   - VFD pompalar için: `kWh` sütunu artık `gercek_tuketim_kwh`'den (aktif saat bazlı).
+   - Durum satırı: `CALISIYOR` (aktif + frekvans>0), `BEKLEMEDE` (röleye geçerli), `KAPALI` (diğer).
+
+5. **PDF raporunda site/yangin toplam kWh özet eklendi:**
+   - Raporun en altına mavi kutucuk: **"TOPLAM TUKETIM: Site Suyu: X kWh | Yangin Suyu: Y kWh | Genel Toplam: Z kWh"**.
+
+#### Dashboard iyileştirmeleri:
+6. **Pump kartlarına .detay div eklendi:**
+   - VFD pompalar için detay kısmına **Hz/A/V** verileri ve **gerçek kWh** gösteriliyor.
+
+7. **Kuyu debisi (ton/saat) dinamik olarak gösteriliyor:**
+   - `dashboard.html` artık `d.kuyu_debisi`nı kullanıyor (önceden sabit '12').
+   - Sunucu (`get_ozet`) `kuyu_debisi` alanını ekliyor.
+
+8. **İlk sayfa yüklenme periyot tutarsızlığı düzeltildi:**
+   - REST API başlatma yüklenmesinde pompalar `currentPeriod` değerini (varsayılan 1h) kullanıyor, önce 24h yüklendiği için tutarsızlık oluyordu.
+
+#### DB migrasyon:
+- `readings.db` silindi, yeni şemayla yeniden oluşturulacak (fire_big_volt kolonu + üstteki düzeltmeler).
+- `collector.py` INSERT sorgısına `fire_big_volt` eklendi (alarms kolonlarından sonra).
+- **Downside firmware JSON `/data` endpoint'i güncellendi:** `down.pumps` objesine `sys_start`, `kuyu_start`, `hidr_start` boolean alanları eklendi. Artık web panel ve istatistik sistemi pompa durumunu 3 aşamalı görebiliyor.
+- **3 durum mantığı:**
+  - `start = false` → **KAPALI** (kullanıcı kapattı / motor kaptı / devre dışı)
+  - `start = true, on = false` → **BEKLEMEDE** (başlatıldı ama röle pasif — basınç/koşul bekliyor)
+  - `start = true, on = true` → **ÇALIŞIYOR** (pompa aktif)
+- **Embedded web panel `setPump()` fonksiyonu 3 duruma geçirildi:** Yeni `started` parametresi, `.wait` CSS sınıfı (sarı border + gölge) eklendi.
+- **İstatistik sistemi (collector + server + dashboard):**
+  - `db.py`: `down_sys_start`, `down_kuyu_start`, `down_hidr_start` kolonları eklendi (+ ALTER TABLE migration)
+  - `collector.py`: `down.pumps.sys_start/kuyu_start/hidr_start` parse ediliyor
+  - `config.py`: Pompa tanımlarına `start_col` eklendi (site_relay/yedek → `down_sys_start`, kuyu → `down_kuyu_start`, hidrant → `down_hidr_start`)
+  - `server.py`: `get_pump_stats` start flaglerine göre 3 durum hesaplıyor
+  - `dashboard.html`: Pompa kartları 3 renk/sınıf — yeşil (ÇALIŞIYOR), sarı (BEKLEMEDE), gri (KAPALI)
+  - PDF rapor: Aynı 3 durum renk kodlaması
+- Senkron: root `downside_web_entegre.txt` + `istatistik/` dosyaları güncellendi.
+- MD5: `D67431AA...`, root ↔ firmware_versiyon ↔ V01 eşit (3'lü doğrulama).
+
 ### 21.08.2026 — Upside: updateDisplay stack taşması düzeltildi + dolumRescue hayalet-latch teşhisi (RoleHatasi READ_ONLY)
 - **Stack taşması (düzeltildi):** `updateDisplay()` içindeki mesaj karşılaştırma tamponu `prevMsg[32]` idi; `lastMsg` ise 128 char taşıyabiliyor (`MSG_MAX_LEN=128`). Kopya sınır kontrolsüz `strcpy(prevMsg, lastMsg)` ile yapılıyordu — `"Yangin (fire1) pompasi calistirildi (ekran)"` gibi 32+ karakterli her mesajda ~12 byte stack üzerine yazılıyordu (sessiz hasar/rastgele davranış riski). Düzeltme: `strncmp` karşılaştırma + `strncpy(..., sizeof(prevMsg)-1)` + NULL sonlandırma.
 - **dolumRescue hiç çalışmıyordu — kök neden:** Bulutta `RoleHatasi` READ_WRITE olduğu için bağlantı handshake'inde sunucu sakladığı eski `true` değerini cihaza geri yazıyordu. `setup()`'ta temizlenen latch böylece her boot'ta hayalet olarak geri geliyordu ve satır `if (role_hatasi) return;` tüm kurtarma teşhisini sessizce blokluyordu. Semptomlar: telefon trigger'ı geliyordu ama bulutta mesaj görünmüyordu, valf takılıyken alarm/tıklama yoktu, reset sonrası hemen role_hatasi oluşuyordu. **Çözüm: RoleHatasi Arduino IoT Cloud Thing'de READ_ONLY yapıldı** (cihaz→bulut tek yön; sync-back bitti). Düzeltme sonrası kurtarma mesajları gelmeye başladı — doğrulandı.
@@ -10,7 +65,8 @@
 - **`udpReceive` reset_upside davranışı BİLİNÇLİ:** Downside/panel tarafında `reset_upside` bayrağı, uzaktan reset komutu olarak kullanılıyor ve gerçekten reset olduğu görünce elle kapatılıyor — sürekli-true restart döngüsü riski değil, tasarım. Çalıştırma notu: bayrağı kapatmak için upside'ın boot'u bitmesini BEKLEMEYE GEREK YOK; tam tersine, upside ayağa kalkıp ilk paketi almadan önce kapatılırsa ikinci restart asla oluşmaz. Bayrak true iken cihaz online göründüyse ilk gelen paket yeniden restart tetikler.
 - **broadcastIP maddesi değerlendirildi ve geçildi:** IP değişikliği aynı subnet'te (sahada sabit `192.168.1.x`) olduğunda broadcast adresi değişmediğinden sorun oluşturmaz; yalnızca modem değişimi/subnet değişiminde etkisiz hale gelir (belirti: panel verisi sessizce donar). Sahada risk yok kabul edildi — dokunulmadı.
 - Not: Bu txt tek başına derlenmez — bulut tarafındaki READ_ONLY dahil üretim için `thingProperties.h`'nin de firmware arşivinde saklanması gerekir.
-- Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` MD5 eşit (`ED418ED7...`).
+- **DOLUM_BEKLENTI_MS 5000→10000:** Valf açılış sonrası basınç düşüş bekleme penceresi 5 sn → 10 sn'ye çıkarıldı (mekanik valvun tam açılması ve basınç dengelenmesi için daha geniş pencere). Tüm pulse/deneme pencereleri bu değeri kullanır; toplam kurtarma süresi ~35–40 sn'ye çıkar.
+- Senkron: root ↔ `firmware_versiyon\upside_web_entegre.txt` ↔ `firmware_versiyon\Çamkent Su projesi_V01\upside_web_entegre.txt` MD5 eşit (`61BED0E9...`).
 - Güvenli yedek: 21.08.2026 22:54 itibarıyla upside + downside son durumları `firmware_versiyon\SAFE_BACKUP\*_GUVENLI_2026-08-21_2254.txt` altına alındı (MD5 doğrulamalı; upside `ED418ED7...`, downside `169A776E...`).
 
 ### 17.08.2026 — Upside: dolumRescue delay→millis() dönüşümü + cloud veri filtresi
