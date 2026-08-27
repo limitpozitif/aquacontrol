@@ -2,6 +2,25 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 27.08.2026 — VFD frekansı 50 Hz üstü hatalı veri filtrelemesi
+
+**Sorun:** PDF/dashboard raporlarında VFD frekansı zaman zaman 50 Hz üzeri görünüyordu
+(site ortalaması 53.16, yangın 70.78).
+
+**Kök neden:** ESP32 ara sıra frekans olarak `6553.5` (= 65535/10 hata kodu) değeri
+gönderiyor. Collector bu değeri ham kaydediyordu; `get_pump_stats` ortalamaya dahil ediyordu.
+DB'de site_freq'te 79 adet >50 satır vardı (hepsi 6553.x).
+
+**Düzeltme:**
+- `config.py`: `MAX_FREKANS_HZ = 50.0` eklendi — frekansın fiziksel üst sınırı.
+- `server.py` `get_pump_stats`:
+  - `last_freq > MAX_FREKANS_HZ` ise `last_freq = 0` (canlı gösterim).
+  - `vfd_rows` filtresine `0 < freq <= MAX_FREKANS_HZ` eklendi → çöpler hem ortalama_freq'ten,
+    hem de akım/gerilim/güç ortalamalarından ve `vfd_aktif_saat` kWh hesabından elendi.
+
+**Doğrulama:** site_freq ortalaması 53.16 → 33.24, fire_freq 70.78 → 31.12 Hz
+(akım/gerilim kolonları zaten temizdi). 3 konuma senkron (MD5 eşit).
+
 ### 25.08.2026 — Finansal rapor toplam kWh özetleri + diğer iyileştirmeler
 
 #### CRITICAL düzeltmeler:
@@ -24,18 +43,22 @@
    - VFD pompalar için: `kWh` sütunu artık `gercek_tuketim_kwh`'den (aktif saat bazlı).
    - Durum satırı: `CALISIYOR` (aktif + frekvans>0), `BEKLEMEDE` (röleye geçerli), `KAPALI` (diğer).
 
-5. **PDF raporunda site/yangin toplam kWh özet eklendi:**
+ 5. **PDF raporunda site/yangin toplam kWh özet eklendi:**
    - Raporun en altına mavi kutucuk: **"TOPLAM TUKETIM: Site Suyu: X kWh | Yangin Suyu: Y kWh | Genel Toplam: Z kWh"**.
 
+ 6. **PDF raporunda saatlik ortalama tuketim eklendi (27.08.2026):**
+   - `get_report_data` → site/yangin/toplam icin ayri ayri: `ort_saatlik_site_kwh`, `ort_saatlik_fire_kwh`, `ort_saatlik_toplam_kwh` = ilgili `kwh / rapor_saat`.
+   - Mavi kutucukta 2. satir: **"ORT. SAATLIK TUKETIM: Site Suyu: X kWh/saat | Yangin Suyu: Y kWh/saat | Genel Toplam: Z kWh/saat"** — rapor periyoduna gore (1h / 24h / 720h) otomatik ortalar.
+
 #### Dashboard iyileştirmeleri:
-6. **Pump kartlarına .detay div eklendi:**
+7. **Pump kartlarına .detay div eklendi:**
    - VFD pompalar için detay kısmına **Hz/A/V** verileri ve **gerçek kWh** gösteriliyor.
 
-7. **Kuyu debisi (ton/saat) dinamik olarak gösteriliyor:**
+8. **Kuyu debisi (ton/saat) dinamik olarak gösteriliyor:**
    - `dashboard.html` artık `d.kuyu_debisi`nı kullanıyor (önceden sabit '12').
    - Sunucu (`get_ozet`) `kuyu_debisi` alanını ekliyor.
 
-8. **İlk sayfa yüklenme periyot tutarsızlığı düzeltildi:**
+9. **İlk sayfa yüklenme periyot tutarsızlığı düzeltildi:**
    - REST API başlatma yüklenmesinde pompalar `currentPeriod` değerini (varsayılan 1h) kullanıyor, önce 24h yüklendiği için tutarsızlık oluyordu.
 
 #### DB migrasyon:
