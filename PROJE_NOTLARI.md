@@ -2,6 +2,22 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 27.08.2026 — ORT. SAATLIK TÜKETİM gerçek veri penceresine göre hesaplanıyor
+
+**Sorun:** Aylık (30d) raporda `ORT. SAATLIK TÜKETİM` nominal periyoda (720 saat) bölünüyordu.
+DB kısmi veri içerdiğinde (örn. yalnızca 27 saat) sonuç yanıltıcı oluyordu: 24h rapor 1.54 kWh/saat
+gösterirken 30d rapor 0.06 kWh/saat gösteriyordu.
+
+**Düzeltme:** `get_report_data` → `gercek_pencere_saat` = `(last_ts - first_ts)` saniye/3600
+(alt sınır 1.0). `ort_saatlik_*` hesabı ve `rapor_saat` artık bu gerçek süreyi kullanıyor.
+Nominal `hours` yalnızca sorgu penceresi (cutoff) için kalıyor.
+
+**Doğrulama:** 30d rapor 27.35 saatlik pencerede artık `site 1.65 | fire 0.63 | toplam 2.28`
+kWh/saat gösteriyor — 24h raporu (1.54 / 0.53 / 2.07) ile tutarlı. 3 konuma senkron (MD5 eşit).
+
+**Ek:** Rapor başlık meta satırına `Periyot: Son 1 Ay (27.4 saat)` eklendi — nominal etiketin
+yanında gerçek veri penceresi de görünüyor (`data['rapor_saat']`).
+
 ### 27.08.2026 — VFD frekansı 50 Hz üstü hatalı veri filtrelemesi
 
 **Sorun:** PDF/dashboard raporlarında VFD frekansı zaman zaman 50 Hz üzeri görünüyordu
