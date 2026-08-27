@@ -18,6 +18,11 @@ kWh/saat gösteriyor — 24h raporu (1.54 / 0.53 / 2.07) ile tutarlı. 3 konuma 
 **Ek:** Rapor başlık meta satırına `Periyot: Son 1 Ay (27.4 saat)` eklendi — nominal etiketin
 yanında gerçek veri penceresi de görünüyor (`data['rapor_saat']`).
 
+**Ek 2:** `period_label` artık gerçek veri kapsamına göre üretiliyor (`gercek_period_label`):
+"Son 1 Ay" gibi nominal etiket yerine **"Son 10 Gun 5 Saat"** biçiminde gerçek pencere yazılıyor.
+Hem başlıkta (`CAMKENT SU - Son 10 Gun 5 Saat Raporu`) hem Periyot satırında. `PERIOD_LABELS` ve
+nominal `hours`/720h az özel durumu kaldırıldı (sorgu penceresi cuttoff için `hours` hâlâ kullanılıyor).
+
 ### 27.08.2026 — VFD frekansı 50 Hz üstü hatalı veri filtrelemesi
 
 **Sorun:** PDF/dashboard raporlarında VFD frekansı zaman zaman 50 Hz üzeri görünüyordu
