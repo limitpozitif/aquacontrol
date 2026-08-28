@@ -19,7 +19,7 @@
 <meta property="og:locale" content="tr_TR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="AQUA KONTROL — Akıllı Su & Yangın Kontrol Sistemi">
-<meta name="twitter:description" content="Siteler için akıllı su veyangın kontrol sistemi. Otomatik basınç yönetimi, uzaktan izleme, 6 katmanlı güvenlik.">
+<meta name="twitter:description" content="Siteler için akıllı su ve yangın kontrol sistemi. Otomatik basınç yönetimi, uzaktan izleme, 6 katmanlı güvenlik.">
 <meta name="twitter:image" content="https://www.aquakontrol.com/panel_upper_normal.png">
 <script type="application/ld+json">
 {
@@ -47,6 +47,12 @@
     "opens": "00:00",
     "closes": "23:59"
   },
+  "areaServed": {
+    "@type": "Country",
+    "name": "Türkiye"
+  },
+  "serviceType": "Su ve yangın kontrol sistemi, otomatik basınç yönetimi, pompa kontrolü, uzaktan izleme",
+  "knowsAbout": ["su kontrol sistemi", "yangın kontrol sistemleri", "pompa kontrolü", "basınç yönetimi", "yangın rezervi", "akıllı su otomasyonu"],
   "sameAs": [],
   "priceRange": "$$"
 }
@@ -54,24 +60,49 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "AQUA KONTROL - Akıllı Su & Yangın Kontrol Sistemi",
-  "description": "Siteler için akıllı su veyangın kontrol sistemi. Otomatik basınç yönetimi, sürekli dolu yangın rezervi, uzaktan izleme ve 6 katmanlı güvenlik.",
-  "image": "https://www.aquakontrol.com/panel_upper_normal.png",
-  "brand": {
-    "@type": "Brand",
-    "name": "AQUA KONTROL"
-  },
-  "manufacturer": {
-    "@type": "Organization",
-    "name": "Limit Pozitif"
-  },
-  "offers": {
-    "@type": "Offer",
-    "url": "https://www.aquakontrol.com",
-    "priceCurrency": "TRY",
-    "availability": "https://schema.org/InStock"
-  }
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Sistem internet olmadan çalışır mı?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Evet. Cihazlar UDP ile kendi aralarında çalışır; internet ve bulut bağlantısı isteğe bağlı eklenir. Tek noktanın internetine bağımlı değildir."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Yangın rezervi nasıl sürekli dolu tutulur?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yangın tankları %95'in altına düşünce otomatik dolum valfi açılır ve tank sürekli dolu kalır. Gerçek yangın modunda acil dolum devreye girer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Elektrik kesintisinde sistem ne yapar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tüm çıkışlar kapalı başlar ve kontrollü şekilde devreye alınır. Faz hatası veya kuyuda su yoksa pompalar hiç çalışmaz; korumalar aktif kalır."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kuru çalışma koruması var mı?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Evet. Tank seviyesi belirlenen eşiğin altına inerse pompa asla kuru çalışmaz; tank boşken pompayı çalıştırmak imkânsızdır."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kurulum ve teklif nasıl alınır?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Önce saha keşfi yapılır, ihtiyaç analizi çıkarılır ve size özel net teklif sunulur. İletişim formunu doldurarak talep oluşturabilirsiniz."
+      }
+    }
+  ]
 }
 </script>
 <style>
