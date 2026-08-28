@@ -2,6 +2,23 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 27.08.2026 — Pompa periyot seçici düzeltmesi (buton periyodu artık yayınla senkron)
+
+**Sorun:** Dashboard'da "Son 1 Saat / Son 24 Saat / ..." butonlarına tıklanınca değerler
+değişmiyordu (hep 24 saatlik görünüyordu); yalnızca PDF raporları doğruydu.
+
+**Kök neden:** `collector_thread` her 2 sn'de bir `get_pump_stats(conn, 24)` ile **sabit** 24 saatlik
+veriyi yayınlıyordu (server.py satır ~698). Buton doğru periyodu odaya gönderiyordu, ama periyodik
+yayın 2 sn içinde üzerine 24 saatlik değerle geçiyordu.
+
+**Düzeltme:**
+- Global `aktif_pompa_period = "24h"` eklendi.
+- `handle_pompa_sorgu` seçilen periyodu `aktif_pompa_period` olarak saklıyor.
+- `collector_thread` periyodik yayını `parse_period(aktif_pompa_period)` ile yapıyor — buton periyodu kalıcı.
+
+**Doğrulama:** 1h → 0.66 sa / 0.94 kWh, 24h → 15.35 sa / 28.72 kWh, 7d → 25.47 sa / 49.51 kWh
+(30d = 7d çünkü DB ~3 günlük veri içeriyor). 3 konuma senkron (MD5 eşit).
+
 ### 27.08.2026 — ORT. SAATLIK TÜKETİM gerçek veri penceresine göre hesaplanıyor
 
 **Sorun:** Aylık (30d) raporda `ORT. SAATLIK TÜKETİM` nominal periyoda (720 saat) bölünüyordu.
