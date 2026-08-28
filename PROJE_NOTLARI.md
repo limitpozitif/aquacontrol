@@ -2,6 +2,23 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 27.08.2026 — Süre hesapları gerçek zaman damgalarına geçirildi (kayıt×2sn hatası)
+
+**Sorun:** Tüm "çalışma saati" hesapları `kayıt sayısı × POLL_INTERVAL(2sn)` ile yapılıyordu.
+Ancak ESP32'ye uzak erişimde gerçek kayıt aralığı ~2.5-3 sn (ağ gecikmesi) olduğundan süreler
+~%30-50 **eksik** hesaplanıyordu: 24 saatlik pencerede site_vfd 15.35 saat görünüyordu
+(gerçekte ~24 saat).
+
+**Düzeltme:** `server.py`'ye `aktif_sure_saniye(rows, test)` eklendi — ardışık iki kaydın
+**gerçek ts farkını** toplar (son kayıt aktifse son aralık da eklenir). Kayıp/kesinti artık süreyi
+ne eksiltir ne artırır: o aralıkta pompa on idiyse ts farkı sayılır, off ise sayılmaz.
+- `get_pump_stats`: `calisma_saan`, `vfd_aktif_saan`, `calisma_oranı` (aktif süre/pencere) ts bazlı.
+- `get_ozet` ve `get_report_data`: kuyu çalışma saati ve su tüketimi ts bazlı.
+- `POLL_INTERVAL` artık yalnızca collector `sleep` aralığı — hesaplarda kullanılmıyor.
+
+**Doğrulama:** 24h site_vfd saat 15.35 → **23.98**, kWh 28.72 → 41.64; 1h 0.66 → 0.98;
+30d 25.47 → 39.10 saat (DB ~39 saatlik veriyle tam uyumlu). 3 konuma senkron (MD5 eşit).
+
 ### 27.08.2026 — Pompa periyot seçici düzeltmesi (buton periyodu artık yayınla senkron)
 
 **Sorun:** Dashboard'da "Son 1 Saat / Son 24 Saat / ..." butonlarına tıklanınca değerler
