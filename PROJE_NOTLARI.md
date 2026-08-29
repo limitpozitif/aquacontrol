@@ -2,6 +2,12 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Varsayılan periyot 24 saate alındı
+
+Dashboard açılışta `currentPeriod='1h'` (Son 1 Saat) çiziliyordu; kullanıcı istediği periyodu
+göremedi. `currentPeriod` ve aktif buton 24h'ye alındı (1h butonu pasif). Seçim sonrası grafik
+anında `yukleGrafikler()` ile yeniden çiziliyor. MD5 6 konumda eşit.
+
 ### 29.08.2026 — Tüketim grafikleri eğriye çevrildi + periyoda bağlandı + zoom eklendi
 
 İstek üzerine: grafikler seçili aralıkta değişimeli (bar yerine eğri) ve istenen aralığa zoom yapılabilmeli.
