@@ -2,6 +2,17 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Kova ızgarası sabitlendi + DB lock sorunu
+
+- Kullanıcı "son 24 saatteyim, grafik sürekli değişiyor" dedi: period modunda
+  `get_tuketim_trendi` kovaları her çağrıda `now - hours`'tan başlatıyordu → kova
+  sınırları her yenilemede (60 sn) kayıyordu. Artık kova ızgarası sabit zaman
+  dilimlerine oturtuluyor (bitis'in slotu dahil son n_kova bitişik slot). 24h/7d/30d
+  kovaları saat başında başlar; yalnızca son kova canlı büyür.
+- **DB lock:** iki sunucu örneği aynı anda `readings.db`'ye yazınca `database is
+  locked` çakıştı. Tek örnek çalıştırmak yeterli; örnekler kapatılıp tek başlatıldı.
+  WAL + timeout=10 zaten aktif (`db.py`).
+
 ### 29.08.2026 — Tüketim grafikleri: gerçek drill-down zoom + İzmir saat dilimi
 
 Kullanıcı 30g görünümünde her saatin kovasını görmek ve zoomlayınca o saatin
