@@ -2,6 +2,29 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim grafikleri: gerçek drill-down zoom + İzmir saat dilimi
+
+Kullanıcı 30g görünümünde her saatin kovasını görmek ve zoomlayınca o saatin
+detayına inmek istedi. Ham veri her ~3 sn'de bir kaydedildiğinden rollup gerekmedi:
+- `get_tuketim_trendi` iki moda ayrıldı. Period modu: 1h/24h/7d/30d → kova sayısı
+  saat sayısı kadar (30d → **720 saatlik kova**, her saat ayrı). Zoom modu
+  (`from`/`to` argümanları): pencereyi ~10 dk'lık kovalara böler (sinır 24..720).
+  Route `/api/tuketim-trendi?from=&to=` desteği eklendi.
+- Dashboard: tüketim grafikleri artık x ekseni zaman (linear, epoch ms); zoom
+  sonrası `onZoomComplete`/`onPanComplete` → görünen pencereyi sunucudan detaylı
+  çeker (`tuketimZoomAt`, 250 ms debounce, 60 sn altı pencere korunur). Başlık
+  zoom penceresini gösterir (`tuketimLabel`); "Sıfırla" butonları `sifirlaTuketim()`
+  ile periyoda döner.
+- **Zaman dilimi sabitlendi (İZMİR, UTC+3, DST yok):** tüm zaman hesapları
+  `IZMIR = 3*3600*1000` ofsetine bağlandı (`izToMs`, `izTxt`, `izNaive`). Tarayıcı
+  bölge ayarından bağımsız. Sunucu tarafında `from/to`'da tz bilgisi varsa naive'e
+  normalize edilir. Makine saati doğrulandı: Turkey Standard Time (UTC+3).
+- X/y eksen tick renkleri koyu `#484f58` → aydınlık `#c9d1d9`.
+
+**Doğrulama:** period 1h/24h/7d/30d = 24/24/168/720 kova (30d'de 71 dolu, saat
+başına); zoom 7g→720 kova (~10 dk), 24h→144, 6h→36, 1h→24 kova. Toplamlar tutarlı
+(24h ~1040 dk, 7d/30d ~3082 dk). DOM render: 4 canvas, JS hatasız.
+
 ### 29.08.2026 — Zoom düzeltildi (minRange blokajı)
 
 `chartjs-plugin-zoom` için yazılan `limits: { x: { minRange: 60000 } }` kategori (string
