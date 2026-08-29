@@ -2,6 +2,15 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Zoom düzeltildi (minRange blokajı)
+
+`chartjs-plugin-zoom` için yazılan `limits: { x: { minRange: 60000 } }` kategori (string
+saat etiketi) ekseninde TÜM zoom'u bloke ediyordu: eksen aralığı en fazla 24 kategoriyken
+minRange 60000, hiçbir yakınlaştırma/uzaklaştırma işleminin onaylanmamasına yol açıyordu.
+Headless Chrome testiyle doğrulandı (wheel zoom 1→1 sabit kaldı, blok dışıydı). `limits`
+tamamen kaldırıldı; wheel/drag/pinch/Shift+pan ayarları korundu. Teşhis ~8 saniyelik
+izole zoom testi sayfasıyla yapıldı (`%TEMP%\opencode\zoom_test*.html`).
+
 ### 29.08.2026 — Tüketim trendi sorgusu hızlandırıldı
 
 Kullanıcı yükleme süresinin uzun olduğunu belirtti. `get_tuketim_trendi` tüm kolonları
