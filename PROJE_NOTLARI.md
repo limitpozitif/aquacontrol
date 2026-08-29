@@ -2,6 +2,21 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim zoom'u en az 1 saat pencereyle sınırlandı
+
+Kullanıcı "zoom-in 1 saatin altına inmesin" dedi. Önceden minimum 60 sn idi
+(bu pencere 60 sn'den küçükse `tuketimZoomAt` iptal ediyordu) ama zoom eklentisi
+görsel olarak daha derine inebiliyordu.
+- `TUKETIM_MIN_PENCERE_MS = 3600000` sabiti eklendi; `tuketimZoomAt` 1 saatten
+  küçük pencereleri yok sayıyor, `tuketimEksenSabitle` zoom `limits`'ine
+  `minRange: 1 saat` yazıyor → tekerlek/sürükleme zoom'u hâlâ eklenti tarafında
+  bile 1 saatin altına inemez. Zoom-out geri dönüşü etkilenmez (limits min/max
+  pencere/veri sınırlarını korur).
+
+**Doğrulama (headless Chrome):** 50 tekerlek zoom-in adımı sonunda görünür aralık
+tam `1.000h`, `tuketimPencere` `1.000h` — `[OK] EN AZ 1 SAAT`. MD5 dashboard
+`A56C8D8B…` üç konumda eşit. Sunucu yeniden başlatıldı (PID 15380).
+
 ### 29.08.2026 — Basınç/doluluk başlıklarındaki yanıltıcı "Son 12 Saat" düzeltildi
 
 Kullanıcı "dilim bilgisi değişmiyor, hep son 12 saat kalıyor" dedi. Grafik aralığı
