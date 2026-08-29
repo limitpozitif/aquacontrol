@@ -2,6 +2,25 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Basınç ve tank doluluk trendleri periyot seçimine bağlandı + kümeleme
+
+Kullanıcı "periyot seçince basınç/doluluk trendinin aralığı değişmiyor" dedi.
+`yukleGrafikler` bu iki grafiği sabit `period=6h` ile çekiyordu; periyot butonları
+yalnızca tüketim grafiklerini etkiliyordu.
+- `/api/basinc` ve `/api/tank-trendi` artık istenen periyodu alıyor ve sonuca
+  `_bucket_ort()` (max 720 nokta, eşit zaman dilimi, ortalama) uyguluyor → 24h/7d/30d
+  ham yüz binlerce nokta yerine en fazla 720 nokta dönüyor.
+- Dashboard: bu iki grafik de `currentPeriod` ile çekiliyor; x ekseni tüketim
+  grafikleri gibi **linear zaman** eksenine geçirildi (`fmtZX` tick formatı: aralık
+  ≥50 saatse gün `dd.MM`, değilse `HH:MM`).
+- `fmtX` (tüketim ekseni) periyot görünümünde artık kendi veri aralığına göre gün
+  etiketi üretir (7g/30g'de tekrarlayan saat:dk yerine).
+
+**Doğrulama:** API periyot testi 1h→612 nokta, 24h→715, 7d/30d→713 (hepsi ≤720;
+7d/30d aynı çünkü DB'de ~3 gün veri var). Headless Chrome: 24h→24sa, 7d→71.8sa,
+1h→0.99sa span; tüketim 7d→168 kova. MD5: server.py `F2B866A5…`, dashboard
+`5F1EC834…` üç konumda eşit. Sunucu yeniden başlatıldı (PID 6308).
+
 ### 29.08.2026 — Tüketim grafiği zoom-out sınırı (görünüm veri aralığını aşamaz)
 
 Kullanıcı "son 24 saat seçiliyken zoom yapınca 25-08 ila 30-08 arasını gösteriyor"
