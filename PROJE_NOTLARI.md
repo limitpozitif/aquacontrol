@@ -2,6 +2,19 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Basınç/doluluk başlıklarındaki yanıltıcı "Son 12 Saat" düzeltildi
+
+Kullanıcı "dilim bilgisi değişmiyor, hep son 12 saat kalıyor" dedi. Grafik aralığı
+değişiyordu (önceki giriş) ama basınç ve tank doluluk trendi kartlarının başlığı
+sabit "Son 12 Saat" metni taşıyordu — 12 saatlik bir seçenek olmamasına rağmen.
+- Başlıklar dinamikleştirildi: `<span id="basincPeriod">`, `<span id="tankPeriod">`
+  → `yukleGrafikler` seçilen periyodu `periodLabel(currentPeriod)` ile yazıyor
+  (Son 1 Saat / Son 24 Saat / Son 7 Gun / Son 30 Gun). Varsayılan "Son 24 Saat".
+
+**Doğrulama (headless Chrome):** başlık metni butonla birlikte değişiyor —
+BAS/TANK: Son 24 Saat → Son 7 Gun → Son 1 Saat → Son 30 Gun. MD5 dashboard
+`594F5813…` üç konumda eşit. Sunucu yeniden başlatıldı (PID 5644).
+
 ### 29.08.2026 — Basınç ve tank doluluk trendleri periyot seçimine bağlandı + kümeleme
 
 Kullanıcı "periyot seçince basınç/doluluk trendinin aralığı değişmiyor" dedi.
