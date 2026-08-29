@@ -2,6 +2,25 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Dashboard'a saatlik tüketim eğrileri eklendi
+
+İstek: "tüketim hangi saatlerde artıp azalmış" görebilmek. Yanıt: site suyu için **ton**
+dayanağı yok (site debisi bilinmiyor: Upside 5.5kW aşağı basıyor, Downside 7.5kW 65m yukarı;
+debi hesabı kullanıcıya danışıldı → "debi yok, saat olarak göster" kararı). Kuyu tarafı için
+debisi biliniyor (14 ton/sa), orada ton veriliyor.
+
+- `server.py`: `get_tuketim_trendi(conn, hours)` + `/api/tuketim-trendi` route.
+  Saatlik 24 (isteklenen periyotta) kova; her kovada:
+  - `site_dk` = `site_pump_on`(VFD) VEYA `down_inv`(relay) aktif süre (dakika) → **tüketim yoğunluğu**
+  - `kuyu_dk` = `down_kuyu` aktif süre (dakika)
+  - `kuyu_ton` = kuyu_dk/60 × KUYU_DEBISI(14) — site ton bilinmediği için verilmez
+- `dashboard.html`: GRAFİKLER satırına 2 kart — "Site Tuketim Yogunlugu (Son 24 Saat)" (bar, dk)
+  ve "Kuyu Su Tuketimi (Son 24 Saat)" (bar, ton). 60sn'lik periyodik güncellemeye dahil.
+- `aktif_sure_saniye` ts farkı mantığını saat kovalarına uygular (28.08 tarihli düzeltme ile tutarlı).
+
+**Doğrulama:** `/api/tuketim-trendi` HTTP 200, 24 kova; kuyu toplam 90 dk → 21 ton (1.5sa × 14 ✓).
+6 konuma senkron (root + firmware_versiyon + V01, MD5 eşit).
+
 ### 27.08.2026 — Süre hesapları gerçek zaman damgalarına geçirildi (kayıt×2sn hatası)
 
 **Sorun:** Tüm "çalışma saati" hesapları `kayıt sayısı × POLL_INTERVAL(2sn)` ile yapılıyordu.
