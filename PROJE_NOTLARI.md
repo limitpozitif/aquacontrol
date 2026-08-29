@@ -2,6 +2,22 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim grafikleri eğriye çevrildi + periyoda bağlandı + zoom eklendi
+
+İstek üzerine: grafikler seçili aralıkta değişimeli (bar yerine eğri) ve istenen aralığa zoom yapılabilmeli.
+
+- **Eğri:** `chartSite` / `chartKuyu` `bar` → `line` (tension 0.3, noktasız, dolgulu eğri).
+- **Periyot takibi:** `/api/tuketim-trendi` artık `?period=` parametresi alıyor; periyot butonuna
+  tıklayınca `yukleGrafikler()` yeniden çağrılıyor + kart başlıkları güncelleniyor (`periodLabel`).
+- **Kovlama düzeltmesi:** `get_tuketim_trendi` saat-bazlı kovalama yerine **sabit 24 kova**
+  (periyot/24) kullanıyor — 7d/30d'de `hour % hours` hatası veri çarpıyordu. Artık 1h/24h/7d/30d'de
+  kova sayısı sabit 24, her kova periyot genişliğinde.
+- **Zoom:** `chartjs-plugin-zoom@2` (CDN) eklendi; tüketim grafiklerine tekerlek zoom + sürükle-bırak
+  (drag) seçim + Shift+sürükle kaydırma + "Sifirla" butonu. Diğer grafikler (basınç/tank) zoom'suz.
+
+**Doğrulama:** 1h/24h/7d/30d API OK (24 kova), toplamlar tutarlı (24h kuyu 21 ton ✓). Dashboard HTML'de
+plugin + resetZoom mevcut. 6 konuma senkron (MD5 eşit). Commit yapıldı.
+
 ### 29.08.2026 — Dashboard'a saatlik tüketim eğrileri eklendi
 
 İstek: "tüketim hangi saatlerde artıp azalmış" görebilmek. Yanıt: site suyu için **ton**
