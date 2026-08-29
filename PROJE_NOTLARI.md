@@ -2,6 +2,32 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim yoğunluğu y ekseni 80'e çıkıyordu (çift sayım) + zoom imleç odaklı doğrulandı
+
+Kullanıcı "Site Tüketim Yoğunluğunda dikey eksen 80'e kadar çıkmış, o nedir?" dedi.
+
+**Kök neden:** `get_tuketim_trendi`→`kova_sure` (ve pompa sürelerinde `aktif_sure_saniye`)
+son kayıt aktifken döngünün zaten eklediği son aralığı **ikinci kez** ekliyordu. Kayıt
+kopması olan kovada (ör. 41 dk boşluk) bu çift sayım kova genişliğini aşıyordu:
+24h/7d/30d'de kova = 60 dk olduğundan max 60 olması gerekirken 80'e varan değerler
+üretiliyordu. Ayrıca Chart.js auto-scale üst tick'i 80'e taşıyordu.
+- `kova_sure` ve `aktif_sure_saniye`'den bonus satırları kaldırıldı → max değer artık
+  her görünümde kova genişliğiyle sınırlı (24h/7d/30d=60, 1h=2.5, zoom 12h=10).
+
+**Doğrulama (gerçek DB, 84045 kayıt):** period modlarında max `site_dk` = kova genişliği;
+zoom 3h=7.5, zoom 12h=10 (önceden 10.6>7.5 idi). API `?period=24h` → max=60.
+
+Wheel/drag zoom davranışı da headless Chrome ile teyit edildi (webmock, override
+fetch → `yukleGrafikler` tam veri + `tuketimSinir` yüklü):
+- `W_IN_SOL`(sol %25): pencere `20:20-17:56 21.6h` → `19.4h` — **imleç sol nokta odaklı** ✅
+- `W_IN_SAG`(sağ %75): pencere `21:41-19:17 21.6h` → `19.4h` — **imleç sağ nokta odaklı** ✅
+- `DRAG %20-%55`: sol tık sürükle seçim pencereyi kuruyor (9.5h) ✅
+- `W_OUT`: zoom-out periyoda dönüyor (`PCN=NULL`) ✅
+- Seri wheel-in'lerde `tuketimSinir` varken pencere periyota/24h'ye devrilmiyor ✅
+
+MD5: dashboard `654B30B7…`, server.py `6020BDD2…` — root + 4 dashboard + 2 server
+kopyası eşit. Sunucu yeniden başlatıldı (PID 17848).
+
 ### 29.08.2026 — Tüketim zoom'u en az 1 saat pencereyle sınırlandı
 
 Kullanıcı "zoom-in 1 saatin altına inmesin" dedi. Önceden minimum 60 sn idi
