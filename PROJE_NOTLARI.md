@@ -2,6 +2,25 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim grafiği zoom-out sınırı (görünüm veri aralığını aşamaz)
+
+Kullanıcı "son 24 saat seçiliyken zoom yapınca 25-08 ila 30-08 arasını gösteriyor"
+dedi. `chartjs-plugin-zoom` için `limits` tanımlı değildi; tekerlek aşağı (zoom-out)
+görünür pencereyi mevcut verinin (24 saat) dışına taşıyor, `tuketimZoomAt` o geniş
+pencereden veri çekip 5 günlük görünüm yaratıyordu. Şimdi görünüm veriye kenetli:
+- `tuketimVeriAralik()` → grafikteki güncel x verisinin min/max (epoch ms).
+- `tuketimZoomAt` görünür pencereyi **veri aralığına kırpıyor**; pencere verinin
+  %98'ine ulaşırsa (tam zoom-out) `tuketimPencere = null` → periyot görünümüne döner.
+- `tuketimEksenSabitle()` her veri yüklemesinden sonra x eksenini ve zoom
+  `limits`'ini pencereye (zoom varsa) ya da veri sınırlarına kenetler → zoom-out/pan
+  asla yüklenmiş verinin sınırını aşamaz.
+- Değişiklik hem `istatistik/templates/dashboard.html` hem `firmware_versiyon/`
+  kopyalarına işlendi (MD5 eşit: `FBD4C4FED2DA19EBFAC91FAB00128267`).
+
+**Doğrulama (headless Chrome):** 4 kez wheel zoom-in → pencere daraldı, `tuketimPencere`
+set edildi. Sonra 30 kez wheel zoom-out → eksen tam veri sınırında kaldı (veri
+dışına çıkmadı), `pencere = null` (periyoda döndü). `[OK] RETURNED TO PERIOD`.
+
 ### 29.08.2026 — Kova ızgarası sabitlendi + DB lock sorunu
 
 - Kullanıcı "son 24 saatteyim, grafik sürekli değişiyor" dedi: period modunda
