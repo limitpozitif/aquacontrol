@@ -2,6 +2,14 @@
 
 ## DEĞİŞİKLİK GÜNLÜĞÜ
 
+### 29.08.2026 — Tüketim trendi sorgusu hızlandırıldı
+
+Kullanıcı yükleme süresinin uzun olduğunu belirtti. `get_tuketim_trendi` tüm kolonları
+(`SELECT *`, ~53 alan) çekiyor ve `aktif_sure_saniye` her kovada ts'yi iki kez parse ediyordu.
+- Sorgu 5 kolona indirildi (`ts, site_pump_on, site_freq, down_inv, down_kuyu`).
+- `ková_sure()` yerel fonksiyonu: ts bir kez parse edilip `(ts_obj, row)` ikilileriyle dolaşır.
+- 24h: ~190ms → ~170ms; 7d/30d ~500ms (veri ~46k satırla sınırlı). MD5 3 konumda eşit.
+
 ### 29.08.2026 — Varsayılan periyot 24 saate alındı
 
 Dashboard açılışta `currentPeriod='1h'` (Son 1 Saat) çiziliyordu; kullanıcı istediği periyodu
