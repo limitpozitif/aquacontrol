@@ -1,59 +1,17 @@
-downside_web_entegre.txt
-upside_web_entegre.txt
-upside_hmi.HMI
-upside_hmi_analog.HMI
-web_veri_semasi.txt
-tank_seviye_okuma.txt
+# Default Project — kök düzen
+# GitHub yalnızca ticari web sitesini (aquakontrol-web/docs) yayınlar.
+# ESP32 firmware/web panel ve diğer tüm proje dosyaları yerelde kalır.
+
+# Çamkent Su (firmware_versiyon — yerel, GitHub'a asla gitmez)
 firmware_versiyon/
-web_panel_data/
-web_gomulu/
 
-# Eski panel kodu
-app.js
-index.html
-style.css
+# aquakontrol-web: docs/ (Vercel sitesi) GitHub'a gider, geri kalanı yerel
+aquakontrol-web/*
+!aquakontrol-web/docs/
+!aquakontrol-web/docs/**
 
-# Firmware dokümanları
-upside_with_nex.txt
-downside_son_durum_fixed.txt
-
-# Tanıtım / teknik dosyalar (yerelde durur, GitHub'a gitmez)
-Web_Panel_Giris_Sistemi_Kilavuzu.html
-Web_Panel_Giris_Sistemi_Kilavuzu.pdf
-yangin-guvenligi-sunum.html
-yangin-guvenligi-sunum.pdf
-site-yangin-kontrol-sistemi-sunum-raporu.html
-site-yangin-kontrol-sistemi-sunum-raporu.md
-site-yangin-kontrol-sistemi-sunum-raporu.pdf
-aqua-kontrol-teklif-sunum.html
-aqua-kontrol-teklif-sunum.pdf
-aqua-kontrol-gorseller/
-downside-layer.html
-downside-layer.png
-upside-layer.html
-upside-layer.png
-nextion-*.html
-nextion-*.png
-nextion-kurulum-rehberi.md
-upside_p0_degisim_listesi.md
-upside.PNG
-login_card.png
-login_screen.png
-web_panel_normal.png
-web_panel_fire.png
-panel_upper.png
-panel_lower.png
-serve.bat
-
-# aquakontrol-web (AKDIAG'lı eski kopya + scriptler)
-aquakontrol-web/
-
-# Yerel / teknik dosyalar (GitHub'a asla gitmez)
+# Diğer yerel projeler (GitHub'a gitmez)
 altyapi-koordinasyon/
-check_system.py
-firmware_v01_hashes.csv
-istatistik/
-Çamkent Su projesi_V01_silinecek/
-5000
-PROJE_NOTLARI.md
+
+# Kök kişisel belge (proje dışı)
 Turkiye_Analizi_2002-2026.pdf

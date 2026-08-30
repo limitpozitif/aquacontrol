@@ -2,16 +2,20 @@
 
 Bu dosya opencode'un bu projede nasıl çalışacağını belirler. Her oturumda uygulanır.
 
-## 🔁 VERSİYONLAMA PROTOKOLÜ (HER DEĞİŞİKLİKTE UYGULA)
+## 📂 ÇALIŞMA MODELİ (aktif + onaylanmış sürüm)
 
-Kullanıcı bir değişiklik istediğinde çalışmaya başlamadan önce **kullanıcıya sor**:
-
-> "Yeni bir versiyon mu yapalım, mevcut projeyi mi güncelleyelim?"
-
-- "Yeni versiyon" → `Çamkent Su projesi_Vxx` numarasını +1 arttır (`V01` → `V02`...),
-  **tüm dosyaların kopyasını** yeni klasöre al, çalışmayı orada yap, değişiklik günlüğünü işle.
-- "Güncelle" → aynı versiyon klasöründeki dosyalar üzerinde çalış.
-- Her değişikliği ilgili klasörün `PROJE_NOTLARI.md` → "DEĞİŞİKLİK GÜNLÜĞÜ" bölümüne yaz.
+- **Aktif çalışma alanı = `firmware_versiyon\` kökü.** Üzerinde oynadığımız/hazırladığımız
+  dosyaların **son durumu** burada durur (`downside_web_entegre.txt`, `upside_web_entegre.txt`,
+  `web_panel_data\`, `web_gomulu\`, sunum/kılavuzlar, görseller, `istatistik\`, `PROJE_NOTLARI.md`).
+- **Onaylanmış sürüm = `firmware_versiyon\Çamkent Su projesi_V01\` (gerekiyorsa `_Vxx`).**
+  Aktif alandaki değişiklikler kullanıcı tarafından **onaylandığında** ilgili dosyalar buraya
+  kopyalanır (MD5 eşitliği doğrulanır). Böylece onaylanan sürüm garanti altına alınır.
+- **Yeni versiyon planlanırsa** `Çamkent Su projesi_Vxx` numarası +1 arttırılır ve o versiyonla
+  ilgili **tüm dosyalar** yeni `Vxx` klasörüne kopyalanır; çalışma yeni `Vxx` üzerinden onay döngüsüyle sürer.
+- `Vxx` klasörü **sadece ilgili versiyon dosyalarını** içerir: analiz yapıları
+  (server.py, collector.py, db.py, dashboard.*, readings.db*, templates\, raporlar\ vb.)
+  `firmware_versiyon\istatistik\` altında durur, `Vxx` içinde **olmaz**.
+- Her onaylanmış değişikliği ilgili klasörün `PROJE_NOTLARI.md` → "DEĞİŞİKLİK GÜNLÜĞÜ" bölümüne yaz.
 - Git varsa değişiklikleri commit'le (mesaj Türkçe, açıklayıcı).
 
 ## 🎤 SUNUM / ADMIN / HANE BİLGİLENDİRME
@@ -46,34 +50,34 @@ Aktif versiyon değiştiğinde (yeni `Çamkent Su projesi_Vxx`) şu hepsi **birl
    → webmock ile Chrome `--screenshot` (budget'sız) + `--window-size=1280,1700`; kırpma: üst 0–848, alt 858–1480
 5. Sunum/kılavuz PDF'leri → `--print-to-pdf` ile yeniden üret (önce Temp, sonra Remove-Item + Move-Item)
 
-Değişiklikleri root + aktif versiyon klasörünün **ikisine de** uygula, günlüğe işle, commit'le.
-`upside_web_entegre.txt` web sunmadığı için sürüm etiketi taşımaz (dokunma).
+Değişiklikleri aktif alan (`firmware_versiyon\`) + onaylanmış versiyon klasörünün **ikisine de**
+uygula, günlüğe işle, commit'le. `upside_web_entegre.txt` web sunmadığı için sürüm etiketi taşımaz (dokunma).
 
-**⚠️ AQUAKONTROL.COM İSTİSNASI:** `docs\` (canlı tanıtım sitesi, Vercel yayınlıyor) **hariçtir** —
-sürüm etiketi taşımaz, senkronizasyon/versiyon kuralları ona uygulanmaz ve GitHub'da **halka açık**
-kalır (public repo). Firmware/web panel source'ları ise GitHub'da **asla** olmaz; yalnızca yerelde
-(`firmware_versiyon\` repo'su) tutulur.
+**⚠️ AQUAKONTROL.COM İSTİSNASI:** `aquakontrol-web\docs\` (canlı tanıtım sitesi, Vercel yayınlıyor)
+**hariçtir** — sürüm etiketi taşımaz, senkronizasyon/versiyon kuralları ona uygulanmaz ve GitHub'da
+**halka açık** kalır (public repo). Firmware/web panel source'ları ise GitHub'da **asla** olmaz;
+yalnızca yerelde (`firmware_versiyon\`) tutulur.
 
 **⚠️ İKİ AYRI PROJE KAVRAMI:** Bu çalışma alanında iki farklı proje var, karıştırma:
-1. **Ticari web sayfası (aquakontrol.com)** → `docs\` klasörü, Vercel yayınlıyor, GitHub'da **açık**.
-   Sürüm etiketi taşımaz, ESP32 kuralları ona uygulanmaz. Yalnızca bu proje GitHub'a gider.
-2. **ESP32 web paneli** → `web_panel_data\` + `web_gomulu\` + firmware (`downside_web_entegre.txt`,
-   `upside_web_entegre.txt`). Bunlar ESP32'lerin yayınladığı web/paneldir; sürüm etiketi (Vxx) **burada**
-   geçerlidir ve **GitHub'a asla gitmez** — yalnızca yerelde (`firmware_versiyon\`) tutulur.
+1. **Ticari web sayfası (aquakontrol.com)** → `aquakontrol-web\docs\` klasörü, Vercel yayınlıyor,
+   GitHub'da **açık**. Sürüm etiketi taşımaz, ESP32 kuralları ona uygulanmaz. Yalnızca bu kısım GitHub'a gider.
+2. **ESP32 web paneli** → `firmware_versiyon\web_panel_data\` + `web_gomulu\` + firmware
+   (`downside_web_entegre.txt`, `upside_web_entegre.txt`). Bunlar ESP32'lerin yayınladığı web/paneldir;
+   sürüm etiketi (Vxx) **burada** geçerlidir ve **GitHub'a asla gitmez** — yalnızca yerelde tutulur.
 
-GitHub repo'su sadece ticari web sayfası içerir: `docs\`, `AGENTS.md`, `.gitignore`. Diğer tüm
-kaynak/teknik dosyalar `.gitignore` ile korunur ve yerelde kalır.
+GitHub repo'su sadece ticari web sayfasını içerir: `aquakontrol-web\docs\`, `AGENTS.md`, `.gitignore`.
+Diğer tüm kaynak/teknik dosyalar `.gitignore` ile korunur ve yerelde kalır.
 
 **Yeni versiyon sonrası doğrulama kontrol listesi** (tümü `Vxx` ile eşleşmeli):
-- `downside_web_entegre.txt`: `j["ver"]="Vxx"` + gömülü hero-sub/footer
+- `firmware_versiyon\downside_web_entegre.txt`: `j["ver"]="Vxx"` + gömülü hero-sub/footer
 - `web_panel_data/index.html`: hero-sub + footer + `v=Vxx`
 - `web_gomulu/web_index_html.h`: aynı satırlar
-- `firmware_versiyon/` arşivindeki kopyalar (root ile MD5 eşit olmalı)
+- `firmware_versiyon\` arşivindeki kopyalar (aktif ile MD5 eşit olmalı)
 - Sunum/kılavuz kapakları `Vxx` + `last_update` slaytı güncel
 
 ## 🔥 FLASH KAYNAĞI (kritik — kullanıcı bu dosyaları flash ediyor)
 
-Kullanıcı **flash'ı aşağıdaki dosyalardan yapıyor**, `web_gomulu\*.h` DEĞİL:
+Kullanıcı **flash'ı aşağıdaki dosyalardan yapıyor** (`firmware_versiyon\` kökü), `web_gomulu\*.h` DEĞİL:
 
 - **`downside_web_entegre.txt`** — DOWNSIDE firmware + web panel **gömülü** (asıl flash dosyası).
   Web'i `R"CAMKENTP9(...)CAMKENTP9"` blokları olarak içinde taşır: `WEB_INDEX_HTML`
@@ -86,22 +90,24 @@ Kullanıcı **flash'ı aşağıdaki dosyalardan yapıyor**, `web_gomulu\*.h` DE�
 Kural: **`web_panel_data\` içinde yapılan her değişiklik, `downside_web_entegre.txt` içindeki
 ilgili bloğa da gömülmek zorundadır**; aksi hâlde flash edilen cihazda eski web kalır.
 
-- Gömmek: `yardimci_araclar\embed_web.ps1` (web_panel_data → downside_web_entegre.txt;
-  blok dışındaki tüm baytlara dokunmaz; idempotent; dominan satır sonunu korur; **kök
-  yollarını sabit kullanır** → V01 için root'ta üret, sonra kopyala).
+- Gömmek: `yardimci_aracilar\embed_web.ps1` (web_panel_data → downside_web_entegre.txt;
+  blok dışındaki tüm baytlara dokunmaz; idempotent; dominan satır sonunu korur; script
+  `PSScriptRoot` görelli çalışır → aktif alanda `firmware_versiyon` üzerinde çalıştır, sonra onayla).
 - Doğrulamak: embed sonrası `git diff -- downside_web_entegre.txt` incele (yalnızca blok içi
   fark olmalı); bloklar birebir `web_panel_data` ile eşit olmalı.
 - `web_gomulu\*.h` ayrı başlık biçimidir (`web2header.ps1` üretir) — flash kaynağı DEĞİLDİR.
 - ⚠️ PS 5.1 tuzağı: `string.StartsWith([char]0xFEFF)` hatalı TRUE döner ve içeriği bozar;
   scriptlerde BOM kontrolü EKLEME (`ReadAllLines` BOM'u kendisi siler).
-- `yardimci_araclar\` scriptleri yalnızca V01 klasöründe yaşar; kök `yardimci_araclar` yok.
+- `yardimci_aracilar\` scriptleri onaylanmış sürüm klasöründe yaşar; aktif çalışma sırasında
+  `firmware_versiyon\` köküne kopyalanıp orada çalıştırılır ve tekrar V01'e gömülür.
 
 **Web panel değişikliğinde tam akış (sırayla):**
-1. `web_panel_data\*` dosyasını düzenle — **kanonik kaynak burasıdır**.
-2. `embed_web.ps1` çalıştır (web_panel_data → root `downside_web_entegre.txt`).
-3. `web2header.ps1` çalıştır (web_panel_data → `web_gomulu\*.h`).
+1. `firmware_versiyon\web_panel_data\*` dosyasını düzenle — **kanonik kaynak burasıdır**.
+2. `embed_web.ps1` çalıştır (web_panel_data → `firmware_versiyon\downside_web_entegre.txt`).
+3. `web2header.ps1` çalıştır (web_panel_data → `firmware_versiyon\web_gomulu\*.h`).
 4. Doğrula: `git diff -- downside_web_entegre.txt` (yalnızca blok içi fark); sonra
-   `downside_web_entegre.txt`'yi root → V01'e kopyala ve **MD5 eşitliğini** kontrol et.
+   `downside_web_entegre.txt`'yi aktif `firmware_versiyon\` kökünden onaylanmış `Vxx`'e kopyala
+   ve **MD5 eşitliğini** kontrol et.
 5. Commit (Türkçe, açıklayıcı).
 
 **⚠️ Doğrulama tuzağı:** `git diff --no-index --stat` çıktısını `-match "diff --git"` ile test
@@ -141,10 +147,15 @@ etkileşimi). Güvenilir yöntemler:
 
 ## 📁 DOSYA DİZİNİ
 
+> Tüm yollar `firmware_versiyon\` köküne göredir (aktif çalışma alanı). Sunum/kılavuz/görseller
+> ve analiz yapıları (`istatistik\`) burada; sürüm etiketi (Vxx) taşıyan her şey ayrıca
+> `Çamkent Su projesi_V01\` içinde onaylanmış kopyasıyla yaşar.
+
 | Dosya | Açıklama |
 |---|---|
 | `web_panel_data\` | **GÜNCEL** panel (app.js V01, index.html, login.html, style.css) |
 | `web_gomulu\` | Panelin Arduino'ya gömülü halleri (`web_*.h`) |
+| `istatistik\` | Analiz sunucusu (server.py, collector.py, db.py, config.py, dashboard.*, readings.db*, templates\, raporlar\) |
 | `Web_Panel_Giris_Sistemi_Kilavuzu.*` | Kullanım kılavuzu (10 slayt) |
 | `yangin-guvenligi-sunum.*` | Yangın güvenliği sunumu (12 slayt) |
 | `site-yangin-kontrol-sistemi-sunum-raporu.*` | Teknik sunum raporu |
@@ -160,8 +171,13 @@ etkileşimi). Güvenilir yöntemler:
 | `panel_upper.png`, `panel_lower.png` | Üst/alt bölüm kırpmaları (kılavuz) |
 | `login_card.png`, `login_screen.png` | Giriş ekranı görselleri |
 | `upside.PNG` | Teknik panel görseli |
-| `index.html`, `app.js`, `style.css` | Eski kök panel (eski — **kullanılmıyor**, güncel: `web_panel_data\`) |
 | `serve.bat` | Panel sunma yardımcısı |
+| `PROJE_NOTLARI.md` | Aktif ana günlük (kök; V01'de sürüm kopyası) |
+
+> Default Project kökü **yalnızca proje klasörlerini** barındırır: `firmware_versiyon\`,
+> `aquakontrol-web\`, `altyapi-koordinasyon\` + meta dosyalar (`AGENTS.md`, `.gitignore`).
+> Kökte başka proje dosyası bulunmaz; `Turkiye_Analizi_2002-2026.pdf` proje dışı kişisel belgedir,
+> gitignore'dadır, dokunma.
 
 > Not: `roll-off-*` dosyaları bu projeye ait değil (ayrı iş fikri). Onlara dokunma.
 > Versiyon klasörlerinde her sürümün `PROJE_NOTLARI.md` dosyası bulunur — en güncel bilgi oradadır.
