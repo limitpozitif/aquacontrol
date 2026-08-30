@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanal Kontrol Paneli — AQUA KONTROL Demo</title>
+<meta name="description" content="AQUA KONTROL'un canlı simülasyon paneli. Şebeke, pompa, yangın modlarını test edin.">
+<link rel="canonical" href="https://www.aquakontrol.com/demo.html">
+<style>
+:root{--navy:#041e42;--blue:#0b3d91;--sky:#0f6ad0;--light:#e6f0f9;--bg:#f6f9fc;--ink:#1a2733;--muted:#5a6b7c;--red:#e53935;--green:#2e7d32;--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0}a{color:var(--sky)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+section{padding:72px 0}h2{color:#fff;font-size:clamp(26px,3.4vw,40px);margin-bottom:14px;text-align:center}
+.lead{color:#9fb6d6;text-align:center;max-width:760px;margin:0 auto 40px}
+.demo{background:#0c1f40;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(143,211,255,.2)}
+.demo-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:#041e42;border-bottom:1px solid rgba(143,211,255,.15)}
+.demo-bar .t{font-weight:800;letter-spacing:.5px}
+.led{width:10px;height:10px;border-radius:50%;background:#4caf50;display:inline-block;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(76,175,80,.55)}50%{box-shadow:0 0 0 7px rgba(76,175,80,0)}}
+.demo-alarm{display:none;background:linear-gradient(90deg,#b71c1c,#e53935);padding:13px 22px;font-weight:700;font-size:15px;animation:blink 1s infinite}
+.demo-alarm.show{display:block}
+@keyframes blink{50%{opacity:.7}}
+.demo-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;padding:22px}
+.demo-tanks{display:grid;gap:16px}
+.tank{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:16px}
+.tank .cap{display:flex;justify-content:space-between;font-size:13px;color:#9fb6d6;margin-bottom:10px}
+.tank .cap b{color:#fff;font-size:14px}
+.tank .body{position:relative;height:120px;border-radius:8px;background:rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.tank .water{position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(180deg,#4fc3f7,#0f6ad0)}
+.tank .water.fire{background:linear-gradient(180deg,#ff8a65,#e53935)}
+.pct{position:absolute;top:10px;left:12px;z-index:3;font-weight:800;font-size:17px;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+.ton{position:absolute;top:10px;right:12px;z-index:3;font-size:12.5px;color:#9fb6d6}
+.valve{margin-top:10px;font-size:12.5px;color:#9fb6d6}
+.valve .ok{color:#4caf50;font-weight:700}.valve .open{color:#ffb74d;font-weight:700}
+.demo-right{display:flex;flex-direction:column;gap:14px}
+.pumps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pump{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;transition:border-color .2s}
+.pump.run{border-color:rgba(76,175,80,.6)}
+.pump .spin{width:38px;height:38px;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:var(--sky);display:flex;align-items:center;justify-content:center;font-size:15px}
+.pump.run .spin{border-top-color:#4caf50;animation:rotate 1s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.pump .nm{font-size:12.5px;color:#9fb6d6}.pump .st{font-size:12.5px;font-weight:700}.pump.run .st{color:#4caf50}.pump.off .st{color:#e57373}
+.data-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 14px;font-size:13.5px;color:#9fb6d6}
+.data-row b{font-size:16px;color:#fff}
+.data-row .warn{color:#ffb74d}.data-row .ok{color:#4caf50}
+.demo-controls{display:flex;gap:10px;flex-wrap:wrap}
+.demo-btn{flex:1;min-width:120px;padding:13px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:700;font-size:14px;background:var(--sky);color:#fff;transition:background .2s}
+.demo-btn:hover{transform:translateY(-2px)}.demo-btn.on{background:#e53935}.demo-btn.toggle.on{background:#2e7d32}.demo-btn:disabled{opacity:.4;cursor:not-allowed}
+.demo-note{font-size:12.5px;color:#7d94b8;text-align:center;margin-top:4px}@media(max-width:900px){.demo-grid{grid-template-columns:1fr}}
+footer{background:#031633;color:rgba(255,255,255,.65);padding:34px 0;font-size:14px}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"AQUA KONTROL Sanal Panel","description":"Canlı simülasyon - pompa, tank, yangın modları","applicationCategory":"Utility"}
+</script>
+</head>
+<body>
+<header style="position:sticky;top:0;z-index:50;background:rgba(4,30,66,.96)">
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between;height:66px">
+<a style="color:#fff;font-weight:800;font-size:20px" href="/">AQUA <span style="color:#8fd3ff">KONTROL</span></a>
+<nav style="display:flex;gap:24px;align-items:center">
+<a href="sorun.html">Sorun</a><a href="cozum.html">Çözüm</a><a href="yangin.html">Yangın</a><a href="panel.html">Panel</a><a href="demo.html">Sanal Panel</a><a href="guvenlik.html">Güvenlik</a><a href="karsilastirma.html">Karşılaştırma</a><a href="iletisim.html">Bize Ulaşın</a>
+</nav>
+</div>
+</header>
+<main>
+<div class="wrap">
+<h2 style="color:#fff">🎮 Sanal Kontrol Paneli</h2>
+<p class="lead">Aşağıdaki panel <strong>canlı bir simülasyondur</strong> — butonlara tıklayarak sistemin nasıl karar verdiğini deneyin.</p>
+<div class="demo">
+<div class="demo-bar"><span class="t">💧 AQUA KONTROL — SANAL PANEL</span><span style="font-size:13px;color:#9fb6d6"><span class="led"></span> ÇEVRİMİÇİ</span></div>
+<div style="display:none" class="demo-alarm" id="demoAlarm">🔥 YANGIN MODU AKTİF — Yangın pompası ve joker pompa devrede · Tanklar acil dolumda</div>
+<div class="demo-grid">
+<div class="demo-tanks">
+<div class="tank"><div class="cap"><b>🏠 Site Suyu Tankı</b><span>100 ton</span></div><div class="body"><div class="pct" id="pSite">62%</div><div class="ton" id="tSite">62 ton</div></div><div class="valve" id="vSite">Şebeke birincil — Site pompası: <span class="ok">BEKLEMEDE</span></div></div>
+<div class="tank"><div class="cap"><b>🚒 Yangın Rezervi</b><span>4 × tank</span></div><div class="body"><div class="pct" id="pFire">88%</div><div class="ton" id="tFire">88 ton</div></div><div class="valve" id="vFire">Dolum valfi: <span class="ok">KAPALI</span></div></div>
+</div>
+<div class="demo-right">
+<div class="pumps">
+<div class="pump" id="pumpSite"><div class="spin">💧</div><div><div class="nm">Site Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+<div class="pump" id="pumpKuyu"><div class="spin">🕳️</div><div><div class="nm">Kuyu Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+<div class="pump" id="pumpJoker"><div class="spin">🔀</div><div><div class="nm">Joker Pompa</div><div class="st">BEKLEMEDE</div></div></div>
+<div class="pump" id="pumpFire"><div class="spin">🚒</div><div><div class="nm">Yangın Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+</div>
+<div style="margin-top:14px">
+<div class="data-row"><span>Şebeke basıncı</span><b id="dSebeke">4.8 bar</b></div>
+<div class="data-row"><span>Site basıncı</span><b id="dSite">3.1 bar</b></div>
+<div class="data-row"><span>Yangın hattı</span><b id="dFire">2.6 bar</b></div>
+</div>
+<div class="demo-controls" style="margin-top:16px">
+<button class="demo-btn fire-btn" id="btnFire">🔥 Yangın Modu</button>
+<button class="demo-btn toggle on" id="btnSys">⚡ Sistem AÇIK</button>
+<button class="demo-btn toggle on" id="btnKuyu">🕳️ Kuyu OTO</button>
+</div>
+<div class="demo-note">Sistem 1.5 sn'de bir kendini günceller · Yangın Modu'na basınca gerçek yangın akışını izleyin</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer><div class="wrap foot-grid"><a style="color:#fff;font-weight:800" href="/">AQUA KONTROL</a><span>2026 Limit Pozitif</span><a href="iletisim.html">Bize Ulaşın</a></div></footer>
+<script>
+var S={site:62,fire:88,sysOn:true,kuyuAuto:true,fireMode:false,sitePump:false,kuyuPump:false,joker:false,firePump:false,dSebeke:4.8,dSite:3.1,dFire:2.6};
+function $(x){return document.getElementById(x);}
+function pump(id,run,st){var el=$(id);el.classList.toggle('run',run);el.classList.toggle('off',!run);el.querySelector('.st').textContent=st}
+function update(){var j=0.03;if(!S.sysOn){S.sitePump=S.kuyuPump=S.joker=S.firePump=false}else if(S.fireMode){S.firePump=S.joker=S.sitePump=true;S.kuyuPump=S.sysOn}else{S.firePump=false;S.joker=S.dFire<2.4;S.sitePump=S.site<84||(S.site<96&&S.sitePump);if(S.site>=96)S.sitePump=false;S.kuyuPump=S.kuyuAuto&&(S.fire<95||S.site<70);if(S.kuyuPump&&S.fire>=98&&S.site>=78)S.kuyuPump=false}
+var cons=0.22+(S.fireMode?1.1:0),fill=S.sitePump?0.85:0,fcons=S.fireMode?5.4:0,ffill=(S.kuyuPump&&S.fire<98)?(S.fireMode?3.375:5.4):0;if(S.kuyuPump){S.site=Math.min(100,S.site+0.55)}S.site=Math.max(0,Math.min(100,S.site-cons+fill));S.fire=Math.max(0,Math.min(100,S.fire-fcons+ffill));S.dSebeke=Math.max(4.5,Math.min(5.1,S.dSebeke+(Math.random()*2-1)*0.05));S.dSite=S.sitePump?S.dSite+(3.4-S.dSite)*j:S.dSite+(2.1-S.dSite)*j*0.6;if(S.fireMode){S.dFire=8.1*j+S.dFire*(1-j)}else{S.dFire=S.joker?2.9*j+S.dFire*(1-j):2.2*j+S.dFire*(1-j)*0.5}
+var wSite=$( 'wSite'),wFire=$( 'wFire'),pSite=$( 'pSite'),pFire=$( 'pFire'),tSite=$( 'tSite'),tFire=$( 'tFire'),vSite=$( 'vSite'),vFire=$( 'vFire'),alarm=$( 'demoAlarm'),dSebeke=$( 'dSebeke'),dSite=$( 'dSite'),dFire=$( 'dFire');
+wSite.style.height=S.site+'%';wFire.style.height=S.fire+'%';pSite.textContent=Math.round(S.site)+'%';pFire.textContent=Math.round(S.fire)+'%';tSite.textContent=Math.round(S.site)+' ton';tFire.textContent=Math.round(S.fire)+' ton';pump('pumpSite',S.sitePump,S.sitePump?'ÇALIŞIYOR':'BEKLEMEDE');pump('pumpKuyu',S.kuyuPump,S.kuyuPump?'ÇALIŞIYOR':'BEKLEMEDE');pump('pumpJoker',S.joker,S.joker?'ÇALIŞIYOR':'BEKLEMEDE');pump('pumpFire',S.firePump,S.firePump?'ÇALIŞIYOR':'BEKLEMEDE');
+vSite.innerHTML='Şebeke birincil · Site pompa: <span class="'+(S.sitePump?'open':'ok')+'">'+(S.sitePump?'ÇALIŞIYOR':'BEKLEMEDE')+'</span>';var valfAcik=(S.kuyuPump&&S.fire<98)||S.fireMode;vFire.innerHTML='Dolum valfi: <span class="'+(valfAcik?'open':'ok')+'">'+(valfAcik?'AÇIK — DOLUYOR':'KAPALI')+'</span>';dSebeke.textContent=S.dSebeke.toFixed(1)+' bar';dSite.textContent=S.dSite.toFixed(1)+' bar';dFire.textContent=S.dFire.toFixed(1)+' bar';dFire.className=S.fireMode?'warn':(S.dFire<2.2?'warn':'ok');alarm.classList.toggle('show',S.fireMode);if(S.fireMode&&S.fire<10){alarm.textContent='İŞLETME YANGIN REZERVÜSÜ KRİTİK SERTİFİKASININ SÜRESİ DOLMUŞ! Acil dolum valfi açık';alarm.style.background='linear-gradient(90deg,#b71c1c,#ff5722)'}else if(S.fireMode){alarm.textContent='🔥 YANGIN MODU AKTİF — Yangın pompası ve joker pompa devrede · Tanklar acil dolumda';alarm.style.background=''}
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}function lerp(a,b,t){return a+(b-a)*t}
+document.getElementById('btnFire').addEventListener('click',function(){S.fireMode=!S.fireMode;this.classList.toggle('on',S.fireMode);this.textContent=S.fireMode?'🔥 Yangın Modu AKTİF':'🔥 Yangın Modu'});document.getElementById('btnSys').addEventListener('click',function(){S.sysOn=!S.sysOn;this.classList.toggle('on',S.sysOn);this.textContent=S.sysOn?'⚡ Sistem AÇIK':'⚡ Sistem KAPALI'});document.getElementById('btnKuyu').addEventListener('click',function(){S.kuyuAuto=!S.kuyuAuto;this.classList.toggle('on',S.kuyuAuto);this.textContent=S.kuyuAuto?'🕳️ Kuyu OTO':'🕳️ Kuyu DURDURULDU'});update();setInterval(update,1500);
+</script>
+<script>
+var burger=document.getElementById('burger'),nav=document.getElementById('navlinks');
+if(burger){burger.addEventListener('click',function(){nav.classList.toggle('open')})
+}
+</script>
+</body>
+</html>
