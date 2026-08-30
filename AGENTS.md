@@ -1,6 +1,42 @@
 # AGENTS.md — Çamkent Su Projesi
 
-Bu dosya opencode'un bu projede nasıl çalışacağını belirler. Her oturumda uygulanır.
+Bu dosya bu projede çalışan yapay zekâ aracının (opencode, Claude, ChatGPT, Gemini,
+Cursor, Windsurf vb.) nasıl davranacağını belirler. **Hangi araç kullanılırsa kullanılsın**
+her oturumda uygulanır.
+
+## 📐 KLASÖR YAPISI (ZORUNLU ŞART — hiçbir araçla değiştirilemez)
+
+**Bu çalışma alanının klasör yapısı sabit ve zorunludur.** Hangi yapay zekâ aracıyla
+çalışılırsa çalışılsın, oturuma başlarken aşağıdaki kurallar öncelikle okunur ve uygulanır:
+
+1. **Kök (Default Project) yalnızca şunları barındırır:**
+
+   ```
+   Default Project\
+   ├── firmware_versiyon\        ESP32 firmware + web paneli + sunumlar/raporlar/hmi (GİZLİ, git ignore)
+   ├── aquakontrol-web\          Ticari tanıtım sitesi (GitHub'da yalnızca docs\ yayınlanır)
+   ├── altyapi-koordinasyon\     Altyapı/koordinasyon işleri (yerel)
+   ├── AGENTS.md                 Bu dosya — tüm kuralların tek kaynağı
+   ├── .gitignore
+   └── Turkiye_Analizi_2002-2026.pdf   Proje dışı kişisel belge — DOKUNMA
+   ```
+
+   Kök seviyede **başka proje dosyası/klasörü oluşturulmaz, taşınmaz, silinmez.**
+   Yeni üretilen her dosya ilgili proje klasörünün **içine** yazılır.
+
+2. **Üç alt projeden her birinin kendi `AGENTS.md`'si vardır** ve kök `AGENTS.md`'ye işaret
+   eder (`firmware_versiyon\`, `aquakontrol-web\`, `altyapi-koordinasyon\`). Bu dosyalar da
+   aynı şekilde klasör yapısının korunmasını şart koşar.
+
+3. **Proje klasör adları sabittir** (`firmware_versiyon`, `aquakontrol-web`,
+   `altyapi-koordinasyon`) — yeniden adlandırılamaz, taşınamaz, birleştirilemez.
+
+4. **GitHub'a yalnızca** `aquakontrol-web\docs\` + kök `AGENTS.md` + `.gitignore` gider.
+   `firmware_versiyon\` (firmware, web paneli, sunumlar, istatistik, görseller) ve
+   `altyapi-koordinasyon\` **asla** GitHub'a push edilmez; yalnızca yerelde durur.
+
+5. Kuralların tamamı kök `AGENTS.md` ve alt klasörlerin `AGENTS.md`'lerindedir. Çelişki
+   ya da belirsizlikte **kök `AGENTS.md` önceliklidir.**
 
 ## 📂 ÇALIŞMA MODELİ (aktif + onaylanmış sürüm)
 
@@ -178,6 +214,9 @@ etkileşimi). Güvenilir yöntemler:
 > `aquakontrol-web\`, `altyapi-koordinasyon\` + meta dosyalar (`AGENTS.md`, `.gitignore`).
 > Kökte başka proje dosyası bulunmaz; `Turkiye_Analizi_2002-2026.pdf` proje dışı kişisel belgedir,
 > gitignore'dadır, dokunma.
+>
+> Her alt proje klasöründe kendi `AGENTS.md`'si vardır (`firmware_versiyon\AGENTS.md`,
+> `aquakontrol-web\AGENTS.md`, `altyapi-koordinasyon\AGENTS.md`) — yapıyı şart koşar, kök dosyaya işaret eder.
 
 > Not: `roll-off-*` dosyaları bu projeye ait değil (ayrı iş fikri). Onlara dokunma.
 > Versiyon klasörlerinde her sürümün `PROJE_NOTLARI.md` dosyası bulunur — en güncel bilgi oradadır.
