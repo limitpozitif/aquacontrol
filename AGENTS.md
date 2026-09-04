@@ -38,6 +38,15 @@ her oturumda uygulanır.
 5. Kuralların tamamı kök `AGENTS.md` ve alt klasörlerin `AGENTS.md`'lerindedir. Çelişki
    ya da belirsizlikte **kök `AGENTS.md` önceliklidir.**
 
+## 🔎 DEĞİŞİKLİK ÖNCESİ: ENVANTERE BAK (taramayı kısaltır)
+
+Bir değişiklik isteğinde **tüm repoyu tarayarak başlama.** Önce ilgili alt projenin
+`AGENTS.md`'sindeki **"🗺 DEĞİŞİKLİK ENVANTERİ (NEREDE NE VAR?)"** bölümüne bak; o konunun
+hangi dosyada yaşadığı orada listelenir. Listedeki **tüm** yerlere aynı anda uygula ve
+`PROJE_NOTLARI.md` → "DEĞİŞİKLİK GÜNLÜĞÜ"ne yaz. Aynı kavramın iki yerde tutulup birinin
+güncellenmemesi = tutarsızlık; envanter bu durumu önler. Yeni bir kavram eklediğinde
+envantere de satır ekle (envanterin güncel kalması şarttır).
+
 ## 📂 ÇALIŞMA MODELİ (aktif + onaylanmış sürüm)
 
 - **Aktif çalışma alanı = `firmware_versiyon\` kökü.** Üzerinde oynadığımız/hazırladığımız

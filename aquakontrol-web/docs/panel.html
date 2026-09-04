@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Paneli ve Sanal Demo — Uzaktan İzleme | AQUA KONTROL</title>
+<meta name="description" content="AQUA KONTROL web paneli: canlı veri 2 saniyede bir, alarmlar, kullanıcı yönetimi. Butonlarla oynayarak sistemin nasıl karar verdiğini gösteren canlı sanal panel simülasyonu.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Limit Pozitif">
+<meta name="theme-color" content="#041e42">
+<link rel="canonical" href="https://www.aquakontrol.com/panel.html">
+<meta property="og:title" content="Web Paneli ve Sanal Demo — Uzaktan İzleme | AQUA KONTROL">
+<meta property="og:description" content="İnternet olan her yerden canlı izleme: tanklar, basınçlar, pompalar. Yangın modunu sanal panelde deneyin.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.aquakontrol.com/panel.html">
+<meta property="og:image" content="https://www.aquakontrol.com/panel_upper_normal.png">
+<meta property="og:site_name" content="AQUA KONTROL">
+<meta property="og:locale" content="tr_TR">
+<link rel="stylesheet" href="style.css">
+</head>
+<body itemscope itemtype="https://schema.org/WebPage">
+
+<header role="banner">
+  <div class="wrap nav">
+    <a class="logo" href="index.html" itemprop="name">AQUA <span>KONTROL</span></a>
+    <nav class="nav-links" id="navlinks" role="navigation" aria-label="Ana menü">
+      <a href="index.html">Ana Sayfa</a>
+      <a href="sorun.html">Sorun</a>
+      <a href="cozum.html">Çözüm</a>
+      <a href="yangin.html">Yangın</a>
+      <a href="panel.html" class="active">Panel &amp; Demo</a>
+      <a href="guvenlik.html">Güvenlik</a>
+      <a href="karsilastirma.html">Karşılaştırma</a>
+      <a href="iletisim.html" class="nav-cta">Bize Ulaşın</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Menü" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main role="main">
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Ana Sayfa</a> › Panel &amp; Demo</div>
+    <h1>🌐 Uzaktan izleme — web paneli</h1>
+    <p>İnternet olan her yerden: telefon, tablet veya bilgisayar. Tanklar, basınçlar, pompalar ve alarmlar tek ekranda.</p>
+  </div>
+</section>
+
+<!-- REMOTE -->
+<section id="panel">
+  <div class="wrap split">
+    <figure class="shot reveal">
+      <img src="panel_lower_normal.png" alt="Web paneli — alt istasyon görünümü">
+      <figcaption>Alt istasyon ve pompa durumları aynı ekranda.</figcaption>
+    </figure>
+    <div class="text">
+      <h2>Canlı veri, alarm, kullanıcı — tek panelde</h2>
+      <p class="lead">Sistemin tamamı uzaktan izlenir ve yönetilir.</p>
+      <ul>
+        <li><b>Canlı veri, 2 sn'de bir:</b> tank dolulukları (tonaj + %), basınçlar, pompa frekans / akım / gerilim.</li>
+        <li><b>Alarmlar ve sensör sağlığı</b> anında görünür (sarı / kırmızı bantlar).</li>
+        <li><b>Kullanıcı ve aktif kullanıcı sayısı</b> ile sistemin <b>çevrimiçi</b> durumu izlenir.</li>
+        <li><b>Kayıtlı numaralarla güvenli giriş</b> — onay beklenmeden anında şifre.</li>
+        <li>Yangın düğmesi <b>yalnızca görevli / yöneticiye</b> açıktır.</li>
+      </ul>
+      <div class="callout ok">İki gözle izleme: istasyonlarda dokunmatik ekran (Nextion), her yerden web paneli. Biri kopsa diğeri devam eder.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo" class="cm-no-collapse" style="background:var(--navy);">
+  <div class="wrap">
+    <h2 class="center" style="color:#fff;">🎮 Sanal kontrol sistemi</h2>
+    <p class="lead center" style="color:#9fb6d6;">Aşağıdaki panel <b>canlı bir simülasyondur</b> — butonlara tıklayarak sistemin nasıl karar verdiğini deneyin.</p>
+    <div class="demo reveal">
+      <div class="demo-bar">
+        <span class="t">💧 AQUA KONTROL · SANAL PANEL</span>
+        <span style="font-size:13px; color:#9fb6d6;"><span class="led"></span> ÇEVRİMİÇİ</span>
+      </div>
+      <div class="demo-alarm" id="demoAlarm">🔥 YANGIN MODU AKTİF — Yangın pompası ve joker pompa devrede · Tanklar acil dolumda</div>
+      <div class="demo-grid">
+        <div class="demo-tanks">
+          <div class="tank">
+            <div class="cap"><b>🏠 Site Suyu Tankı</b><span>100 ton</span></div>
+            <div class="body">
+              <div class="meter"></div>
+              <div class="water" id="wSite"></div>
+              <div class="pct" id="pSite">62%</div>
+              <div class="ton" id="tSite">62 ton</div>
+            </div>
+            <div class="valve" id="vSite">Şebeke birincil · Site pompası: <span class="ok">BEKLEMEDE</span></div>
+          </div>
+          <div class="tank">
+            <div class="cap"><b>🚒 Yangın Rezervi</b><span>4 × tank</span></div>
+            <div class="body">
+              <div class="meter"></div>
+              <div class="water fire" id="wFire"></div>
+              <div class="pct" id="pFire">88%</div>
+              <div class="ton" id="tFire">88 ton</div>
+            </div>
+            <div class="valve" id="vFire">Dolum valfi: <span class="ok">KAPALI</span></div>
+          </div>
+        </div>
+        <div class="demo-right">
+          <div class="pumps">
+            <div class="pump" id="pumpSite"><div class="spin">💧</div><div><div class="nm">Site Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+            <div class="pump" id="pumpKuyu"><div class="spin">🕳️</div><div><div class="nm">Kuyu Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+            <div class="pump" id="pumpJoker"><div class="spin">🔀</div><div><div class="nm">Joker Pompa</div><div class="st">BEKLEMEDE</div></div></div>
+            <div class="pump" id="pumpFire"><div class="spin">🚒</div><div><div class="nm">Yangın Pompası</div><div class="st">BEKLEMEDE</div></div></div>
+          </div>
+          <div>
+            <div class="data-row"><span>Şebeke basıncı</span><b id="dSebeke">4.8 bar</b></div>
+            <div class="data-row"><span>Site basıncı</span><b id="dSite">3.1 bar</b></div>
+            <div class="data-row"><span>Yangın hattı</span><b id="dFire">2.6 bar</b></div>
+          </div>
+          <div class="demo-controls">
+            <button class="demo-btn fire-btn" id="btnFire">🔥 Yangın Modu</button>
+            <button class="demo-btn toggle on" id="btnSys">⚡ Sistem AÇIK</button>
+            <button class="demo-btn toggle on" id="btnKuyu">🕳️ Kuyu OTO</button>
+          </div>
+          <div class="demo-note">Sistem 1.5 sn'de bir kendini günceller · Yangın Modu'na basınca gerçek yangın akışını izleyin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer role="contentinfo">
+  <div class="footer-counter">
+    <span class="counter-item">👁️ Aktif Ziyaretçi: <b id="active-count">1</b></span>
+    <span class="counter-sep">|</span>
+    <span class="counter-item">📊 Toplam Ziyaretçi: <b id="total-count">0</b></span>
+  </div>
+  <div class="wrap foot-grid">
+    <a class="logo" href="index.html">AQUA <span>KONTROL</span></a>
+    <span>© 2026 Limit Pozitif · Akıllı Su &amp; Yangın Kontrol Sistemi</span>
+    <a href="iletisim.html">Bize Ulaşın</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  /* --- SANAL PANEL SIMULATION --- */
+  (function () {
+    var S = {
+      site: 62, fire: 88, sysOn: true, kuyuAuto: true, fireMode: false,
+      sitePump: false, kuyuPump: false, joker: false, firePump: false,
+      dSebeke: 4.8, dSite: 3.1, dFire: 2.6
+    };
+    function $id(x) { return document.getElementById(x); }
+    var wSite = $id('wSite'), wFire = $id('wFire'), pSite = $id('pSite'), pFire = $id('pFire'),
+        tSite = $id('tSite'), tFire = $id('tFire'), vSite = $id('vSite'), vFire = $id('vFire'),
+        alarm = $id('demoAlarm'), btnFire = $id('btnFire'), btnSys = $id('btnSys'), btnKuyu = $id('btnKuyu'),
+        dSebeke = $id('dSebeke'), dSite = $id('dSite'), dFire = $id('dFire');
+
+    function pump(id, run, st) {
+      var el = $id(id);
+      el.classList.toggle('run', run);
+      el.classList.toggle('off', !run && (st === 'ARIZA' || false));
+      el.querySelector('.st').textContent = st;
+    }
+    function ramp(t) { return t; }
+    var tick = 0;
+
+    function update() {
+      tick++;
+      var j = 0.03;
+      if (!S.sysOn) {
+        S.sitePump = S.kuyuPump = S.joker = S.firePump = false;
+      } else if (S.fireMode) {
+        S.firePump = true; S.joker = true; S.sitePump = true; S.kuyuPump = S.kuyuAuto;
+      } else {
+        S.firePump = false;
+        S.joker = S.dFire < 2.4;
+        S.sitePump = S.site < 84 || (S.site < 96 && S.sitePump);
+        if (S.site >= 96) S.sitePump = false;
+        S.kuyuPump = S.kuyuAuto && (S.fire < 95 || S.site < 70);
+        if (S.kuyuPump && S.fire >= 98 && S.site >= 78) S.kuyuPump = false;
+      }
+
+      var cons = 0.22 + (S.fireMode ? 1.1 : 0);
+      var fill = S.sitePump ? 0.85 : 0;
+      var fcons = S.fireMode ? 5.4 : 0;
+      var ffill = (S.kuyuPump && S.fire < 98) ? (S.fireMode ? 3.375 : 5.4) : 0;
+      if (S.kuyuPump) { S.site = Math.min(100, S.site + 0.55); }
+      S.site = clamp(S.site - cons + fill, 0, 100);
+      S.fire = clamp(S.fire - fcons + ffill, 0, 100);
+
+      S.dSebeke = clamp(S.dSebeke + (rand(-1,1) * 0.05), 4.5, 5.1);
+      S.dSite = S.sitePump ? lerp(S.dSite, 3.4, j) : lerp(S.dSite, 2.1, j * 0.6);
+      if (S.fireMode) { S.dFire = lerp(S.dFire, 8.1, j); } else { S.dFire = S.joker ? lerp(S.dFire, 2.9, j) : lerp(S.dFire, 2.2, j * 0.5); }
+
+      wSite.style.height = S.site + '%';
+      wFire.style.height = S.fire + '%';
+      pSite.textContent = Math.round(S.site) + '%';
+      pFire.textContent = Math.round(S.fire) + '%';
+      tSite.textContent = Math.round(S.site) + ' ton';
+      tFire.textContent = Math.round(S.fire) + ' ton';
+
+      pump('pumpSite', S.sitePump, S.sitePump ? 'ÇALIŞIYOR · ' + Math.round(35 + tick % 16) + ' Hz' : 'BEKLEMEDE');
+      pump('pumpKuyu', S.kuyuPump, S.kuyuPump ? 'ÇALIŞIYOR · ' + Math.round(38 + tick % 10) + ' Hz' : (S.kuyuAuto ? 'OTO · BEKLEMEDE' : 'MANUEL DURDURULDU'));
+      pump('pumpJoker', S.joker, S.joker ? 'ÇALIŞIYOR' : 'BEKLEMEDE');
+      pump('pumpFire', S.firePump, S.firePump ? 'ÇALIŞIYOR · ACİL' : 'BEKLEMEDE');
+
+      vSite.innerHTML = 'Şebeke birincil · Site pompası: <span class="' + (S.sitePump ? 'open' : 'ok') + '">' + (S.sitePump ? 'ÇALIŞIYOR' : 'BEKLEMEDE') + '</span>';
+      var valfAcik = (S.kuyuPump && S.fire < 98) || S.fireMode;
+      vFire.innerHTML = 'Dolum valfi: <span class="' + (valfAcik ? 'open' : 'ok') + '">' + (valfAcik ? 'AÇIK — DOLUYOR' : 'KAPALI') + '</span>';
+
+      dSebeke.textContent = S.dSebeke.toFixed(1) + ' bar';
+      dSite.textContent = S.dSite.toFixed(1) + ' bar';
+      dFire.textContent = S.dFire.toFixed(1) + ' bar';
+      dFire.className = S.fireMode ? 'warn' : (S.dFire < 2.2 ? 'warn' : 'ok');
+
+      alarm.classList.toggle('show', S.fireMode);
+      if (S.fireMode && S.fire < 10) {
+        alarm.textContent = '⚠️ YANGIN REZERVİ KRİTİK — Su tankı boşalıyor! acil dolum valfi açık';
+        alarm.style.background = 'linear-gradient(90deg, #b71c1c, #ff5722)';
+      } else if (S.fireMode) {
+        alarm.textContent = '🔥 YANGIN MODU AKTİF — Yangın pompası ve joker pompa devrede · Tanklar acil dolumda';
+        alarm.style.background = '';
+      }
+    }
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    btnFire.addEventListener('click', function () {
+      S.fireMode = !S.fireMode;
+      this.classList.toggle('on', S.fireMode);
+      this.textContent = S.fireMode ? '🔥 Yangın Modu AKTİF' : '🔥 Yangın Modu';
+    });
+    btnSys.addEventListener('click', function () {
+      S.sysOn = !S.sysOn;
+      this.classList.toggle('on', S.sysOn);
+      this.textContent = S.sysOn ? '⚡ Sistem AÇIK' : '⚡ Sistem KAPALI';
+    });
+    btnKuyu.addEventListener('click', function () {
+      S.kuyuAuto = !S.kuyuAuto;
+      this.classList.toggle('on', S.kuyuAuto);
+      this.textContent = S.kuyuAuto ? '🕳️ Kuyu OTO' : '🕳️ Kuyu DURDURULDU';
+    });
+
+    update();
+    setInterval(update, 1500);
+  })();
+</script>
+</body>
+</html>
