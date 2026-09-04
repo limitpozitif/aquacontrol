@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --navy: #041e42;
     --blue: #0b3d91;
     --sky: #0f6ad0;
@@ -75,7 +75,7 @@
   .card p { color: var(--muted); font-size: 15px; }
   .card ul { list-style: none; }
   .card ul li { position: relative; padding-left: 22px; margin-bottom: 9px; color: var(--muted); font-size: 15px; }
-  .card ul li::before { content: "âœ”"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  .card ul li::before { content: "✔"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
   .card.fire { border-top-color: var(--red); }
   .card.ok { border-top-color: var(--green); }
   .card.warn { border-top-color: var(--orange); }
@@ -84,7 +84,7 @@
   /* FLOW */
   .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: stretch; }
   .flow-item { background: #fff; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border-top: 4px solid var(--sky); text-align: center; position: relative; }
-  .flow-item::after { content: "âœ"; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: var(--sky); font-size: 22px; font-weight: 700; }
+  .flow-item::after { content: "➜"; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: var(--sky); font-size: 22px; font-weight: 700; }
   .flow-item:last-child::after { display: none; }
   .flow-item .num { width: 40px; height: 40px; border-radius: 50%; background: var(--sky); color: #fff; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
   .flow-item h3 { font-size: 16px; color: var(--blue); margin-bottom: 8px; }
@@ -94,7 +94,7 @@
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
   .split .text ul { list-style: none; margin-top: 4px; }
   .split .text ul li { position: relative; padding-left: 26px; margin-bottom: 13px; font-size: 16px; }
-  .split .text ul li::before { content: "âœ”"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  .split .text ul li::before { content: "✔"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
   .split .text b { color: var(--ink); }
   .shot { background: #fff; padding: 12px; border-radius: var(--radius); box-shadow: var(--shadow); }
   .shot img { border-radius: 10px; }
@@ -296,7 +296,7 @@
     .data-row b { font-size: 11px; }
     footer .foot-grid { font-size: 12px; }
 
-    /* Mobil akordeon: cm-sec bÃ¶lÃ¼mlerini kapatÄ±labilir yap */
+    /* Mobil akordeon: cm-sec bölümlerini kapatılabilir yap */
     .cm-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 14px; margin: 8px 0; background: var(--sky); color: #fff; border-radius: 10px; font-size: 13px; font-weight: 700; }
     .cm-toggle .cm-caret { margin-left: auto; font-size: 11px; transition: transform .2s; }
     .cm-body { max-height: 0; overflow: hidden; opacity: 0; padding: 0 6px; transition: max-height .3s ease, opacity .3s ease; }
